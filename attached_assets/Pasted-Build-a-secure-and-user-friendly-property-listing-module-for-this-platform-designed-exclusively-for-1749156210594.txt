@@ -1,0 +1,69 @@
+Build a secure and user-friendly property listing module for this  platform designed exclusively for real estate agents and brokers in India. The feature must allow agents to add new property listings in three modes:
+1.	Exclusive Listing – Only the agent can list and share it.
+2.	Co-Listing – Multiple agents can list the same property with permission.
+3.	Shared Listing – The property can be viewed and promoted internally in the closed network (platform-controlled visibility).
+Owner Approval Flow (Mandatory for All Listings):
+•	Agent must provide owner's name and mobile number.
+•	A verification request is sent to the owner via SMS or WhatsApp, including:
+o	Property details entered by agent.
+o	Terms & Conditions clearly stating: agent's role, scope of work, charges, and listing type.
+o	Options for the owner to approve or deny the listing with a digital consent mechanism.
+•	Property listing goes live only after owner approves.
+•	Each approved listing should store: consent ID, timestamp, and agent ID.
+________________________________________
+🏗️ Property Listing Form – Required Fields
+The listing form must include:
+•	Property Title
+•	Property Type (dropdown)
+•	Price
+•	Size (sq. ft.)
+•	BHK Configuration (optional)
+•	Full Address (Google Places autocomplete)
+•	Flat/Unit Number (optional, but encouraged)
+•	Floor No.
+•	Building/Society Name
+•	Location (Area, City)
+•	Description
+•	Upload up to 10 Photos
+•	Listing Type Selector:
+o	Exclusive
+o	Allow Co-Listing
+o	Shared Within Network
+•	Owner Details Section:
+o	Owner Name
+o	Owner Phone Number (with masked display and verification logic)
+o	Commission Terms (dropdown or free entry)
+o	Scope of Work (multi-select)
+•	Optional Upload: Agent agreement or authorization letter
+Every field that captures sensitive data must include a short note:
+“This information is encrypted and never shared publicly. Required for verification and trust.”
+________________________________________
+Privacy and Security Requirements
+•	Flat/unit numbers, owner name, and phone number must be AES encrypted in the backend.
+•	Owner contact info must never be visible to other agents.
+•	Show a trust/privacy message near sensitive fields:
+o	“Encrypted & used only for verification”
+o	“Owner will receive a consent request with clear terms”
+•	Add a universal note at the bottom of the form:
+Your data is secure. All sensitive information is stored safely and never displayed without explicit permission.
+Backend must support duplicate detection by checking:
+•	Property type, address, building, unit number (if available)
+•	Size + price similarity + geolocation proximity
+________________________________________
+Smart Duplicate Handling
+•	When a new listing is submitted, system checks if a similar property already exists (within 90% match on price, location, unit).
+•	If a possible match is found:
+o	Warn agent: “This property might already be listed.”
+o	Offer a Request Co-listing option.
+o	Notify the original lister to approve/reject co-listing request.
+________________________________________
+Output Summary for Owners (Consent Link)
+When owner receives the listing approval request, show:
+•	Property Title & Photos
+•	Listing Type (Exclusive/Co/Shared)
+•	Agent Info & Role
+•	Commission Terms
+•	Scope of Work
+•	Accept / Decline buttons
+________________________________________
+Allow agents to generate a well-formatted PDF or text preview of the listing (only for listings they have rights to), which they can easily forward to their clients via WhatsApp, email, etc.

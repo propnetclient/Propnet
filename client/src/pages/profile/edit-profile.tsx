@@ -32,6 +32,7 @@ export default function EditProfile() {
   });
 
   const [logoFiles, setLogoFiles] = useState<File[]>([]);
+  const [profilePhotoFiles, setProfilePhotoFiles] = useState<File[]>([]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -73,6 +74,10 @@ export default function EditProfile() {
 
     if (logoFiles.length > 0) {
       formDataToSend.append("agencyLogo", logoFiles[0]);
+    }
+
+    if (profilePhotoFiles.length > 0) {
+      formDataToSend.append("profilePhoto", profilePhotoFiles[0]);
     }
 
     updateProfileMutation.mutate(formDataToSend);
@@ -117,6 +122,14 @@ export default function EditProfile() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label>Profile Photo</Label>
+                  <FileUpload 
+                    onFilesChange={setProfilePhotoFiles}
+                    maxFiles={1}
+                  />
+                  <p className="text-xs text-neutral-500 mt-1">Upload your profile photo (optional)</p>
+                </div>
                 <div>
                   <Label htmlFor="name">Full Name</Label>
                   <Input

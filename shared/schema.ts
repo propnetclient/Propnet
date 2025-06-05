@@ -32,10 +32,22 @@ export const properties = pgTable("properties", {
   price: text("price").notNull(),
   size: text("size").notNull(),
   location: text("location").notNull(),
+  fullAddress: text("full_address").notNull(),
+  flatNumber: text("flat_number"),
+  floorNumber: text("floor_number"),
+  buildingSociety: text("building_society"),
   description: text("description"),
   bhk: integer("bhk"),
-  listingType: text("listing_type").notNull(), // exclusive, colisting
+  listingType: text("listing_type").notNull(), // exclusive, colisting, shared
   photos: text("photos").array().default([]),
+  ownerName: text("owner_name").notNull(), // encrypted
+  ownerPhone: text("owner_phone").notNull(), // encrypted
+  commissionTerms: text("commission_terms"),
+  scopeOfWork: text("scope_of_work").array(),
+  agreementDocument: text("agreement_document"),
+  ownerApprovalStatus: text("owner_approval_status").default("pending"), // pending, approved, rejected
+  consentId: text("consent_id"),
+  approvalTimestamp: timestamp("approval_timestamp"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
