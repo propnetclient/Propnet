@@ -55,8 +55,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).parse(req.body);
       
       // In production, verify OTP with SMS service
-      // For now, accept any 6-digit OTP
-      if (otp.length !== 6) {
+      // For MVP, accept the fixed OTP 123456
+      if (otp !== "123456") {
         return res.status(400).json({ message: "Invalid OTP" });
       }
 
