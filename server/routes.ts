@@ -482,6 +482,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Owner consent routes
+  app.get("/api/consent/:consentId", async (req, res) => {
+    try {
+      const consentId = req.params.consentId;
+      const consentData = await storage.getConsentData(consentId);
+      
+      if (!consentData) {
+        return res.status(404).json({ message: "Consent not found" });
+      }
+
+      res.json(consentData);
+    } catch (error) {
+      console.error("Consent fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch consent data" });
+    }
+  });
+
+  app.post("/api/consent/:consentId/:action", async (req, res) => {
+    try {
+      const { consentId, action } = req.params;
+      
+      if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ message: "Invalid action" });
+      }
+
+      const property = await storage.updatePropertyApproval(consentId, action === 'approve' ? 'approved' : 'rejected');
+      
+      res.json({ 
+        success: true, 
+        action,
+        property,
+        message: action === 'approve' ? "Property listing approved" : "Property listing rejected"
+      });
+    } catch (error) {
+      console.error("Consent action error:", error);
+      res.status(500).json({ message: "Failed to process consent action" });
+    }
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
 

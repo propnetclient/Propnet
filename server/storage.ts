@@ -29,6 +29,11 @@ export interface IStorage {
   createPropertyRequirement(requirement: InsertPropertyRequirement & { userId: number }): Promise<PropertyRequirement>;
   updatePropertyRequirement(id: number, updates: Partial<InsertPropertyRequirement>): Promise<PropertyRequirement>;
   deletePropertyRequirement(id: number): Promise<void>;
+
+  // Consent and approval methods
+  getConsentData(consentId: string): Promise<any>;
+  updatePropertyApproval(consentId: string, status: string): Promise<Property>;
+  checkDuplicateProperty(propertyData: any): Promise<Property[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -252,6 +257,34 @@ export class DatabaseStorage implements IStorage {
       .update(propertyRequirements)
       .set({ isActive: false })
       .where(eq(propertyRequirements.id, id));
+  }
+
+  async getConsentData(consentId: string): Promise<any> {
+    const [propertyWithDetails] = await db
+      .select()
+      .from(properties)
+      .leftJoin(users, eq(properties.ownerId, users.id))
+      .where(eq(properties.consentId, consentId));
+
+    if (!propertyWithDetails) return null;
+
+    return {
+      property: propertyWithDetails.properties,
+      agent: propertyWithDetails.users,
+      status: propertyWithDetails.properties.ownerApprovalStatus
+    };
+  }
+
+  async updatePropertyApproval(consentId: string, status: string): Promise<Property> {
+    const [property] = await db
+      .update(properties)
+      .set({ 
+        ownerApprovalStatus: status,
+        approvalTimestamp: status === 'approved' ? new Date() : null
+      })
+      .where(eq(properties.consentId, consentId))
+      .returning();
+    return property;
   }
 }
 
