@@ -1,0 +1,48 @@
+import { Switch, Route } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/use-auth";
+import Login from "@/pages/auth/login";
+import OtpVerification from "@/pages/auth/otp-verification";
+import KYC from "@/pages/auth/kyc";
+import PropertyFeed from "@/pages/properties/feed";
+import AddProperty from "@/pages/properties/add-property";
+import PropertyDetail from "@/pages/properties/property-detail";
+import Profile from "@/pages/profile/profile";
+import ColistingRequests from "@/pages/profile/colisting-requests";
+import NotFound from "@/pages/not-found";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={Login} />
+      <Route path="/otp-verification" component={OtpVerification} />
+      <Route path="/kyc" component={KYC} />
+      <Route path="/feed" component={PropertyFeed} />
+      <Route path="/add-property" component={AddProperty} />
+      <Route path="/property/:id" component={PropertyDetail} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/colisting-requests" component={ColistingRequests} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <div className="app-container">
+            <Toaster />
+            <Router />
+          </div>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
