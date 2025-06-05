@@ -10,8 +10,10 @@ import KYC from "@/pages/auth/kyc";
 import PropertyFeed from "@/pages/properties/feed";
 import PropertySearch from "@/pages/properties/search";
 import AddProperty from "@/pages/properties/add-property";
+import BulkUpload from "@/pages/properties/bulk-upload";
 import PropertyDetail from "@/pages/properties/property-detail";
 import Profile from "@/pages/profile/profile";
+import EditProfile from "@/pages/profile/edit-profile";
 import ColistingRequests from "@/pages/profile/colisting-requests";
 import NotFound from "@/pages/not-found";
 
@@ -24,8 +26,10 @@ function Router() {
       <Route path="/feed" component={PropertyFeed} />
       <Route path="/search" component={PropertySearch} />
       <Route path="/add-property" component={AddProperty} />
+      <Route path="/bulk-upload" component={BulkUpload} />
       <Route path="/property/:id" component={PropertyDetail} />
       <Route path="/profile" component={Profile} />
+      <Route path="/edit-profile" component={EditProfile} />
       <Route path="/colisting-requests" component={ColistingRequests} />
       <Route component={NotFound} />
     </Switch>

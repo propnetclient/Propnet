@@ -191,6 +191,17 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
               <Calendar size={12} className="mr-1" />
               {formatDate(property.createdAt)}
             </div>
+            {!isOwner && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowContactModal(true)}
+                className="text-primary border-primary hover:bg-primary hover:text-white text-sm flex items-center space-x-1"
+              >
+                <Phone size={14} />
+                <span>Contact</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -203,6 +214,13 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
           </div>
         </div>
       </div>
+
+      <ContactModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+        propertyOwner={property.owner}
+        propertyTitle={property.title}
+      />
     </div>
   );
 }

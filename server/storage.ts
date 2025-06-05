@@ -8,6 +8,7 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User>;
+  updateUserProfile(id: number, updates: Partial<InsertUser>): Promise<User>;
 
   // Property methods
   getProperties(): Promise<(Property & { owner: User; coAgents?: User[] })[]>;
@@ -46,6 +47,19 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserProfile(id: number, updates: Partial<InsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...updates,
+        areaOfExpertise: updates.areaOfExpertise ? updates.areaOfExpertise.toString().split(',').map(s => s.trim()) : undefined,
+        workingRegions: updates.workingRegions ? updates.workingRegions.toString().split(',').map(s => s.trim()) : undefined,
+      })
       .where(eq(users.id, id))
       .returning();
     return user;

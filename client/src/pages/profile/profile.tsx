@@ -63,6 +63,11 @@ export default function Profile() {
       action: () => setLocation("/colisting-requests"),
     },
     {
+      icon: User,
+      label: "Edit Profile",
+      action: () => setLocation("/edit-profile"),
+    },
+    {
       icon: Settings,
       label: "Settings",
       action: () => toast({ title: "Coming Soon", description: "Settings will be available soon" }),
@@ -100,18 +105,38 @@ export default function Profile() {
           <TabsContent value="overview" className="px-6 py-6">
             {/* Profile Header */}
             <div className="text-center mb-8">
-              <div className="w-24 h-24 bg-neutral-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl font-bold text-neutral-500">
-                  {user?.name?.charAt(0) || "A"}
-                </span>
+              <div className="w-24 h-24 bg-neutral-200 rounded-full mx-auto mb-4 flex items-center justify-center relative">
+                {user?.agencyLogo ? (
+                  <img 
+                    src={`/uploads/${user.agencyLogo}`} 
+                    alt="Agency Logo" 
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-neutral-500">
+                    {user?.name?.charAt(0) || "A"}
+                  </span>
+                )}
               </div>
               <h3 className="text-xl font-bold text-neutral-900">{user?.name || "Agent"}</h3>
               <p className="text-neutral-500">{user?.agencyName || "Real Estate Agent"}</p>
-              <div className="flex items-center justify-center mt-2">
+              {user?.email && (
+                <p className="text-sm text-neutral-400">{user.email}</p>
+              )}
+              {user?.city && (
+                <p className="text-sm text-neutral-400">{user.city}</p>
+              )}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
                 <Badge className="bg-accent text-white">
                   <Award size={12} className="mr-1" />
                   {user?.isVerified ? "Verified Agent" : "Pending Verification"}
                 </Badge>
+                {user?.experience && (
+                  <Badge variant="outline">{user.experience} Experience</Badge>
+                )}
+                {user?.reraId && (
+                  <Badge variant="outline">RERA: {user.reraId}</Badge>
+                )}
               </div>
             </div>
 
