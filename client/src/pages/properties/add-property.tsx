@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import FileUpload from "@/components/ui/file-upload";
@@ -87,14 +87,25 @@ export default function AddProperty() {
     <div className="flex flex-col min-h-screen">
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-neutral-100 z-10">
-        <div className="flex items-center px-6 py-4">
-          <button 
-            className="text-primary mr-4"
-            onClick={() => setLocation("/feed")}
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center">
+            <button 
+              className="text-primary mr-4"
+              onClick={() => setLocation("/feed")}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 className="text-lg font-semibold text-neutral-900">Add Property</h2>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation("/bulk-upload")}
+            className="flex items-center space-x-2"
           >
-            <ArrowLeft size={24} />
-          </button>
-          <h2 className="text-lg font-semibold text-neutral-900">Add Property</h2>
+            <Upload size={16} />
+            <span>Bulk Upload</span>
+          </Button>
         </div>
       </div>
 

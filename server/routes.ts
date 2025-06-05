@@ -11,12 +11,17 @@ import fs from "fs";
 // Configure multer for file uploads
 const upload = multer({
   dest: 'uploads/',
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (file.mimetype.startsWith('image/')) {
+    const allowedTypes = /jpeg|jpg|png|gif|csv/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const isImage = file.mimetype.startsWith('image/');
+    const isCsv = file.mimetype === 'text/csv' || file.mimetype === 'application/vnd.ms-excel';
+    
+    if (isImage || (isCsv && extname)) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'));
+      cb(new Error('Only image files and CSV files are allowed'));
     }
   }
 });
@@ -241,6 +246,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, request });
     } catch (error) {
       res.status(400).json({ message: "Failed to update request" });
+    }
+  });
+
+  // Profile update route
+  app.post("/api/profile/update", upload.single('agencyLogo'), async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const updates: any = { ...req.body };
+      
+      if (req.file) {
+        updates.agencyLogo = req.file.filename;
+      }
+
+      const user = await storage.updateUserProfile(userId, updates);
+      res.json({ user, message: "Profile updated successfully" });
+    } catch (error) {
+      console.error("Profile update error:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Bulk property upload route
+  app.post("/api/properties/bulk-upload", upload.single('file'), async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const csvContent = fs.readFileSync(req.file.path, 'utf-8');
+      const lines = csvContent.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      
+      let successful = 0;
+      let failed = 0;
+      const errors: string[] = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        
+        if (values.length < headers.length) continue;
+        
+        try {
+          const propertyData: any = {};
+          headers.forEach((header, index) => {
+            propertyData[header] = values[index];
+          });
+
+          // Convert bhk to number if present
+          if (propertyData.bhk) {
+            propertyData.bhk = parseInt(propertyData.bhk) || 0;
+          }
+
+          const validatedData = insertPropertySchema.parse(propertyData);
+
+          await storage.createProperty({
+            ...validatedData,
+            ownerId: userId
+          });
+          successful++;
+        } catch (error: any) {
+          failed++;
+          errors.push(`Row ${i + 1}: ${error.message}`);
+        }
+      }
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        total: lines.length - 1,
+        successful,
+        failed,
+        errors: errors.slice(0, 10) // Limit to first 10 errors
+      });
+    } catch (error) {
+      console.error("Bulk upload error:", error);
+      res.status(500).json({ message: "Failed to process bulk upload" });
     }
   });
 
