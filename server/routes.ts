@@ -49,25 +49,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/verify-otp", async (req, res) => {
     try {
-      const { phone, otp } = z.object({ 
-        phone: z.string(), 
-        otp: z.string() 
-      }).parse(req.body);
+      console.log("Raw request body:", req.body);
+      
+      const phone = req.body.phone;
+      const otp = req.body.otp;
+      
+      if (!phone || !otp) {
+        console.log("Missing phone or OTP");
+        return res.status(400).json({ message: "Phone and OTP required" });
+      }
+      
+      console.log(`Verifying OTP for ${phone}: received "${otp}", expected "123456"`);
+      console.log(`OTP type: ${typeof otp}, length: ${otp.length}`);
       
       // In production, verify OTP with SMS service
       // For MVP, accept the fixed OTP 123456
-      if (otp !== "123456") {
+      if (String(otp).trim() !== "123456") {
+        console.log(`OTP verification failed: "${String(otp).trim()}" !== "123456"`);
         return res.status(400).json({ message: "Invalid OTP" });
       }
+
+      console.log("OTP verification successful, proceeding...");
 
       let user = await storage.getUserByPhone(phone);
       
       if (!user) {
         user = await storage.createUser({ phone });
+        console.log("Created new user:", user);
       }
 
       // Set session
       (req as any).session.userId = user.id;
+      console.log("Session set for user ID:", user.id);
       
       res.json({ 
         success: true, 
@@ -75,6 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isKycComplete: user.isKycComplete 
       });
     } catch (error) {
+      console.error("OTP verification error:", error);
       res.status(400).json({ message: "Invalid OTP" });
     }
   });
