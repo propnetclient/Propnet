@@ -551,7 +551,7 @@ export default function MyListings() {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
           </div>
-        ) : myProperties.length === 0 ? (
+        ) : (myProperties as any[])?.length === 0 ? (
           <div className="text-center py-12">
             <Building2 size={48} className="mx-auto text-neutral-400 mb-4" />
             <h3 className="text-lg font-medium text-neutral-700 mb-2">No listings yet</h3>
