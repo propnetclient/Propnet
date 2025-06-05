@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertPropertySchema, insertCoListingRequestSchema } from "@shared/schema";
+import { insertUserSchema, insertPropertySchema, insertCoListingRequestSchema, insertPropertyRequirementSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -346,6 +346,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Bulk upload error:", error);
       res.status(500).json({ message: "Failed to process bulk upload" });
+    }
+  });
+
+  // Property requirements routes
+  app.get("/api/property-requirements", async (req, res) => {
+    try {
+      const requirements = await storage.getPropertyRequirements();
+      res.json(requirements);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch requirements" });
+    }
+  });
+
+  app.get("/api/my-requirements", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const requirements = await storage.getUserRequirements(userId);
+      res.json(requirements);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch requirements" });
+    }
+  });
+
+  app.post("/api/property-requirements", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const requirementData = insertPropertyRequirementSchema.parse(req.body);
+      const requirement = await storage.createPropertyRequirement({
+        ...requirementData,
+        userId,
+      });
+
+      res.json({ success: true, requirement });
+    } catch (error) {
+      console.error("Create requirement error:", error);
+      res.status(400).json({ message: "Failed to create requirement" });
+    }
+  });
+
+  app.patch("/api/property-requirements/:id", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      const updates = insertPropertyRequirementSchema.partial().parse(req.body);
+      
+      const requirement = await storage.updatePropertyRequirement(id, updates);
+      res.json({ success: true, requirement });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update requirement" });
+    }
+  });
+
+  app.delete("/api/property-requirements/:id", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      await storage.deletePropertyRequirement(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete requirement" });
     }
   });
 

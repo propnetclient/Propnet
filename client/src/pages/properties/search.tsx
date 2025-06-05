@@ -1,21 +1,38 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Search, Filter, MapPin, Home, Building2, TrendingUp, SlidersHorizontal, X } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Search, Filter, MapPin, Home, Building2, TrendingUp, SlidersHorizontal, X, Plus, Bell } from "lucide-react";
 import { useLocation } from "wouter";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import EnhancedPropertyCard from "@/components/ui/enhanced-property-card";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { useAuth } from "@/hooks/use-auth";
-import type { Property } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { insertPropertyRequirementSchema } from "@shared/schema";
+import type { Property, PropertyRequirement } from "@shared/schema";
+import { z } from "zod";
+
+const requirementFormSchema = insertPropertyRequirementSchema.extend({
+  validUntil: z.string().optional(),
+});
 
 export default function PropertySearch() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [priceRange, setPriceRange] = useState([0, 200]);
@@ -24,37 +41,99 @@ export default function PropertySearch() {
   const [listingType, setListingType] = useState("");
   const [sortBy, setSortBy] = useState("recent");
   const [showFilters, setShowFilters] = useState(false);
+  const [isRequirementDialogOpen, setIsRequirementDialogOpen] = useState(false);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["/api/properties"],
   });
 
+  const { data: requirements = [] } = useQuery({
+    queryKey: ["/api/property-requirements"],
+  });
+
+  const form = useForm<z.infer<typeof requirementFormSchema>>({
+    resolver: zodResolver(requirementFormSchema),
+    defaultValues: {
+      title: "",
+      propertyType: "",
+      location: "",
+      minPrice: "",
+      maxPrice: "",
+      description: "",
+      validUntil: "",
+    },
+  });
+
+  const createRequirementMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof requirementFormSchema>) => {
+      const { validUntil, ...requirementData } = data;
+      const payload = {
+        ...requirementData,
+        validUntil: validUntil ? new Date(validUntil).toISOString() : null,
+      };
+      return apiRequest("POST", "/api/property-requirements", payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/property-requirements"] });
+      setIsRequirementDialogOpen(false);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "Your property requirement has been posted successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to post requirement. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Advanced filtering logic
   const filteredProperties = (properties as any[]).filter((property: any) => {
-    const matchesSearch = property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         property.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = property.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         property.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          property.description?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesType = !propertyType || property.propertyType === propertyType;
-    const matchesLocation = !locationFilter || property.location.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesBhk = !bhk || property.bhk === bhk;
+    const matchesLocation = !locationFilter || property.location?.toLowerCase().includes(locationFilter.toLowerCase());
+    const matchesBhk = !bhk || property.bhk?.toString() === bhk || `${property.bhk} BHK` === bhk;
     const matchesListingType = !listingType || property.listingType === listingType;
     
     // Price filtering with range
-    const price = parseFloat(property.price.replace(/[^\d.]/g, ''));
-    const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
+    const priceStr = property.price?.toString() || '0';
+    const price = parseFloat(priceStr.replace(/[^\d.]/g, '')) || 0;
+    const priceInLakhs = price / 100000; // Convert to lakhs
+    const matchesPrice = priceInLakhs >= priceRange[0] && priceInLakhs <= (priceRange[1] === 200 ? Infinity : priceRange[1]);
     
     return matchesSearch && matchesType && matchesLocation && matchesBhk && matchesListingType && matchesPrice;
   }).sort((a: any, b: any) => {
     switch (sortBy) {
       case "price-low":
-        return parseFloat(a.price.replace(/[^\d.]/g, '')) - parseFloat(b.price.replace(/[^\d.]/g, ''));
+        const priceA = parseFloat((a.price?.toString() || '0').replace(/[^\d.]/g, '')) || 0;
+        const priceB = parseFloat((b.price?.toString() || '0').replace(/[^\d.]/g, '')) || 0;
+        return priceA - priceB;
       case "price-high":
-        return parseFloat(b.price.replace(/[^\d.]/g, '')) - parseFloat(a.price.replace(/[^\d.]/g, ''));
+        const priceHighA = parseFloat((a.price?.toString() || '0').replace(/[^\d.]/g, '')) || 0;
+        const priceHighB = parseFloat((b.price?.toString() || '0').replace(/[^\d.]/g, '')) || 0;
+        return priceHighB - priceHighA;
       case "recent":
       default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     }
+  });
+
+  const filteredRequirements = (requirements as any[]).filter((requirement: any) => {
+    const matchesSearch = requirement.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         requirement.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         requirement.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesType = !propertyType || requirement.propertyType === propertyType;
+    const matchesLocation = !locationFilter || requirement.location?.toLowerCase().includes(locationFilter.toLowerCase());
+    
+    return matchesSearch && matchesType && matchesLocation;
   });
 
   const clearFilters = () => {
@@ -81,7 +160,7 @@ export default function PropertySearch() {
           >
             <ArrowLeft size={24} />
           </button>
-          <h2 className="text-lg font-semibold text-neutral-900">Search Properties</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">Search & Requirements</h2>
         </div>
 
         {/* Search Bar */}
@@ -89,7 +168,7 @@ export default function PropertySearch() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
             <Input
-              placeholder="Search by title, location, or description..."
+              placeholder="Search properties and requirements..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4"
@@ -125,6 +204,158 @@ export default function PropertySearch() {
                 <SelectItem value="price-high">Price: High to Low</SelectItem>
               </SelectContent>
             </Select>
+
+            <Dialog open={isRequirementDialogOpen} onOpenChange={setIsRequirementDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="flex items-center space-x-2 whitespace-nowrap">
+                  <Plus size={16} />
+                  <span>Post Requirement</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[95vw] max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Post Property Requirement</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit((data) => createRequirementMutation.mutate(data))} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Requirement Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Looking for 2 BHK apartment..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="propertyType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Property Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select property type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Apartment">Apartment</SelectItem>
+                              <SelectItem value="Villa">Villa</SelectItem>
+                              <SelectItem value="Commercial">Commercial</SelectItem>
+                              <SelectItem value="Plot">Plot</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preferred Location</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter area or city" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="minPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Min Price</FormLabel>
+                            <FormControl>
+                              <Input placeholder="₹50 Lakhs" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="maxPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Max Price</FormLabel>
+                            <FormControl>
+                              <Input placeholder="₹1 Crore" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Additional Details</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Describe your requirements in detail..."
+                              className="resize-none"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="validUntil"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valid Until (Optional)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex space-x-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsRequirementDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={createRequirementMutation.isPending}
+                        className="flex-1"
+                      >
+                        {createRequirementMutation.isPending ? "Posting..." : "Post Requirement"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>

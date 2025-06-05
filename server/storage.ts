@@ -181,6 +181,50 @@ export class DatabaseStorage implements IStorage {
       .insert(coListings)
       .values({ propertyId, agentId });
   }
+
+  async getPropertyRequirements(): Promise<(PropertyRequirement & { user: User })[]> {
+    const requirements = await db
+      .select()
+      .from(propertyRequirements)
+      .leftJoin(users, eq(propertyRequirements.userId, users.id))
+      .where(eq(propertyRequirements.isActive, true));
+
+    return requirements.map(r => ({
+      ...r.property_requirements,
+      user: r.users!,
+    }));
+  }
+
+  async getUserRequirements(userId: number): Promise<PropertyRequirement[]> {
+    return await db
+      .select()
+      .from(propertyRequirements)
+      .where(and(eq(propertyRequirements.userId, userId), eq(propertyRequirements.isActive, true)));
+  }
+
+  async createPropertyRequirement(requirement: InsertPropertyRequirement & { userId: number }): Promise<PropertyRequirement> {
+    const [newRequirement] = await db
+      .insert(propertyRequirements)
+      .values(requirement)
+      .returning();
+    return newRequirement;
+  }
+
+  async updatePropertyRequirement(id: number, updates: Partial<InsertPropertyRequirement>): Promise<PropertyRequirement> {
+    const [requirement] = await db
+      .update(propertyRequirements)
+      .set(updates)
+      .where(eq(propertyRequirements.id, id))
+      .returning();
+    return requirement;
+  }
+
+  async deletePropertyRequirement(id: number): Promise<void> {
+    await db
+      .update(propertyRequirements)
+      .set({ isActive: false })
+      .where(eq(propertyRequirements.id, id));
+  }
 }
 
 export const storage = new DatabaseStorage();
