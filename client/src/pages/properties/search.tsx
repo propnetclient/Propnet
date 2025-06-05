@@ -1,57 +1,74 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Search, MapPin, Filter, SlidersHorizontal } from "lucide-react";
-import PropertyCard from "@/components/ui/property-card";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Search, Filter, MapPin, Home, Building2, TrendingUp, SlidersHorizontal, X } from "lucide-react";
+import { useLocation } from "wouter";
+import EnhancedPropertyCard from "@/components/ui/enhanced-property-card";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { useAuth } from "@/hooks/use-auth";
+import type { Property } from "@shared/schema";
 
 export default function PropertySearch() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-  const [selectedCity, setSelectedCity] = useState("all");
-  const [priceRange, setPriceRange] = useState("all");
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 200]);
+  const [locationFilter, setLocationFilter] = useState("");
+  const [bhk, setBhk] = useState("");
+  const [listingType, setListingType] = useState("");
+  const [sortBy, setSortBy] = useState("recent");
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["/api/properties"],
   });
 
-  const cities = ["all", "Mumbai", "Delhi", "Bangalore", "Pune", "Chennai", "Hyderabad"];
-  const propertyTypes = ["all", "Apartment", "Villa", "Commercial", "Plot"];
-  const priceRanges = [
-    { value: "all", label: "Any Price" },
-    { value: "0-50", label: "Under ₹50L" },
-    { value: "50-100", label: "₹50L - ₹1Cr" },
-    { value: "100-250", label: "₹1Cr - ₹2.5Cr" },
-    { value: "250+", label: "Above ₹2.5Cr" }
-  ];
-
-  const filteredProperties = properties.filter((property: any) => {
-    const matchesSearch = !searchQuery || 
-      property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      property.location.toLowerCase().includes(searchQuery.toLowerCase());
+  // Advanced filtering logic
+  const filteredProperties = (properties as any[]).filter((property: any) => {
+    const matchesSearch = property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         property.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         property.description?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesType = selectedType === "all" || 
-      property.propertyType.toLowerCase() === selectedType.toLowerCase();
+    const matchesType = !propertyType || property.propertyType === propertyType;
+    const matchesLocation = !locationFilter || property.location.toLowerCase().includes(locationFilter.toLowerCase());
+    const matchesBhk = !bhk || property.bhk === bhk;
+    const matchesListingType = !listingType || property.listingType === listingType;
     
-    const matchesCity = selectedCity === "all" || 
-      property.location.toLowerCase().includes(selectedCity.toLowerCase());
-
-    return matchesSearch && matchesType && matchesCity;
+    // Price filtering with range
+    const price = parseFloat(property.price.replace(/[^\d.]/g, ''));
+    const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
+    
+    return matchesSearch && matchesType && matchesLocation && matchesBhk && matchesListingType && matchesPrice;
+  }).sort((a: any, b: any) => {
+    switch (sortBy) {
+      case "price-low":
+        return parseFloat(a.price.replace(/[^\d.]/g, '')) - parseFloat(b.price.replace(/[^\d.]/g, ''));
+      case "price-high":
+        return parseFloat(b.price.replace(/[^\d.]/g, '')) - parseFloat(a.price.replace(/[^\d.]/g, ''));
+      case "recent":
+      default:
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="loading-spinner" />
-      </div>
-    );
-  }
+  const clearFilters = () => {
+    setSearchQuery("");
+    setPropertyType("");
+    setPriceRange([0, 200]);
+    setLocationFilter("");
+    setBhk("");
+    setListingType("");
+    setSortBy("recent");
+  };
+
+  const activeFiltersCount = [propertyType, locationFilter, bhk, listingType].filter(Boolean).length +
+    (priceRange[0] > 0 || priceRange[1] < 200 ? 1 : 0);
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
@@ -72,100 +89,167 @@ export default function PropertySearch() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
             <Input
-              type="text"
+              placeholder="Search by title, location, or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title or location..."
-              className="pl-10"
+              className="pl-10 pr-4"
             />
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Quick Filters */}
         <div className="px-6 pb-4">
-          <div className="flex items-center space-x-2 mb-3">
-            <SlidersHorizontal size={16} className="text-neutral-500" />
-            <span className="text-sm font-medium text-neutral-700">Filters</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="Property Type" />
-              </SelectTrigger>
-              <SelectContent>
-                {propertyTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type === "all" ? "All Types" : type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center space-x-3 overflow-x-auto">
+            <Button
+              variant={showFilters ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center space-x-2 whitespace-nowrap"
+            >
+              <SlidersHorizontal size={16} />
+              <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <Badge className="ml-1 bg-primary text-white text-xs min-w-[20px] h-5">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </Button>
 
-            <Select value={selectedCity} onValueChange={setSelectedCity}>
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="City" />
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                {cities.map((city) => (
-                  <SelectItem key={city} value={city}>
-                    {city === "all" ? "All Cities" : city}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="mt-3">
-            <Select value={priceRange} onValueChange={setPriceRange}>
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="Price Range" />
-              </SelectTrigger>
-              <SelectContent>
-                {priceRanges.map((range) => (
-                  <SelectItem key={range.value} value={range.value}>
-                    {range.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="recent">Recent</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
 
+      {/* Advanced Filters Panel */}
+      {showFilters && (
+        <Card className="mx-6 mt-4">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Advanced Filters</CardTitle>
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  Clear All
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowFilters(false)}>
+                  <X size={16} />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Property Type */}
+            <div>
+              <label className="text-sm font-medium text-neutral-700 mb-2 block">Property Type</label>
+              <Select value={propertyType} onValueChange={setPropertyType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="Apartment">Apartment</SelectItem>
+                  <SelectItem value="Villa">Villa</SelectItem>
+                  <SelectItem value="Commercial">Commercial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Price Range */}
+            <div>
+              <label className="text-sm font-medium text-neutral-700 mb-2 block">
+                Price Range: ₹{priceRange[0]}L - ₹{priceRange[1]}L {priceRange[1] === 200 ? "+" : ""}
+              </label>
+              <Slider
+                value={priceRange}
+                onValueChange={setPriceRange}
+                max={200}
+                min={0}
+                step={10}
+                className="w-full"
+              />
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="text-sm font-medium text-neutral-700 mb-2 block">Location</label>
+              <Input
+                placeholder="Enter area or city"
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+              />
+            </div>
+
+            {/* BHK */}
+            <div>
+              <label className="text-sm font-medium text-neutral-700 mb-2 block">BHK</label>
+              <Select value={bhk} onValueChange={setBhk}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Any BHK" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Any BHK</SelectItem>
+                  <SelectItem value="1 BHK">1 BHK</SelectItem>
+                  <SelectItem value="2 BHK">2 BHK</SelectItem>
+                  <SelectItem value="3 BHK">3 BHK</SelectItem>
+                  <SelectItem value="4+ BHK">4+ BHK</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Listing Type */}
+            <div>
+              <label className="text-sm font-medium text-neutral-700 mb-2 block">Listing Type</label>
+              <Select value={listingType} onValueChange={setListingType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Listings" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Listings</SelectItem>
+                  <SelectItem value="exclusive">Exclusive</SelectItem>
+                  <SelectItem value="colisting">Co-listing</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Results */}
-      <div className="flex-1 px-6 py-4">
+      <div className="flex-1 px-6 py-6">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-neutral-500">
+          <div className="text-sm text-neutral-600">
             {filteredProperties.length} properties found
-          </span>
-          {(searchQuery || selectedType !== "all" || selectedCity !== "all") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedType("all");
-                setSelectedCity("all");
-                setPriceRange("all");
-              }}
-            >
-              Clear Filters
+          </div>
+          {(searchQuery || activeFiltersCount > 0) && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              Clear search
             </Button>
           )}
         </div>
 
-        {filteredProperties.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <MapPin className="text-neutral-400 mb-4" size={48} />
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">No Properties Found</h3>
-            <p className="text-neutral-500">
-              Try adjusting your search filters or search terms
-            </p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          </div>
+        ) : filteredProperties.length === 0 ? (
+          <div className="text-center py-12">
+            <Building2 size={48} className="mx-auto text-neutral-400 mb-4" />
+            <h3 className="text-lg font-medium text-neutral-700 mb-2">No properties found</h3>
+            <p className="text-neutral-500 mb-4">Try adjusting your search criteria</p>
+            <Button onClick={clearFilters}>Clear all filters</Button>
           </div>
         ) : (
           <div className="space-y-4">
             {filteredProperties.map((property: any) => (
-              <PropertyCard 
+              <EnhancedPropertyCard 
                 key={property.id} 
                 property={property}
                 currentUserId={user?.id}
