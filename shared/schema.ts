@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   phone: varchar("phone", { length: 15 }).notNull().unique(),
   name: text("name"),
   email: text("email"),
+  profilePhoto: text("profile_photo"),
   reraId: text("rera_id"),
   agencyName: text("agency_name"),
   agencyLogo: text("agency_logo"),

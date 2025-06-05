@@ -91,13 +91,13 @@ export default function Profile() {
 
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 shrink-0">
-            <TabsTrigger value="overview" className="flex items-center space-x-2">
-              <User size={16} />
+          <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 shrink-0 max-w-md">
+            <TabsTrigger value="overview" className="flex items-center justify-center space-x-1 text-sm">
+              <User size={14} />
               <span>Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center space-x-2">
-              <BarChart3 size={16} />
+            <TabsTrigger value="analytics" className="flex items-center justify-center space-x-1 text-sm">
+              <BarChart3 size={14} />
               <span>Analytics</span>
             </TabsTrigger>
           </TabsList>
