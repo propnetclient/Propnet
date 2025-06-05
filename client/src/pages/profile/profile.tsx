@@ -84,9 +84,9 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="flex-1">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mx-6 mt-4">
+      <div className="flex-1 overflow-hidden">
+        <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 shrink-0">
             <TabsTrigger value="overview" className="flex items-center space-x-2">
               <User size={16} />
               <span>Overview</span>
@@ -172,7 +172,7 @@ export default function Profile() {
             </div>
           </TabsContent>
 
-          <TabsContent value="analytics" className="px-6 py-6">
+          <TabsContent value="analytics" className="flex-1 overflow-y-auto px-6 py-6">
             <AnalyticsDashboard userId={user?.id || 0} />
           </TabsContent>
         </Tabs>

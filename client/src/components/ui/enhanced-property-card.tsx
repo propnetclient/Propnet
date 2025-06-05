@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Share2, MapPin, Calendar, Eye, TrendingUp } from "lucide-react";
+import { Heart, Share2, MapPin, Calendar, Eye, TrendingUp, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ContactModal from "@/components/ui/contact-modal";
 
 interface EnhancedPropertyCardProps {
   property: any;
@@ -13,6 +14,7 @@ interface EnhancedPropertyCardProps {
 export default function EnhancedPropertyCard({ property, currentUserId }: EnhancedPropertyCardProps) {
   const [, setLocation] = useLocation();
   const [isLiked, setIsLiked] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const { toast } = useToast();
 
   const isOwner = currentUserId === property.ownerId;

@@ -149,7 +149,7 @@ export default function PropertySearch() {
             {/* Property Type */}
             <div>
               <label className="text-sm font-medium text-neutral-700 mb-2 block">Property Type</label>
-              <Select value={propertyType} onValueChange={setPropertyType}>
+              <Select value={propertyType} onValueChange={(value) => setPropertyType(value || "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
@@ -190,7 +190,7 @@ export default function PropertySearch() {
             {/* BHK */}
             <div>
               <label className="text-sm font-medium text-neutral-700 mb-2 block">BHK</label>
-              <Select value={bhk} onValueChange={setBhk}>
+              <Select value={bhk} onValueChange={(value) => setBhk(value || "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Any BHK" />
                 </SelectTrigger>
@@ -207,7 +207,7 @@ export default function PropertySearch() {
             {/* Listing Type */}
             <div>
               <label className="text-sm font-medium text-neutral-700 mb-2 block">Listing Type</label>
-              <Select value={listingType} onValueChange={setListingType}>
+              <Select value={listingType} onValueChange={(value) => setListingType(value || "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Listings" />
                 </SelectTrigger>

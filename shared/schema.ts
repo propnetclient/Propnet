@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -7,9 +7,17 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   phone: varchar("phone", { length: 15 }).notNull().unique(),
   name: text("name"),
+  email: text("email"),
   reraId: text("rera_id"),
   agencyName: text("agency_name"),
+  agencyLogo: text("agency_logo"),
   city: text("city"),
+  areaOfExpertise: text("area_of_expertise").array(),
+  workingRegions: text("working_regions").array(),
+  experience: text("experience"),
+  bio: text("bio"),
+  website: text("website"),
+  socialMedia: json("social_media"),
   isVerified: boolean("is_verified").default(false),
   isKycComplete: boolean("is_kyc_complete").default(false),
   createdAt: timestamp("created_at").defaultNow(),
