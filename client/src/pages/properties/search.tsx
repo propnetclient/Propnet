@@ -453,41 +453,141 @@ export default function PropertySearch() {
         </Card>
       )}
 
-      {/* Results */}
-      <div className="flex-1 px-6 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-neutral-600">
-            {filteredProperties.length} properties found
-          </div>
-          {(searchQuery || activeFiltersCount > 0) && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Clear search
-            </Button>
-          )}
-        </div>
+      {/* Tabs for Properties and Requirements */}
+      <div className="flex-1 overflow-hidden">
+        <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 shrink-0 max-w-md">
+            <TabsTrigger value="properties" className="flex items-center justify-center space-x-1 text-sm">
+              <Home size={14} />
+              <span>Properties ({filteredProperties.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="requirements" className="flex items-center justify-center space-x-1 text-sm">
+              <Bell size={14} />
+              <span>Requirements ({filteredRequirements.length})</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-          </div>
-        ) : filteredProperties.length === 0 ? (
-          <div className="text-center py-12">
-            <Building2 size={48} className="mx-auto text-neutral-400 mb-4" />
-            <h3 className="text-lg font-medium text-neutral-700 mb-2">No properties found</h3>
-            <p className="text-neutral-500 mb-4">Try adjusting your search criteria</p>
-            <Button onClick={clearFilters}>Clear all filters</Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredProperties.map((property: any) => (
-              <EnhancedPropertyCard 
-                key={property.id} 
-                property={property}
-                currentUserId={user?.id}
-              />
-            ))}
-          </div>
-        )}
+          <TabsContent value="properties" className="flex-1 px-6 py-6 overflow-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-neutral-600">
+                {filteredProperties.length} properties found
+              </div>
+              {(searchQuery || activeFiltersCount > 0) && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  Clear search
+                </Button>
+              )}
+            </div>
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : filteredProperties.length === 0 ? (
+              <div className="text-center py-12">
+                <Building2 size={48} className="mx-auto text-neutral-400 mb-4" />
+                <h3 className="text-lg font-medium text-neutral-700 mb-2">No properties found</h3>
+                <p className="text-neutral-500 mb-4">Try adjusting your search criteria or post a requirement</p>
+                <div className="space-x-2">
+                  <Button onClick={clearFilters}>Clear all filters</Button>
+                  <Button variant="outline" onClick={() => setIsRequirementDialogOpen(true)}>
+                    Post Requirement
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredProperties.map((property: any) => (
+                  <EnhancedPropertyCard 
+                    key={property.id} 
+                    property={property}
+                    currentUserId={user?.id}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="requirements" className="flex-1 px-6 py-6 overflow-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-neutral-600">
+                {filteredRequirements.length} requirements found
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => setIsRequirementDialogOpen(true)}
+                className="flex items-center space-x-1"
+              >
+                <Plus size={14} />
+                <span>Post New</span>
+              </Button>
+            </div>
+
+            {filteredRequirements.length === 0 ? (
+              <div className="text-center py-12">
+                <Bell size={48} className="mx-auto text-neutral-400 mb-4" />
+                <h3 className="text-lg font-medium text-neutral-700 mb-2">No requirements found</h3>
+                <p className="text-neutral-500 mb-4">Be the first to post a property requirement</p>
+                <Button onClick={() => setIsRequirementDialogOpen(true)}>
+                  Post Requirement
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredRequirements.map((requirement: any) => (
+                  <Card key={requirement.id} className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-neutral-900 mb-1">{requirement.title}</h3>
+                        <div className="flex items-center text-sm text-neutral-500 space-x-4">
+                          <span className="flex items-center">
+                            <MapPin size={12} className="mr-1" />
+                            {requirement.location}
+                          </span>
+                          <span className="flex items-center">
+                            <Building2 size={12} className="mr-1" />
+                            {requirement.propertyType}
+                          </span>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        By {requirement.user?.name || 'Agent'}
+                      </Badge>
+                    </div>
+                    
+                    {requirement.description && (
+                      <p className="text-sm text-neutral-600 mb-3">{requirement.description}</p>
+                    )}
+                    
+                    <div className="flex items-center justify-between text-xs text-neutral-400">
+                      <div className="flex space-x-4">
+                        {requirement.minPrice && <span>Min: {requirement.minPrice}</span>}
+                        {requirement.maxPrice && <span>Max: {requirement.maxPrice}</span>}
+                      </div>
+                      <span>
+                        Posted {new Date(requirement.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    
+                    {requirement.validUntil && (
+                      <div className="mt-2 text-xs text-orange-600">
+                        Valid until {new Date(requirement.validUntil).toLocaleDateString()}
+                      </div>
+                    )}
+
+                    {user?.id !== requirement.userId && (
+                      <div className="mt-3 pt-3 border-t border-neutral-100">
+                        <Button size="sm" className="w-full">
+                          Contact for This Requirement
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <BottomNavigation />
