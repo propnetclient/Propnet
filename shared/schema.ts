@@ -57,11 +57,29 @@ export const coListingRequests = pgTable("co_listing_requests", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const propertyRequirements = pgTable("property_requirements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  propertyType: text("property_type").notNull(),
+  location: text("location").notNull(),
+  minPrice: text("min_price"),
+  maxPrice: text("max_price"),
+  minSize: text("min_size"),
+  maxSize: text("max_size"),
+  bhk: integer("bhk"),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  validUntil: timestamp("valid_until"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   properties: many(properties),
   coListings: many(coListings),
   coListingRequests: many(coListingRequests),
+  propertyRequirements: many(propertyRequirements),
 }));
 
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
@@ -99,6 +117,13 @@ export const coListingRequestsRelations = relations(coListingRequests, ({ one })
   }),
 }));
 
+export const propertyRequirementsRelations = relations(propertyRequirements, ({ one }) => ({
+  user: one(users, {
+    fields: [propertyRequirements.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -117,6 +142,12 @@ export const insertCoListingRequestSchema = createInsertSchema(coListingRequests
   status: true,
 });
 
+export const insertPropertyRequirementSchema = createInsertSchema(propertyRequirements).omit({
+  id: true,
+  createdAt: true,
+  userId: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -125,3 +156,5 @@ export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type CoListing = typeof coListings.$inferSelect;
 export type CoListingRequest = typeof coListingRequests.$inferSelect;
 export type InsertCoListingRequest = z.infer<typeof insertCoListingRequestSchema>;
+export type PropertyRequirement = typeof propertyRequirements.$inferSelect;
+export type InsertPropertyRequirement = z.infer<typeof insertPropertyRequirementSchema>;

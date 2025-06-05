@@ -1,4 +1,4 @@
-import { users, properties, coListings, coListingRequests, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest } from "@shared/schema";
+import { users, properties, coListings, coListingRequests, propertyRequirements, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or } from "drizzle-orm";
 
@@ -22,6 +22,13 @@ export interface IStorage {
   createCoListingRequest(request: InsertCoListingRequest): Promise<CoListingRequest>;
   updateCoListingRequestStatus(id: number, status: string): Promise<CoListingRequest>;
   createCoListing(propertyId: number, agentId: number): Promise<void>;
+
+  // Property requirements methods
+  getPropertyRequirements(): Promise<(PropertyRequirement & { user: User })[]>;
+  getUserRequirements(userId: number): Promise<PropertyRequirement[]>;
+  createPropertyRequirement(requirement: InsertPropertyRequirement & { userId: number }): Promise<PropertyRequirement>;
+  updatePropertyRequirement(id: number, updates: Partial<InsertPropertyRequirement>): Promise<PropertyRequirement>;
+  deletePropertyRequirement(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

@@ -106,7 +106,13 @@ export default function Profile() {
             {/* Profile Header */}
             <div className="text-center mb-8">
               <div className="w-24 h-24 bg-neutral-200 rounded-full mx-auto mb-4 flex items-center justify-center relative">
-                {user?.agencyLogo ? (
+                {user?.profilePhoto ? (
+                  <img 
+                    src={`/uploads/${user.profilePhoto}`} 
+                    alt="Profile Photo" 
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : user?.agencyLogo ? (
                   <img 
                     src={`/uploads/${user.agencyLogo}`} 
                     alt="Agency Logo" 
