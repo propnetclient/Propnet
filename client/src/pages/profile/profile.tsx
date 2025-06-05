@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Home, Handshake, Settings, LogOut, ChevronRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, User, Home, Handshake, Settings, LogOut, ChevronRight, BarChart3, Award } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import BottomNavigation from "@/components/layout/bottom-navigation";
+import AnalyticsDashboard from "@/components/ui/analytics-dashboard";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
@@ -78,7 +81,20 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="flex-1 px-6 py-6">
+      <div className="flex-1">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mx-6 mt-4">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <User size={16} />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center space-x-2">
+              <BarChart3 size={16} />
+              <span>Analytics</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="px-6 py-6">
         {/* Profile Header */}
         <div className="text-center mb-8">
           <div className="w-24 h-24 bg-neutral-200 rounded-full mx-auto mb-4 flex items-center justify-center">
@@ -150,6 +166,12 @@ export default function Profile() {
             )}
           </button>
         </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="px-6 py-6">
+            <AnalyticsDashboard userId={user?.id || 0} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <BottomNavigation />

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { UserCircle, Plus } from "lucide-react";
-import PropertyCard from "@/components/ui/property-card";
+import EnhancedPropertyCard from "@/components/ui/enhanced-property-card";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -93,7 +93,7 @@ export default function PropertyFeed() {
         ) : (
           <div className="space-y-4">
             {filteredProperties.map((property: any) => (
-              <PropertyCard 
+              <EnhancedPropertyCard 
                 key={property.id} 
                 property={property}
                 currentUserId={user?.id}

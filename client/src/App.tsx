@@ -8,6 +8,7 @@ import Login from "@/pages/auth/login";
 import OtpVerification from "@/pages/auth/otp-verification";
 import KYC from "@/pages/auth/kyc";
 import PropertyFeed from "@/pages/properties/feed";
+import PropertySearch from "@/pages/properties/search";
 import AddProperty from "@/pages/properties/add-property";
 import PropertyDetail from "@/pages/properties/property-detail";
 import Profile from "@/pages/profile/profile";
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/otp-verification" component={OtpVerification} />
       <Route path="/kyc" component={KYC} />
       <Route path="/feed" component={PropertyFeed} />
+      <Route path="/search" component={PropertySearch} />
       <Route path="/add-property" component={AddProperty} />
       <Route path="/property/:id" component={PropertyDetail} />
       <Route path="/profile" component={Profile} />
