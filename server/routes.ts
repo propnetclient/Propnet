@@ -167,27 +167,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/properties", upload.array('photos', 10), async (req, res) => {
+  app.post("/api/properties", upload.fields([
+    { name: 'photos', maxCount: 10 },
+    { name: 'agreementDocument', maxCount: 1 }
+  ]), async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
       if (!userId) {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      const propertyData = insertPropertySchema.parse(JSON.parse(req.body.data));
+      // Parse scope of work if it's a JSON string
+      if (req.body.scopeOfWork && typeof req.body.scopeOfWork === 'string') {
+        try {
+          req.body.scopeOfWork = JSON.parse(req.body.scopeOfWork);
+        } catch (e) {
+          req.body.scopeOfWork = [];
+        }
+      }
+
+      const propertyData = insertPropertySchema.parse(req.body);
       
-      // Handle uploaded files
-      const photos = (req.files as Express.Multer.File[])?.map(file => file.filename) || [];
+      const photos: string[] = [];
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      if (files && files.photos) {
+        for (const file of files.photos) {
+          photos.push(file.filename);
+        }
+      }
+
+      let agreementDocument = null;
+      if (files && files.agreementDocument && files.agreementDocument[0]) {
+        agreementDocument = files.agreementDocument[0].filename;
+      }
+
+      // Generate consent ID for owner approval
+      const consentId = `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       const property = await storage.createProperty({
         ...propertyData,
         ownerId: userId,
         photos,
+        agreementDocument,
+        consentId,
+        ownerApprovalStatus: 'pending'
       });
 
-      res.json({ success: true, property });
+      // Check for duplicate properties before creating
+      const duplicates = await storage.checkDuplicateProperty(propertyData);
+      
+      if (duplicates.length > 0) {
+        return res.json({
+          success: false,
+          duplicatesFound: true,
+          duplicates: duplicates.map(dup => ({
+            id: dup.id,
+            title: dup.title,
+            location: dup.location,
+            price: dup.price,
+            ownerName: dup.ownerName // This would be masked in real implementation
+          })),
+          message: "Similar properties found. Please review before proceeding."
+        });
+      }
+
+      // In a real implementation, you would send SMS/WhatsApp to owner here
+      console.log(`Owner approval request sent for property ${property.id} to ${propertyData.ownerPhone}`);
+      console.log(`Consent ID: ${consentId}`);
+      console.log(`Consent URL: ${process.env.BASE_URL || 'http://localhost:5000'}/consent/${consentId}`);
+      
+      res.json({ 
+        success: true, 
+        property,
+        consentUrl: `/consent/${consentId}`,
+        message: "Property listing created. Owner approval request sent."
+      });
     } catch (error) {
-      console.error('Property creation error:', error);
+      console.error("Property creation error:", error);
       res.status(400).json({ message: "Failed to create property" });
     }
   });

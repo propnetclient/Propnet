@@ -135,6 +135,34 @@ export class DatabaseStorage implements IStorage {
     return newProperty;
   }
 
+  async checkDuplicateProperty(propertyData: any): Promise<Property[]> {
+    // Check for similar properties based on location, type, size, and price
+    const similarProperties = await db
+      .select()
+      .from(properties)
+      .where(and(
+        eq(properties.propertyType, propertyData.propertyType),
+        eq(properties.location, propertyData.location),
+        eq(properties.isActive, true)
+      ));
+
+    return similarProperties.filter(prop => {
+      // Check price similarity (within 10%)
+      const propPrice = parseFloat(prop.price.replace(/[^\d.]/g, '')) || 0;
+      const newPrice = parseFloat(propertyData.price.replace(/[^\d.]/g, '')) || 0;
+      const priceDiff = Math.abs(propPrice - newPrice) / Math.max(propPrice, newPrice);
+      
+      // Check size similarity (within 10%)
+      const propSize = parseFloat(prop.size.replace(/[^\d.]/g, '')) || 0;
+      const newSize = parseFloat(propertyData.size.replace(/[^\d.]/g, '')) || 0;
+      const sizeDiff = Math.abs(propSize - newSize) / Math.max(propSize, newSize);
+      
+      // Consider it a potential duplicate if price and size are within 10% and building matches
+      return priceDiff <= 0.1 && sizeDiff <= 0.1 && 
+             prop.buildingSociety === propertyData.buildingSociety;
+    });
+  }
+
   async updateProperty(id: number, updates: Partial<InsertProperty>): Promise<Property> {
     const [property] = await db
       .update(properties)
