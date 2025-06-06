@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Share2, MapPin, Calendar, Eye, TrendingUp, Phone, FileText, Download, MessageCircle } from "lucide-react";
+import { Heart, Share2, MapPin, Calendar, Eye, TrendingUp, Phone, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ContactModal from "@/components/ui/contact-modal";
 import { formatPrice, formatArea, getListingTypeBadgeColor, getListingTypeLabel } from "@/utils/formatters";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
 
 interface EnhancedPropertyCardProps {
   property: any;
@@ -20,28 +17,9 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
   const [isLiked, setIsLiked] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const isOwner = currentUserId === property.ownerId;
   const hasCoAgents = property.coAgents && property.coAgents.length > 0;
-
-  const startChatMutation = useMutation({
-    mutationFn: (data: { participantId: number; propertyId: number }) =>
-      apiRequest('/api/chats', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
-    onSuccess: (chat) => {
-      setLocation(`/chat/${chat.id}`);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to start chat. Please try again.",
-        variant: "destructive"
-      });
-    }
-  });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -254,21 +232,6 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
               >
                 <Phone size={14} />
                 <span>Contact</span>
-              </Button>
-            )}
-            {!isOwner && user && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => startChatMutation.mutate({
-                  participantId: property.ownerId,
-                  propertyId: property.id
-                })}
-                disabled={startChatMutation.isPending}
-                className="text-green-600 border-green-200 hover:bg-green-50 w-8 h-8 p-0"
-                title="Ask about this property"
-              >
-                <MessageCircle size={14} />
               </Button>
             )}
             <Button
