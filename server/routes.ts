@@ -557,6 +557,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PDF generation endpoint
+  app.get("/api/properties/:id/pdf", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      const property = await storage.getProperty(id);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Generate HTML content for PDF
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+            .header { text-align: center; border-bottom: 2px solid #3B82F6; padding-bottom: 20px; margin-bottom: 30px; }
+            .logo { font-size: 24px; font-weight: bold; color: #3B82F6; }
+            .title { font-size: 28px; font-weight: bold; margin: 20px 0; }
+            .section { margin: 20px 0; }
+            .label { font-weight: bold; color: #374151; }
+            .value { margin-left: 10px; }
+            .price { font-size: 24px; font-weight: bold; color: #3B82F6; }
+            .description { line-height: 1.6; margin: 15px 0; }
+            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
+            .agent-info { background: #F9FAFB; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">PropertyConnect</div>
+            <div>Professional Property Listing</div>
+          </div>
+          
+          <div class="title">${property.title}</div>
+          
+          <div class="section">
+            <span class="label">Location:</span>
+            <span class="value">${property.location}</span>
+          </div>
+          
+          <div class="section">
+            <span class="label">Price:</span>
+            <span class="price">₹${parseFloat(property.price).toLocaleString('en-IN')}</span>
+            ${property.transactionType === 'rent' ? `<span class="value">/${property.rentFrequency || 'month'}</span>` : ''}
+          </div>
+          
+          <div class="section">
+            <span class="label">Property Type:</span>
+            <span class="value">${property.propertyType}</span>
+          </div>
+          
+          <div class="section">
+            <span class="label">Size:</span>
+            <span class="value">${property.size} ${property.sizeUnit || 'sq.ft'}</span>
+          </div>
+          
+          ${property.bhk ? `<div class="section">
+            <span class="label">BHK:</span>
+            <span class="value">${property.bhk} BHK</span>
+          </div>` : ''}
+          
+          <div class="section">
+            <span class="label">Transaction Type:</span>
+            <span class="value">${property.transactionType === 'sale' ? 'For Sale' : 'For Rent'}</span>
+          </div>
+          
+          ${property.description ? `<div class="section">
+            <span class="label">Description:</span>
+            <div class="description">${property.description}</div>
+          </div>` : ''}
+          
+          <div class="agent-info">
+            <h3>Listed By</h3>
+            <div><span class="label">Agent:</span> ${property.owner.name}</div>
+            ${property.owner.agencyName ? `<div><span class="label">Agency:</span> ${property.owner.agencyName}</div>` : ''}
+            <div><span class="label">Phone:</span> ${property.owner.phone}</div>
+            ${property.owner.email ? `<div><span class="label">Email:</span> ${property.owner.email}</div>` : ''}
+          </div>
+          
+          <div class="footer">
+            <div>Generated on ${new Date().toLocaleDateString('en-IN')}</div>
+            <div>PropertyConnect - Your Trusted Real Estate Platform</div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Set response headers for HTML preview (PDF would require puppeteer)
+      res.setHeader('Content-Type', 'text/html');
+      res.send(htmlContent);
+      
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
 

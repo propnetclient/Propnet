@@ -166,9 +166,13 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
         </div>
         
         <div className="flex items-center justify-between mb-4">
-          <div className="text-2xl font-bold text-primary">{property.price}</div>
+          <div className="text-2xl font-bold text-primary">
+            {formatPrice(property.price, property.transactionType, property.rentFrequency)}
+          </div>
           <div className="text-right">
-            <div className="text-sm text-neutral-500">{property.size}</div>
+            <div className="text-sm text-neutral-500">
+              {formatArea(property.size, property.sizeUnit || 'sq.ft')}
+            </div>
             {property.bhk && (
               <div className="text-xs text-neutral-400">{property.bhk} BHK</div>
             )}
@@ -230,6 +234,15 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
                 <span>Contact</span>
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPDF}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50 text-sm flex items-center space-x-1"
+            >
+              <Download size={14} />
+              <span>PDF</span>
+            </Button>
             <Button
               variant="ghost"
               size="sm"
