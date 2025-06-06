@@ -2,7 +2,8 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertPropertySchema, insertCoListingRequestSchema, insertPropertyRequirementSchema } from "@shared/schema";
+import { insertUserSchema, insertPropertySchema, insertCoListingRequestSchema, insertPropertyRequirementSchema, insertChatMessageSchema } from "@shared/schema";
+import { WebSocketServer, WebSocket } from "ws";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -881,9 +882,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat API endpoints
+  app.get("/api/chats", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const chats = await storage.getUserChats(userId);
+      res.json(chats);
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+      res.status(500).json({ message: "Failed to fetch chats" });
+    }
+  });
+
+  app.post("/api/chats", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { participantId, propertyId } = req.body;
+      const chat = await storage.getOrCreateChat([userId, participantId], propertyId);
+      res.json(chat);
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      res.status(500).json({ message: "Failed to create chat" });
+    }
+  });
+
+  app.get("/api/chats/:chatId/messages", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const chatId = parseInt(req.params.chatId);
+      const messages = await storage.getChatMessages(chatId, userId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/chats/:chatId/messages", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const chatId = parseInt(req.params.chatId);
+      const messageData = insertChatMessageSchema.parse({
+        ...req.body,
+        chatId,
+        senderId: userId
+      });
+
+      const message = await storage.sendMessage(messageData);
+      
+      // Broadcast to WebSocket clients
+      broadcast(chatId, {
+        type: 'new_message',
+        data: message
+      });
+
+      res.json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Community API endpoints
+  app.get("/api/broker-directory", async (req, res) => {
+    try {
+      const { city, specialty } = req.query;
+      const brokers = await storage.getBrokerDirectory({ 
+        city: city as string, 
+        specialty: specialty as string 
+      });
+      res.json(brokers);
+    } catch (error) {
+      console.error("Error fetching broker directory:", error);
+      res.status(500).json({ message: "Failed to fetch broker directory" });
+    }
+  });
+
+  app.get("/api/connections", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const connections = await storage.getUserConnections(userId);
+      res.json(connections);
+    } catch (error) {
+      console.error("Error fetching connections:", error);
+      res.status(500).json({ message: "Failed to fetch connections" });
+    }
+  });
+
+  app.post("/api/connections", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { receiverId } = req.body;
+      const connection = await storage.createConnectionRequest({
+        requesterId: userId,
+        receiverId
+      });
+      res.json(connection);
+    } catch (error) {
+      console.error("Error creating connection:", error);
+      res.status(500).json({ message: "Failed to create connection" });
+    }
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
 
   const httpServer = createServer(app);
+  
+  // WebSocket server for real-time chat
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  const chatClients = new Map<number, Set<WebSocket>>();
+
+  function broadcast(chatId: number, message: any) {
+    const clients = chatClients.get(chatId);
+    if (clients) {
+      clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(message));
+        }
+      });
+    }
+  }
+
+  wss.on('connection', (ws, req) => {
+    console.log('WebSocket connection established');
+    
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        
+        if (message.type === 'join_chat') {
+          const chatId = message.chatId;
+          if (!chatClients.has(chatId)) {
+            chatClients.set(chatId, new Set());
+          }
+          chatClients.get(chatId)?.add(ws);
+        }
+        
+        if (message.type === 'leave_chat') {
+          const chatId = message.chatId;
+          chatClients.get(chatId)?.delete(ws);
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      // Remove client from all chat rooms
+      chatClients.forEach((clients) => {
+        clients.delete(ws);
+      });
+    });
+  });
+
   return httpServer;
 }
