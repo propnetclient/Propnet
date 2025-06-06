@@ -6,7 +6,6 @@ export default function BottomNavigation() {
 
   const navItems = [
     { icon: Home, label: "Feed", path: "/feed" },
-    { icon: Search, label: "Search", path: "/search" },
     { icon: FileText, label: "Requirements", path: "/requirements" },
     { icon: Building2, label: "Listings", path: "/my-listings" },
     { icon: User, label: "Profile", path: "/profile" },
