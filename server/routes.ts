@@ -193,12 +193,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Clean up empty strings and convert them to undefined for optional fields
+      // Clean up empty strings and convert data types
       Object.keys(propertyData).forEach(key => {
         if (propertyData[key] === '') {
           delete propertyData[key];
         }
       });
+
+      // Convert string values to proper types
+      if (propertyData.bhk) {
+        propertyData.bhk = parseInt(propertyData.bhk);
+      }
+      
+      if (propertyData.isActive) {
+        propertyData.isActive = propertyData.isActive === 'true';
+      }
 
       console.log("Processed property data:", propertyData);
 
