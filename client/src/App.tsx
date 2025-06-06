@@ -14,6 +14,7 @@ import BulkUpload from "@/pages/properties/bulk-upload";
 import PropertyDetail from "@/pages/properties/property-detail";
 import MyListings from "@/pages/properties/my-listings";
 import OwnerConsent from "@/pages/properties/owner-consent";
+import Requirements from "@/pages/requirements/requirements";
 import Profile from "@/pages/profile/profile";
 import EditProfile from "@/pages/profile/edit-profile";
 import ColistingRequests from "@/pages/profile/colisting-requests";
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/property/:id" component={PropertyDetail} />
       <Route path="/my-listings" component={MyListings} />
       <Route path="/consent/:consentId" component={OwnerConsent} />
+      <Route path="/requirements" component={Requirements} />
       <Route path="/profile" component={Profile} />
       <Route path="/edit-profile" component={EditProfile} />
       <Route path="/colisting-requests" component={ColistingRequests} />

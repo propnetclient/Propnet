@@ -238,19 +238,19 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
               variant="outline"
               size="sm"
               onClick={handleDownloadPDF}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50 text-sm flex items-center space-x-1"
+              className="text-blue-600 border-blue-200 hover:bg-blue-50 w-8 h-8 p-0"
+              title="Download PDF"
             >
               <Download size={14} />
-              <span>PDF</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setLocation(`/property/${property.id}`)}
-              className="text-primary font-medium text-sm hover:bg-primary/10"
+              className="text-primary hover:bg-primary/10 w-8 h-8 p-0"
+              title="View Details"
             >
-              <Eye size={14} className="mr-1" />
-              View
+              <Eye size={14} />
             </Button>
           </div>
         </div>

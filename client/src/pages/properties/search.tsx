@@ -34,7 +34,7 @@ export default function PropertySearch() {
   });
 
   // Filter properties based on search and filters
-  const filteredProperties = properties.filter((property: any) => {
+  const filteredProperties = Array.isArray(properties) ? properties.filter((property: any) => {
     const matchesSearch = !searchQuery || 
       property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       property.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -67,7 +67,7 @@ export default function PropertySearch() {
     return matchesSearch && matchesTransactionType && matchesPropertyType && 
            matchesBHK && matchesLocation && matchesPriceRange && matchesListingType &&
            matchesMinSize && matchesMaxSize;
-  });
+  }) : [];
 
   const clearFilters = () => {
     setSelectedFilters({
@@ -125,155 +125,151 @@ export default function PropertySearch() {
         />
       </div>
 
-      {/* Quick Filters */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <Select value={selectedFilters.transactionType} onValueChange={(value) => 
-          setSelectedFilters(prev => ({ ...prev, transactionType: value }))}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Buy/Rent" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="sale">For Sale</SelectItem>
-            <SelectItem value="rent">For Rent</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={selectedFilters.propertyType} onValueChange={(value) => 
-          setSelectedFilters(prev => ({ ...prev, propertyType: value }))}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Property Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Apartment">Apartment</SelectItem>
-            <SelectItem value="Villa">Villa</SelectItem>
-            <SelectItem value="House">House</SelectItem>
-            <SelectItem value="Office">Office</SelectItem>
-            <SelectItem value="Shop">Shop</SelectItem>
-            <SelectItem value="Plot">Plot</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={selectedFilters.bhk} onValueChange={(value) => 
-          setSelectedFilters(prev => ({ ...prev, bhk: value }))}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="BHK" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">1 BHK</SelectItem>
-            <SelectItem value="2">2 BHK</SelectItem>
-            <SelectItem value="3">3 BHK</SelectItem>
-            <SelectItem value="4">4 BHK</SelectItem>
-            <SelectItem value="5">5+ BHK</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button
-          variant="outline"
-          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          className="flex items-center gap-2"
-        >
-          <Filter size={16} />
-          Advanced Filters
-          {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-1">{activeFiltersCount}</Badge>
-          )}
-        </Button>
-
-        {activeFiltersCount > 0 && (
-          <Button variant="ghost" onClick={clearFilters} className="flex items-center gap-2">
-            <X size={16} />
-            Clear All
-          </Button>
-        )}
-      </div>
-
-      {/* Advanced Filters */}
-      {showAdvancedFilters && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Advanced Search Filters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Price Range */}
+      {/* Unified Filters */}
+      <Card className="mb-6">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Search Filters</CardTitle>
+            {activeFiltersCount > 0 && (
+              <Button variant="ghost" onClick={clearFilters} size="sm" className="flex items-center gap-2">
+                <X size={16} />
+                Clear All ({activeFiltersCount})
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Basic Filters Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Price Range: {formatPrice(priceRange[0].toString(), selectedFilters.transactionType || 'sale')} - {formatPrice(priceRange[1].toString(), selectedFilters.transactionType || 'sale')}
-              </label>
-              <Slider
-                value={priceRange}
-                onValueChange={setPriceRange}
-                max={10000000}
-                min={0}
-                step={50000}
-                className="w-full"
+              <label className="block text-sm font-medium mb-1">Transaction Type</label>
+              <Select value={selectedFilters.transactionType} onValueChange={(value) => 
+                setSelectedFilters(prev => ({ ...prev, transactionType: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Buy/Rent" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sale">For Sale</SelectItem>
+                  <SelectItem value="rent">For Rent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Property Type</label>
+              <Select value={selectedFilters.propertyType} onValueChange={(value) => 
+                setSelectedFilters(prev => ({ ...prev, propertyType: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Apartment">Apartment</SelectItem>
+                  <SelectItem value="Villa">Villa</SelectItem>
+                  <SelectItem value="House">House</SelectItem>
+                  <SelectItem value="Office">Office</SelectItem>
+                  <SelectItem value="Shop">Shop</SelectItem>
+                  <SelectItem value="Plot">Plot</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">BHK</label>
+              <Select value={selectedFilters.bhk} onValueChange={(value) => 
+                setSelectedFilters(prev => ({ ...prev, bhk: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Any BHK" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 BHK</SelectItem>
+                  <SelectItem value="2">2 BHK</SelectItem>
+                  <SelectItem value="3">3 BHK</SelectItem>
+                  <SelectItem value="4">4 BHK</SelectItem>
+                  <SelectItem value="5">5+ BHK</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Listing Type</label>
+              <Select value={selectedFilters.listingType} onValueChange={(value) => 
+                setSelectedFilters(prev => ({ ...prev, listingType: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="exclusive">Exclusive</SelectItem>
+                  <SelectItem value="colisting">Co-Listing</SelectItem>
+                  <SelectItem value="shared">Shared</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Price Range */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Price Range: {formatPrice(priceRange[0].toString(), selectedFilters.transactionType || 'sale')} - {formatPrice(priceRange[1].toString(), selectedFilters.transactionType || 'sale')}
+            </label>
+            <Slider
+              value={priceRange}
+              onValueChange={setPriceRange}
+              max={10000000}
+              min={0}
+              step={50000}
+              className="w-full"
+            />
+          </div>
+
+          {/* Additional Filters Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Location</label>
+              <Input
+                placeholder="Enter location"
+                value={selectedFilters.location}
+                onChange={(e) => setSelectedFilters(prev => ({ ...prev, location: e.target.value }))}
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Location</label>
-                <Input
-                  placeholder="Enter location"
-                  value={selectedFilters.location}
-                  onChange={(e) => setSelectedFilters(prev => ({ ...prev, location: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Listing Type</label>
-                <Select value={selectedFilters.listingType} onValueChange={(value) => 
-                  setSelectedFilters(prev => ({ ...prev, listingType: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="exclusive">Exclusive</SelectItem>
-                    <SelectItem value="colisting">Co-Listing</SelectItem>
-                    <SelectItem value="shared">Shared</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Area Unit</label>
-                <Select value={selectedFilters.sizeUnit} onValueChange={(value) => 
-                  setSelectedFilters(prev => ({ ...prev, sizeUnit: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Units" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sq.ft">Square Feet</SelectItem>
-                    <SelectItem value="sq.m">Square Meters</SelectItem>
-                    <SelectItem value="sq.yd">Square Yards</SelectItem>
-                    <SelectItem value="acre">Acres</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Area Unit</label>
+              <Select value={selectedFilters.sizeUnit} onValueChange={(value) => 
+                setSelectedFilters(prev => ({ ...prev, sizeUnit: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Units" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sq.ft">Square Feet</SelectItem>
+                  <SelectItem value="sq.m">Square Meters</SelectItem>
+                  <SelectItem value="sq.yd">Square Yards</SelectItem>
+                  <SelectItem value="acre">Acres</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Min Area Size</label>
-                <Input
-                  type="number"
-                  placeholder="Min size"
-                  value={selectedFilters.minSize}
-                  onChange={(e) => setSelectedFilters(prev => ({ ...prev, minSize: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Max Area Size</label>
-                <Input
-                  type="number"
-                  placeholder="Max size"
-                  value={selectedFilters.maxSize}
-                  onChange={(e) => setSelectedFilters(prev => ({ ...prev, maxSize: e.target.value }))}
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Min Area Size</label>
+              <Input
+                type="number"
+                placeholder="Min size"
+                value={selectedFilters.minSize}
+                onChange={(e) => setSelectedFilters(prev => ({ ...prev, minSize: e.target.value }))}
+              />
             </div>
-          </CardContent>
-        </Card>
-      )}
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Max Area Size</label>
+              <Input
+                type="number"
+                placeholder="Max size"
+                value={selectedFilters.maxSize}
+                onChange={(e) => setSelectedFilters(prev => ({ ...prev, maxSize: e.target.value }))}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Results */}
       <div className="flex items-center justify-between mb-4">
