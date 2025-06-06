@@ -7,7 +7,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import puppeteer from "puppeteer";
+import PDFDocument from "pdfkit";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -587,237 +587,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
-      // Generate HTML content for PDF
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-              line-height: 1.6; 
-              color: #333; 
-              background: white;
-            }
-            .container { max-width: 800px; margin: 0 auto; padding: 40px; }
-            .header { 
-              text-align: center; 
-              border-bottom: 3px solid #3B82F6; 
-              padding-bottom: 30px; 
-              margin-bottom: 40px; 
-            }
-            .logo { 
-              font-size: 32px; 
-              font-weight: bold; 
-              color: #3B82F6; 
-              margin-bottom: 10px;
-            }
-            .subtitle { color: #666; font-size: 16px; }
-            .title { 
-              font-size: 32px; 
-              font-weight: bold; 
-              margin: 30px 0; 
-              color: #1a1a1a;
-            }
-            .property-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 30px;
-              margin: 30px 0;
-            }
-            .section { 
-              margin: 20px 0;
-              padding: 15px;
-              border-left: 4px solid #3B82F6;
-              background: #f8f9fa;
-            }
-            .label { 
-              font-weight: 600; 
-              color: #374151; 
-              display: inline-block;
-              min-width: 120px;
-            }
-            .value { 
-              color: #1a1a1a;
-              font-weight: 500;
-            }
-            .price { 
-              font-size: 28px; 
-              font-weight: bold; 
-              color: #3B82F6; 
-              margin: 10px 0;
-            }
-            .description { 
-              line-height: 1.8; 
-              margin: 20px 0; 
-              padding: 20px;
-              background: #f1f5f9;
-              border-radius: 8px;
-              font-style: italic;
-            }
-            .agent-info { 
-              background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
-              color: white;
-              padding: 30px; 
-              border-radius: 12px; 
-              margin: 40px 0; 
-            }
-            .agent-info h3 {
-              font-size: 20px;
-              margin-bottom: 15px;
-              border-bottom: 2px solid rgba(255,255,255,0.3);
-              padding-bottom: 10px;
-            }
-            .agent-info .agent-detail {
-              margin: 8px 0;
-              font-size: 16px;
-            }
-            .agent-info .agent-label {
-              font-weight: 600;
-              opacity: 0.9;
-            }
-            .footer { 
-              text-align: center; 
-              margin-top: 50px; 
-              padding-top: 30px; 
-              border-top: 2px solid #E5E7EB; 
-              color: #666;
-              font-size: 14px;
-            }
-            .property-details {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-              gap: 20px;
-              margin: 30px 0;
-            }
-            .detail-card {
-              background: white;
-              border: 2px solid #e2e8f0;
-              border-radius: 8px;
-              padding: 20px;
-              text-align: center;
-            }
-            .detail-card .detail-value {
-              font-size: 20px;
-              font-weight: bold;
-              color: #3B82F6;
-              margin-bottom: 5px;
-            }
-            .detail-card .detail-label {
-              color: #666;
-              font-size: 14px;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <div class="logo">PropertyConnect</div>
-              <div class="subtitle">Professional Property Listing</div>
-            </div>
-            
-            <div class="title">${property.title}</div>
-            
-            <div class="property-details">
-              <div class="detail-card">
-                <div class="detail-value">${formatPrice(property.price)}</div>
-                <div class="detail-label">Price${property.transactionType === 'rent' ? `/${property.rentFrequency || 'month'}` : ''}</div>
-              </div>
-              <div class="detail-card">
-                <div class="detail-value">${property.size} ${property.sizeUnit || 'sq.ft'}</div>
-                <div class="detail-label">Area</div>
-              </div>
-              <div class="detail-card">
-                <div class="detail-value">${property.propertyType}</div>
-                <div class="detail-label">Type</div>
-              </div>
-              ${property.bhk ? `<div class="detail-card">
-                <div class="detail-value">${property.bhk} BHK</div>
-                <div class="detail-label">Configuration</div>
-              </div>` : ''}
-            </div>
-            
-            <div class="section">
-              <span class="label">📍 Location:</span>
-              <span class="value">${property.location}</span>
-            </div>
-            
-            <div class="section">
-              <span class="label">🏷️ Listing Type:</span>
-              <span class="value">${property.transactionType === 'sale' ? 'For Sale' : 'For Rent'}</span>
-            </div>
-            
-            ${property.description ? `<div class="description">
-              <strong>Property Description:</strong><br>
-              ${property.description}
-            </div>` : ''}
-            
-            <div class="agent-info">
-              <h3>🏢 Listed By</h3>
-              <div class="agent-detail">
-                <span class="agent-label">Agent:</span> ${property.owner.name}
-              </div>
-              ${property.owner.agencyName ? `<div class="agent-detail">
-                <span class="agent-label">Agency:</span> ${property.owner.agencyName}
-              </div>` : ''}
-              <div class="agent-detail">
-                <span class="agent-label">Phone:</span> ${property.owner.phone}
-              </div>
-              ${property.owner.email ? `<div class="agent-detail">
-                <span class="agent-label">Email:</span> ${property.owner.email}
-              </div>` : ''}
-            </div>
-            
-            <div class="footer">
-              <div style="font-weight: bold; margin-bottom: 10px;">
-                Generated on ${new Date().toLocaleDateString('en-IN', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </div>
-              <div>PropertyConnect - Your Trusted Real Estate Platform</div>
-              <div style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
-                This document was generated automatically from our property database
-              </div>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      // Launch Puppeteer and generate PDF
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
+      // Create PDF document
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
       
-      const page = await browser.newPage();
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-      
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '20px',
-          right: '20px',
-          bottom: '20px',
-          left: '20px'
-        }
-      });
-      
-      await browser.close();
-
-      // Set response headers for PDF download
+      // Set response headers
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${property.title.replace(/[^a-zA-Z0-9]/g, '_')}_listing.pdf"`);
-      res.setHeader('Content-Length', pdfBuffer.length);
+      res.setHeader('Content-Disposition', `attachment; filename="${property.title.replace(/[^a-zA-Z0-9\s]/g, '')}_listing.pdf"`);
       
-      res.send(pdfBuffer);
+      // Pipe PDF to response
+      doc.pipe(res);
+
+      // Header with branding
+      doc.fontSize(24)
+         .fillColor('#3B82F6')
+         .text('PropertyConnect', 50, 50, { align: 'center' });
+      
+      doc.fontSize(12)
+         .fillColor('#666666')
+         .text('Professional Property Listing', 50, 80, { align: 'center' });
+
+      // Draw header line
+      doc.moveTo(50, 100)
+         .lineTo(545, 100)
+         .strokeColor('#3B82F6')
+         .lineWidth(2)
+         .stroke();
+
+      // Property title
+      doc.fontSize(20)
+         .fillColor('#1a1a1a')
+         .text(property.title, 50, 130, { align: 'left' });
+
+      let yPosition = 180;
+
+      // Property details in a grid
+      const details = [
+        { label: 'Price', value: `${formatPrice(property.price)}${property.transactionType === 'rent' ? `/${property.rentFrequency || 'month'}` : ''}` },
+        { label: 'Area', value: `${property.size} ${property.sizeUnit || 'sq.ft'}` },
+        { label: 'Type', value: property.propertyType },
+        { label: 'Transaction', value: property.transactionType === 'sale' ? 'For Sale' : 'For Rent' }
+      ];
+
+      if (property.bhk) {
+        details.push({ label: 'Configuration', value: `${property.bhk} BHK` });
+      }
+
+      // Draw property details boxes
+      const boxWidth = 120;
+      const boxHeight = 60;
+      let xStart = 50;
+      let detailsPerRow = 4;
+      
+      details.forEach((detail, index) => {
+        const row = Math.floor(index / detailsPerRow);
+        const col = index % detailsPerRow;
+        const x = xStart + (col * (boxWidth + 15));
+        const y = yPosition + (row * (boxHeight + 15));
+
+        // Draw box
+        doc.rect(x, y, boxWidth, boxHeight)
+           .strokeColor('#e2e8f0')
+           .lineWidth(1)
+           .stroke();
+
+        // Value
+        doc.fontSize(14)
+           .fillColor('#3B82F6')
+           .text(detail.value, x + 5, y + 10, { 
+             width: boxWidth - 10, 
+             align: 'center',
+             height: 25
+           });
+
+        // Label
+        doc.fontSize(10)
+           .fillColor('#666666')
+           .text(detail.label.toUpperCase(), x + 5, y + 40, { 
+             width: boxWidth - 10, 
+             align: 'center' 
+           });
+      });
+
+      yPosition += Math.ceil(details.length / detailsPerRow) * (boxHeight + 15) + 30;
+
+      // Location section
+      doc.rect(50, yPosition, 495, 40)
+         .fillColor('#f8f9fa')
+         .fill();
+      
+      doc.rect(46, yPosition, 4, 40)
+         .fillColor('#3B82F6')
+         .fill();
+
+      doc.fontSize(12)
+         .fillColor('#374151')
+         .text('📍 Location:', 60, yPosition + 10);
+      
+      doc.fillColor('#1a1a1a')
+         .text(property.location, 140, yPosition + 10);
+
+      yPosition += 60;
+
+      // Description section if available
+      if (property.description) {
+        doc.fontSize(14)
+           .fillColor('#1a1a1a')
+           .text('Property Description:', 50, yPosition);
+        
+        yPosition += 25;
+        
+        doc.rect(50, yPosition, 495, 2)
+           .fillColor('#3B82F6')
+           .fill();
+        
+        yPosition += 15;
+
+        doc.fontSize(11)
+           .fillColor('#333333')
+           .text(property.description, 50, yPosition, { 
+             width: 495, 
+             align: 'justify',
+             lineGap: 3
+           });
+
+        yPosition += doc.heightOfString(property.description, { width: 495 }) + 30;
+      }
+
+      // Agent information section
+      const agentBoxY = yPosition;
+      const agentBoxHeight = 120;
+
+      // Agent info background
+      doc.rect(50, agentBoxY, 495, agentBoxHeight)
+         .fillColor('#3B82F6')
+         .fill();
+
+      doc.fontSize(16)
+         .fillColor('white')
+         .text('🏢 Listed By', 70, agentBoxY + 20);
+
+      // Agent details
+      const agentDetails = [
+        `Agent: ${property.owner.name}`,
+        property.owner.agencyName ? `Agency: ${property.owner.agencyName}` : null,
+        `Phone: ${property.owner.phone}`,
+        property.owner.email ? `Email: ${property.owner.email}` : null
+      ].filter(Boolean);
+
+      doc.fontSize(12);
+      agentDetails.forEach((detail, index) => {
+        doc.text(detail!, 70, agentBoxY + 50 + (index * 18));
+      });
+
+      yPosition += agentBoxHeight + 40;
+
+      // Footer
+      doc.moveTo(50, yPosition)
+         .lineTo(545, yPosition)
+         .strokeColor('#E5E7EB')
+         .lineWidth(1)
+         .stroke();
+
+      yPosition += 20;
+
+      doc.fontSize(12)
+         .fillColor('#333333')
+         .text(`Generated on ${new Date().toLocaleDateString('en-IN', { 
+           year: 'numeric', 
+           month: 'long', 
+           day: 'numeric' 
+         })}`, 50, yPosition, { align: 'center' });
+
+      doc.fontSize(14)
+         .fillColor('#3B82F6')
+         .text('PropertyConnect - Your Trusted Real Estate Platform', 50, yPosition + 20, { align: 'center' });
+
+      doc.fontSize(10)
+         .fillColor('#666666')
+         .text('This document was generated automatically from our property database', 50, yPosition + 40, { align: 'center' });
+
+      // Finalize the PDF
+      doc.end();
       
     } catch (error) {
       console.error("PDF generation error:", error);
