@@ -16,6 +16,7 @@ export interface IStorage {
   getUserProperties(userId: number): Promise<Property[]>;
   createProperty(property: InsertProperty & { ownerId: number }): Promise<Property>;
   updateProperty(id: number, updates: Partial<InsertProperty>): Promise<Property>;
+  deleteProperty(id: number): Promise<void>;
 
   // Co-listing methods
   getCoListingRequests(ownerId: number): Promise<(CoListingRequest & { requester: User; property: Property })[]>;
@@ -175,6 +176,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.id, id))
       .returning();
     return property;
+  }
+
+  async deleteProperty(id: number): Promise<void> {
+    await db.delete(properties).where(eq(properties.id, id));
   }
 
   async getCoListingRequests(ownerId: number): Promise<(CoListingRequest & { requester: User; property: Property })[]> {

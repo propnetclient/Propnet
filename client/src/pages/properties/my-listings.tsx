@@ -209,7 +209,78 @@ export default function MyListings() {
       formData.append('agreementDocument', agreementFiles[0]);
     }
 
-    createPropertyMutation.mutate(formData);
+    if (editingProperty) {
+      updatePropertyMutation.mutate({ id: editingProperty.id, data: formData });
+    } else {
+      createPropertyMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (property: any) => {
+    setEditingProperty(property);
+    
+    // Populate form with existing data
+    form.reset({
+      title: property.title || "",
+      propertyType: property.propertyType || "",
+      transactionType: property.transactionType || "sale",
+      price: property.price || "",
+      rentFrequency: property.rentFrequency || "monthly",
+      size: property.size || "",
+      sizeUnit: property.sizeUnit || "sq.ft",
+      location: property.location || "",
+      fullAddress: property.fullAddress || "",
+      flatNumber: property.flatNumber || "",
+      floorNumber: property.floorNumber || "",
+      buildingSociety: property.buildingSociety || "",
+      description: property.description || "",
+      bhk: property.bhk || 0,
+      listingType: property.listingType || "exclusive",
+      isPubliclyVisible: property.isPubliclyVisible || false,
+      ownerName: property.ownerName || "",
+      ownerPhone: property.ownerPhone || "",
+      commissionTerms: property.commissionTerms || "",
+      scopeOfWork: property.scopeOfWork || [],
+    });
+    
+    setSelectedFiles([]);
+    setAgreementFiles([]);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    deletePropertyMutation.mutate(id);
+  };
+
+  const handlePdfDownload = async (propertyId: number, propertyTitle: string) => {
+    try {
+      const response = await fetch(`/api/properties/${propertyId}/pdf`);
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${propertyTitle.replace(/[^a-zA-Z0-9]/g, '_')}_listing.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: "Property listing PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleOwnerPhone = (propertyId: number) => {
@@ -739,6 +810,167 @@ export default function MyListings() {
               </Form>
             </DialogContent>
           </Dialog>
+          
+          {/* Edit Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Property Listing</DialogTitle>
+                <p className="text-sm text-neutral-600">
+                  <Shield size={14} className="inline mr-1" />
+                  Update your property information. Changes will be saved immediately.
+                </p>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                  {/* Same form content as create dialog but with pre-filled values */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Property Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Property Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Beautiful 2 BHK Apartment..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="propertyType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Property Type</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Apartment">Apartment</SelectItem>
+                                  <SelectItem value="Villa">Villa</SelectItem>
+                                  <SelectItem value="Commercial">Commercial</SelectItem>
+                                  <SelectItem value="Plot">Plot</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="transactionType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Transaction Type</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select transaction" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="sale">Sale</SelectItem>
+                                  <SelectItem value="rent">Rent</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="price"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {form.watch("transactionType") === "rent" ? "Monthly Rent" : "Sale Price"}
+                              </FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder={form.watch("transactionType") === "rent" ? "₹25,000/month" : "₹50 Lakhs"} 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="location"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Location</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Bandra West, Mumbai" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description (Optional)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Describe the property features, amenities, etc." 
+                                rows={3}
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <div className="flex space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsEditDialogOpen(false);
+                        setEditingProperty(null);
+                        form.reset();
+                      }}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={updatePropertyMutation.isPending}
+                      className="flex-1"
+                    >
+                      {updatePropertyMutation.isPending ? "Updating..." : "Update Listing"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -782,6 +1014,53 @@ export default function MyListings() {
                         {property.listingType}
                       </Badge>
                     </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(property)}>
+                          <Edit size={14} className="mr-2" />
+                          Edit Property
+                        </DropdownMenuItem>
+                        {property.ownerApprovalStatus === 'approved' && (
+                          <DropdownMenuItem onClick={() => handlePdfDownload(property.id, property.title)}>
+                            <Download size={14} className="mr-2" />
+                            Download PDF
+                          </DropdownMenuItem>
+                        )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <Trash2 size={14} className="mr-2" />
+                              Delete Property
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Property Listing</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this property listing? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDelete(property.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {deletePropertyMutation.isPending ? "Deleting..." : "Delete"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
 
@@ -831,13 +1110,6 @@ export default function MyListings() {
                       </span>
                     )}
                   </div>
-                  
-                  {property.ownerApprovalStatus === 'approved' && (
-                    <Button size="sm" variant="outline" className="h-6 text-xs">
-                      <Download size={12} className="mr-1" />
-                      Generate PDF
-                    </Button>
-                  )}
                 </div>
 
                 {property.ownerApprovalStatus === 'pending' && (

@@ -300,6 +300,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update property route
+  app.put("/api/properties/:id", upload.fields([
+    { name: 'photos', maxCount: 10 },
+    { name: 'agreementDocument', maxCount: 1 }
+  ]), async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      
+      // Check if property exists and belongs to user
+      const existingProperty = await storage.getProperty(propertyId);
+      if (!existingProperty || existingProperty.ownerId !== userId) {
+        return res.status(404).json({ message: "Property not found or access denied" });
+      }
+
+      let propertyData = { ...req.body };
+
+      // Parse scopeOfWork if it exists
+      if (propertyData.scopeOfWork && typeof propertyData.scopeOfWork === 'string') {
+        try {
+          propertyData.scopeOfWork = JSON.parse(propertyData.scopeOfWork);
+        } catch (e) {
+          propertyData.scopeOfWork = [];
+        }
+      }
+
+      // Remove empty fields
+      Object.keys(propertyData).forEach(key => {
+        if (propertyData[key] === '' || propertyData[key] === null || propertyData[key] === undefined) {
+          delete propertyData[key];
+        }
+      });
+
+      // Convert string values to proper types
+      if (propertyData.bhk) {
+        propertyData.bhk = parseInt(propertyData.bhk);
+      }
+      
+      if (propertyData.isActive) {
+        propertyData.isActive = propertyData.isActive === 'true';
+      }
+
+      // Handle new file uploads if any
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      if (files && files.photos) {
+        const newPhotos: string[] = [];
+        for (const file of files.photos) {
+          newPhotos.push(file.filename);
+        }
+        propertyData.photos = [...(existingProperty.photos || []), ...newPhotos];
+      }
+
+      if (files && files.agreementDocument && files.agreementDocument[0]) {
+        propertyData.agreementDocument = files.agreementDocument[0].filename;
+      }
+
+      const updatedProperty = await storage.updateProperty(propertyId, propertyData);
+      
+      res.json({ 
+        success: true, 
+        property: updatedProperty,
+        message: "Property updated successfully"
+      });
+    } catch (error) {
+      console.error("Property update error:", error);
+      res.status(400).json({ message: "Failed to update property" });
+    }
+  });
+
+  // Delete property route
+  app.delete("/api/properties/:id", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const propertyId = parseInt(req.params.id);
+      
+      // Check if property exists and belongs to user
+      const existingProperty = await storage.getProperty(propertyId);
+      if (!existingProperty || existingProperty.ownerId !== userId) {
+        return res.status(404).json({ message: "Property not found or access denied" });
+      }
+
+      // Delete property files if they exist
+      if (existingProperty.photos) {
+        existingProperty.photos.forEach((photo: string) => {
+          const photoPath = path.join('uploads', photo);
+          if (fs.existsSync(photoPath)) {
+            fs.unlinkSync(photoPath);
+          }
+        });
+      }
+
+      if (existingProperty.agreementDocument) {
+        const docPath = path.join('uploads', existingProperty.agreementDocument);
+        if (fs.existsSync(docPath)) {
+          fs.unlinkSync(docPath);
+        }
+      }
+
+      await storage.deleteProperty(propertyId);
+      
+      res.json({ 
+        success: true,
+        message: "Property deleted successfully"
+      });
+    } catch (error) {
+      console.error("Property deletion error:", error);
+      res.status(400).json({ message: "Failed to delete property" });
+    }
+  });
+
   // Co-listing routes
   app.get("/api/colisting-requests", async (req, res) => {
     try {
