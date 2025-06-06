@@ -588,7 +588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Create PDF document
-      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const doc = new PDFDocument({ margin: 0, size: 'A4' });
       
       // Set response headers
       res.setHeader('Content-Type', 'application/pdf');
@@ -597,174 +597,280 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Pipe PDF to response
       doc.pipe(res);
 
-      // Header with branding
-      doc.fontSize(24)
-         .fillColor('#3B82F6')
-         .text('PropertyConnect', 50, 50, { align: 'center' });
+      // Header background with gradient effect
+      doc.rect(0, 0, 595, 120)
+         .fillColor('#1E40AF')
+         .fill();
       
-      doc.fontSize(12)
-         .fillColor('#666666')
-         .text('Professional Property Listing', 50, 80, { align: 'center' });
+      doc.rect(0, 90, 595, 30)
+         .fillColor('#3B82F6')
+         .fill();
 
-      // Draw header line
-      doc.moveTo(50, 100)
-         .lineTo(545, 100)
-         .strokeColor('#3B82F6')
-         .lineWidth(2)
+      // Agent/Broker branding section
+      doc.fontSize(28)
+         .fillColor('white')
+         .text(property.owner.agencyName || property.owner.name || 'Real Estate Professional', 50, 30, { align: 'left' });
+      
+      doc.fontSize(14)
+         .fillColor('#E0E7FF')
+         .text(`${property.owner.agencyName ? 'Real Estate Agency' : 'Licensed Real Estate Professional'}`, 50, 65);
+
+      // PropertyConnect attribution (smaller, right side)
+      doc.fontSize(12)
+         .fillColor('#93C5FD')
+         .text('Powered by PropertyConnect', 400, 40);
+      
+      // Contact info in header
+      doc.fontSize(11)
+         .fillColor('white')
+         .text(`📞 ${property.owner.phone}`, 400, 60);
+      
+      if (property.owner.email) {
+        doc.text(`✉️ ${property.owner.email}`, 400, 75);
+      }
+
+      // Decorative line
+      doc.moveTo(50, 120)
+         .lineTo(545, 120)
+         .strokeColor('#60A5FA')
+         .lineWidth(3)
          .stroke();
 
-      // Property title
-      doc.fontSize(20)
-         .fillColor('#1a1a1a')
-         .text(property.title, 50, 130, { align: 'left' });
+      // Property title with elegant styling
+      doc.rect(50, 140, 495, 50)
+         .fillColor('#F8FAFC')
+         .fill();
+      
+      doc.rect(50, 140, 495, 4)
+         .fillColor('#3B82F6')
+         .fill();
 
-      let yPosition = 180;
+      doc.fontSize(24)
+         .fillColor('#1E293B')
+         .text(property.title, 60, 155, { align: 'left' });
 
-      // Property details in a grid
+      let yPosition = 210;
+
+      // Featured price section
+      doc.rect(50, yPosition, 495, 80)
+         .fillColor('#EFF6FF')
+         .fill();
+      
+      doc.rect(45, yPosition, 5, 80)
+         .fillColor('#3B82F6')
+         .fill();
+
+      doc.fontSize(32)
+         .fillColor('#1E40AF')
+         .text(formatPrice(property.price), 70, yPosition + 15);
+      
+      if (property.transactionType === 'rent') {
+        doc.fontSize(16)
+           .fillColor('#64748B')
+           .text(`per ${property.rentFrequency || 'month'}`, 70, yPosition + 50);
+      }
+
+      // Transaction type badge
+      const badgeText = property.transactionType === 'sale' ? 'FOR SALE' : 'FOR RENT';
+      const badgeColor = property.transactionType === 'sale' ? '#059669' : '#DC2626';
+      
+      doc.rect(400, yPosition + 20, 100, 30)
+         .fillColor(badgeColor)
+         .fill();
+      
+      doc.fontSize(12)
+         .fillColor('white')
+         .text(badgeText, 400, yPosition + 30, { width: 100, align: 'center' });
+
+      yPosition += 100;
+
+      // Property details with modern cards
       const details = [
-        { label: 'Price', value: `${formatPrice(property.price)}${property.transactionType === 'rent' ? `/${property.rentFrequency || 'month'}` : ''}` },
-        { label: 'Area', value: `${property.size} ${property.sizeUnit || 'sq.ft'}` },
-        { label: 'Type', value: property.propertyType },
-        { label: 'Transaction', value: property.transactionType === 'sale' ? 'For Sale' : 'For Rent' }
+        { label: 'Area', value: `${property.size} ${property.sizeUnit || 'sq.ft'}`, icon: '📐' },
+        { label: 'Type', value: property.propertyType, icon: '🏠' },
+        { label: 'Location', value: property.location, icon: '📍' }
       ];
 
       if (property.bhk) {
-        details.push({ label: 'Configuration', value: `${property.bhk} BHK` });
+        details.splice(1, 0, { label: 'Configuration', value: `${property.bhk} BHK`, icon: '🏨' });
       }
 
-      // Draw property details boxes
-      const boxWidth = 120;
-      const boxHeight = 60;
-      let xStart = 50;
-      let detailsPerRow = 4;
+      const cardWidth = 120;
+      const cardHeight = 90;
+      const cardSpacing = 15;
+      const totalCardsWidth = (details.length * cardWidth) + ((details.length - 1) * cardSpacing);
+      const startX = (595 - totalCardsWidth) / 2;
       
       details.forEach((detail, index) => {
-        const row = Math.floor(index / detailsPerRow);
-        const col = index % detailsPerRow;
-        const x = xStart + (col * (boxWidth + 15));
-        const y = yPosition + (row * (boxHeight + 15));
+        const x = startX + (index * (cardWidth + cardSpacing));
+        const y = yPosition;
 
-        // Draw box
-        doc.rect(x, y, boxWidth, boxHeight)
-           .strokeColor('#e2e8f0')
+        // Card shadow effect
+        doc.rect(x + 3, y + 3, cardWidth, cardHeight)
+           .fillColor('#E2E8F0')
+           .fill();
+
+        // Main card
+        doc.rect(x, y, cardWidth, cardHeight)
+           .fillColor('white')
+           .strokeColor('#CBD5E1')
            .lineWidth(1)
-           .stroke();
+           .fillAndStroke();
+
+        // Icon background
+        doc.circle(x + cardWidth/2, y + 25, 18)
+           .fillColor('#EFF6FF')
+           .fill();
+
+        // Icon
+        doc.fontSize(20)
+           .fillColor('#3B82F6')
+           .text(detail.icon, x + cardWidth/2 - 10, y + 15);
 
         // Value
-        doc.fontSize(14)
-           .fillColor('#3B82F6')
-           .text(detail.value, x + 5, y + 10, { 
-             width: boxWidth - 10, 
+        doc.fontSize(12)
+           .fillColor('#1E293B')
+           .text(detail.value, x + 5, y + 50, { 
+             width: cardWidth - 10, 
              align: 'center',
-             height: 25
+             height: 20
            });
 
         // Label
-        doc.fontSize(10)
-           .fillColor('#666666')
-           .text(detail.label.toUpperCase(), x + 5, y + 40, { 
-             width: boxWidth - 10, 
+        doc.fontSize(9)
+           .fillColor('#64748B')
+           .text(detail.label.toUpperCase(), x + 5, y + 75, { 
+             width: cardWidth - 10, 
              align: 'center' 
            });
       });
 
-      yPosition += Math.ceil(details.length / detailsPerRow) * (boxHeight + 15) + 30;
-
-      // Location section
-      doc.rect(50, yPosition, 495, 40)
-         .fillColor('#f8f9fa')
-         .fill();
-      
-      doc.rect(46, yPosition, 4, 40)
-         .fillColor('#3B82F6')
-         .fill();
-
-      doc.fontSize(12)
-         .fillColor('#374151')
-         .text('📍 Location:', 60, yPosition + 10);
-      
-      doc.fillColor('#1a1a1a')
-         .text(property.location, 140, yPosition + 10);
-
-      yPosition += 60;
+      yPosition += cardHeight + 40;
 
       // Description section if available
       if (property.description) {
-        doc.fontSize(14)
-           .fillColor('#1a1a1a')
-           .text('Property Description:', 50, yPosition);
+        // Description header
+        doc.rect(50, yPosition, 495, 40)
+           .fillColor('#F1F5F9')
+           .fill();
         
-        yPosition += 25;
+        doc.rect(50, yPosition, 495, 4)
+           .fillColor('#3B82F6')
+           .fill();
+
+        doc.fontSize(16)
+           .fillColor('#1E293B')
+           .text('Property Description', 60, yPosition + 15);
+
+        yPosition += 55;
+
+        // Description content with elegant styling
+        doc.rect(50, yPosition, 495, 5)
+           .fillColor('#E2E8F0')
+           .fill();
         
-        doc.rect(50, yPosition, 495, 2)
+        yPosition += 20;
+
+        doc.fontSize(12)
+           .fillColor('#475569')
+           .text(property.description, 60, yPosition, { 
+             width: 475, 
+             align: 'justify',
+             lineGap: 5
+           });
+
+        yPosition += doc.heightOfString(property.description, { width: 475, lineGap: 5 }) + 40;
+      }
+
+      // Contact & Agency Information (Enhanced)
+      const contactBoxY = yPosition;
+      const contactBoxHeight = 140;
+
+      // Professional contact section with gradient
+      doc.rect(50, contactBoxY, 495, contactBoxHeight)
+         .fillColor('#1E293B')
+         .fill();
+      
+      doc.rect(50, contactBoxY, 495, 50)
+         .fillColor('#334155')
+         .fill();
+
+      // Agency/Agent name prominently displayed
+      doc.fontSize(20)
+         .fillColor('white')
+         .text(property.owner.agencyName || property.owner.name || 'Real Estate Professional', 70, contactBoxY + 15);
+
+      doc.fontSize(12)
+         .fillColor('#94A3B8')
+         .text('Your Real Estate Partner', 70, contactBoxY + 40);
+
+      // Contact details in organized layout
+      const contactY = contactBoxY + 70;
+      
+      // Phone
+      doc.circle(70, contactY + 10, 8)
+         .fillColor('#3B82F6')
+         .fill();
+      
+      doc.fontSize(10)
+         .fillColor('white')
+         .text('📞', 66, contactY + 6);
+      
+      doc.fontSize(14)
+         .fillColor('white')
+         .text(property.owner.phone, 90, contactY + 5);
+
+      // Email (if available)
+      if (property.owner.email) {
+        doc.circle(70, contactY + 35, 8)
            .fillColor('#3B82F6')
            .fill();
         
-        yPosition += 15;
-
-        doc.fontSize(11)
-           .fillColor('#333333')
-           .text(property.description, 50, yPosition, { 
-             width: 495, 
-             align: 'justify',
-             lineGap: 3
-           });
-
-        yPosition += doc.heightOfString(property.description, { width: 495 }) + 30;
+        doc.fontSize(10)
+           .fillColor('white')
+           .text('✉️', 66, contactY + 31);
+        
+        doc.fontSize(12)
+           .fillColor('#CBD5E1')
+           .text(property.owner.email, 90, contactY + 30);
       }
 
-      // Agent information section
-      const agentBoxY = yPosition;
-      const agentBoxHeight = 120;
-
-      // Agent info background
-      doc.rect(50, agentBoxY, 495, agentBoxHeight)
-         .fillColor('#3B82F6')
+      // Professional certification badge
+      doc.rect(400, contactBoxY + 70, 120, 50)
+         .fillColor('#059669')
          .fill();
-
-      doc.fontSize(16)
+      
+      doc.fontSize(10)
          .fillColor('white')
-         .text('🏢 Listed By', 70, agentBoxY + 20);
+         .text('VERIFIED', 400, contactBoxY + 80, { width: 120, align: 'center' });
+      
+      doc.fontSize(8)
+         .text('REAL ESTATE', 400, contactBoxY + 95, { width: 120, align: 'center' });
+      
+      doc.fontSize(8)
+         .text('PROFESSIONAL', 400, contactBoxY + 105, { width: 120, align: 'center' });
 
-      // Agent details
-      const agentDetails = [
-        `Agent: ${property.owner.name}`,
-        property.owner.agencyName ? `Agency: ${property.owner.agencyName}` : null,
-        `Phone: ${property.owner.phone}`,
-        property.owner.email ? `Email: ${property.owner.email}` : null
-      ].filter(Boolean);
+      yPosition += contactBoxHeight + 30;
 
-      doc.fontSize(12);
-      agentDetails.forEach((detail, index) => {
-        doc.text(detail!, 70, agentBoxY + 50 + (index * 18));
-      });
-
-      yPosition += agentBoxHeight + 40;
-
-      // Footer
-      doc.moveTo(50, yPosition)
-         .lineTo(545, yPosition)
-         .strokeColor('#E5E7EB')
-         .lineWidth(1)
-         .stroke();
+      // Elegant footer with branding
+      doc.rect(50, yPosition, 495, 2)
+         .fillColor('#E2E8F0')
+         .fill();
 
       yPosition += 20;
 
-      doc.fontSize(12)
-         .fillColor('#333333')
+      // Date and platform info
+      doc.fontSize(11)
+         .fillColor('#64748B')
          .text(`Generated on ${new Date().toLocaleDateString('en-IN', { 
            year: 'numeric', 
            month: 'long', 
            day: 'numeric' 
-         })}`, 50, yPosition, { align: 'center' });
+         })} • PropertyConnect Platform`, 50, yPosition, { align: 'center' });
 
-      doc.fontSize(14)
-         .fillColor('#3B82F6')
-         .text('PropertyConnect - Your Trusted Real Estate Platform', 50, yPosition + 20, { align: 'center' });
-
-      doc.fontSize(10)
-         .fillColor('#666666')
-         .text('This document was generated automatically from our property database', 50, yPosition + 40, { align: 'center' });
+      doc.fontSize(9)
+         .fillColor('#94A3B8')
+         .text('This is an official property listing document', 50, yPosition + 20, { align: 'center' });
 
       // Finalize the PDF
       doc.end();
