@@ -7,6 +7,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import puppeteer from "puppeteer";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -572,6 +573,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Property not found" });
       }
 
+      // Format price for display
+      const formatPrice = (price: string) => {
+        const numPrice = parseFloat(price);
+        if (numPrice >= 10000000) {
+          return `₹${(numPrice / 10000000).toFixed(1)} Cr`;
+        } else if (numPrice >= 100000) {
+          return `₹${(numPrice / 100000).toFixed(1)} L`;
+        } else if (numPrice >= 1000) {
+          return `₹${(numPrice / 1000).toFixed(1)} K`;
+        } else {
+          return `₹${numPrice.toLocaleString('en-IN')}`;
+        }
+      };
+
       // Generate HTML content for PDF
       const htmlContent = `
         <!DOCTYPE html>
@@ -579,82 +594,230 @@ export async function registerRoutes(app: Express): Promise<Server> {
         <head>
           <meta charset="utf-8">
           <style>
-            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-            .header { text-align: center; border-bottom: 2px solid #3B82F6; padding-bottom: 20px; margin-bottom: 30px; }
-            .logo { font-size: 24px; font-weight: bold; color: #3B82F6; }
-            .title { font-size: 28px; font-weight: bold; margin: 20px 0; }
-            .section { margin: 20px 0; }
-            .label { font-weight: bold; color: #374151; }
-            .value { margin-left: 10px; }
-            .price { font-size: 24px; font-weight: bold; color: #3B82F6; }
-            .description { line-height: 1.6; margin: 15px 0; }
-            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
-            .agent-info { background: #F9FAFB; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+            }
+            .container { max-width: 800px; margin: 0 auto; padding: 40px; }
+            .header { 
+              text-align: center; 
+              border-bottom: 3px solid #3B82F6; 
+              padding-bottom: 30px; 
+              margin-bottom: 40px; 
+            }
+            .logo { 
+              font-size: 32px; 
+              font-weight: bold; 
+              color: #3B82F6; 
+              margin-bottom: 10px;
+            }
+            .subtitle { color: #666; font-size: 16px; }
+            .title { 
+              font-size: 32px; 
+              font-weight: bold; 
+              margin: 30px 0; 
+              color: #1a1a1a;
+            }
+            .property-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 30px;
+              margin: 30px 0;
+            }
+            .section { 
+              margin: 20px 0;
+              padding: 15px;
+              border-left: 4px solid #3B82F6;
+              background: #f8f9fa;
+            }
+            .label { 
+              font-weight: 600; 
+              color: #374151; 
+              display: inline-block;
+              min-width: 120px;
+            }
+            .value { 
+              color: #1a1a1a;
+              font-weight: 500;
+            }
+            .price { 
+              font-size: 28px; 
+              font-weight: bold; 
+              color: #3B82F6; 
+              margin: 10px 0;
+            }
+            .description { 
+              line-height: 1.8; 
+              margin: 20px 0; 
+              padding: 20px;
+              background: #f1f5f9;
+              border-radius: 8px;
+              font-style: italic;
+            }
+            .agent-info { 
+              background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+              color: white;
+              padding: 30px; 
+              border-radius: 12px; 
+              margin: 40px 0; 
+            }
+            .agent-info h3 {
+              font-size: 20px;
+              margin-bottom: 15px;
+              border-bottom: 2px solid rgba(255,255,255,0.3);
+              padding-bottom: 10px;
+            }
+            .agent-info .agent-detail {
+              margin: 8px 0;
+              font-size: 16px;
+            }
+            .agent-info .agent-label {
+              font-weight: 600;
+              opacity: 0.9;
+            }
+            .footer { 
+              text-align: center; 
+              margin-top: 50px; 
+              padding-top: 30px; 
+              border-top: 2px solid #E5E7EB; 
+              color: #666;
+              font-size: 14px;
+            }
+            .property-details {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 20px;
+              margin: 30px 0;
+            }
+            .detail-card {
+              background: white;
+              border: 2px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 20px;
+              text-align: center;
+            }
+            .detail-card .detail-value {
+              font-size: 20px;
+              font-weight: bold;
+              color: #3B82F6;
+              margin-bottom: 5px;
+            }
+            .detail-card .detail-label {
+              color: #666;
+              font-size: 14px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="logo">PropertyConnect</div>
-            <div>Professional Property Listing</div>
-          </div>
-          
-          <div class="title">${property.title}</div>
-          
-          <div class="section">
-            <span class="label">Location:</span>
-            <span class="value">${property.location}</span>
-          </div>
-          
-          <div class="section">
-            <span class="label">Price:</span>
-            <span class="price">₹${parseFloat(property.price).toLocaleString('en-IN')}</span>
-            ${property.transactionType === 'rent' ? `<span class="value">/${property.rentFrequency || 'month'}</span>` : ''}
-          </div>
-          
-          <div class="section">
-            <span class="label">Property Type:</span>
-            <span class="value">${property.propertyType}</span>
-          </div>
-          
-          <div class="section">
-            <span class="label">Size:</span>
-            <span class="value">${property.size} ${property.sizeUnit || 'sq.ft'}</span>
-          </div>
-          
-          ${property.bhk ? `<div class="section">
-            <span class="label">BHK:</span>
-            <span class="value">${property.bhk} BHK</span>
-          </div>` : ''}
-          
-          <div class="section">
-            <span class="label">Transaction Type:</span>
-            <span class="value">${property.transactionType === 'sale' ? 'For Sale' : 'For Rent'}</span>
-          </div>
-          
-          ${property.description ? `<div class="section">
-            <span class="label">Description:</span>
-            <div class="description">${property.description}</div>
-          </div>` : ''}
-          
-          <div class="agent-info">
-            <h3>Listed By</h3>
-            <div><span class="label">Agent:</span> ${property.owner.name}</div>
-            ${property.owner.agencyName ? `<div><span class="label">Agency:</span> ${property.owner.agencyName}</div>` : ''}
-            <div><span class="label">Phone:</span> ${property.owner.phone}</div>
-            ${property.owner.email ? `<div><span class="label">Email:</span> ${property.owner.email}</div>` : ''}
-          </div>
-          
-          <div class="footer">
-            <div>Generated on ${new Date().toLocaleDateString('en-IN')}</div>
-            <div>PropertyConnect - Your Trusted Real Estate Platform</div>
+          <div class="container">
+            <div class="header">
+              <div class="logo">PropertyConnect</div>
+              <div class="subtitle">Professional Property Listing</div>
+            </div>
+            
+            <div class="title">${property.title}</div>
+            
+            <div class="property-details">
+              <div class="detail-card">
+                <div class="detail-value">${formatPrice(property.price)}</div>
+                <div class="detail-label">Price${property.transactionType === 'rent' ? `/${property.rentFrequency || 'month'}` : ''}</div>
+              </div>
+              <div class="detail-card">
+                <div class="detail-value">${property.size} ${property.sizeUnit || 'sq.ft'}</div>
+                <div class="detail-label">Area</div>
+              </div>
+              <div class="detail-card">
+                <div class="detail-value">${property.propertyType}</div>
+                <div class="detail-label">Type</div>
+              </div>
+              ${property.bhk ? `<div class="detail-card">
+                <div class="detail-value">${property.bhk} BHK</div>
+                <div class="detail-label">Configuration</div>
+              </div>` : ''}
+            </div>
+            
+            <div class="section">
+              <span class="label">📍 Location:</span>
+              <span class="value">${property.location}</span>
+            </div>
+            
+            <div class="section">
+              <span class="label">🏷️ Listing Type:</span>
+              <span class="value">${property.transactionType === 'sale' ? 'For Sale' : 'For Rent'}</span>
+            </div>
+            
+            ${property.description ? `<div class="description">
+              <strong>Property Description:</strong><br>
+              ${property.description}
+            </div>` : ''}
+            
+            <div class="agent-info">
+              <h3>🏢 Listed By</h3>
+              <div class="agent-detail">
+                <span class="agent-label">Agent:</span> ${property.owner.name}
+              </div>
+              ${property.owner.agencyName ? `<div class="agent-detail">
+                <span class="agent-label">Agency:</span> ${property.owner.agencyName}
+              </div>` : ''}
+              <div class="agent-detail">
+                <span class="agent-label">Phone:</span> ${property.owner.phone}
+              </div>
+              ${property.owner.email ? `<div class="agent-detail">
+                <span class="agent-label">Email:</span> ${property.owner.email}
+              </div>` : ''}
+            </div>
+            
+            <div class="footer">
+              <div style="font-weight: bold; margin-bottom: 10px;">
+                Generated on ${new Date().toLocaleDateString('en-IN', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </div>
+              <div>PropertyConnect - Your Trusted Real Estate Platform</div>
+              <div style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
+                This document was generated automatically from our property database
+              </div>
+            </div>
           </div>
         </body>
         </html>
       `;
 
-      // Set response headers for HTML preview (PDF would require puppeteer)
-      res.setHeader('Content-Type', 'text/html');
-      res.send(htmlContent);
+      // Launch Puppeteer and generate PDF
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px'
+        }
+      });
+      
+      await browser.close();
+
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${property.title.replace(/[^a-zA-Z0-9]/g, '_')}_listing.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      
+      res.send(pdfBuffer);
       
     } catch (error) {
       console.error("PDF generation error:", error);
