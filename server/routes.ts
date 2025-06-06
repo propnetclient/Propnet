@@ -177,16 +177,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      // Parse scope of work if it's a JSON string
-      if (req.body.scopeOfWork && typeof req.body.scopeOfWork === 'string') {
-        try {
-          req.body.scopeOfWork = JSON.parse(req.body.scopeOfWork);
-        } catch (e) {
-          req.body.scopeOfWork = [];
+      // Parse form data from multipart upload
+      let propertyData;
+      try {
+        // Handle both JSON string data and direct form fields
+        if (req.body.data) {
+          propertyData = JSON.parse(req.body.data);
+        } else {
+          propertyData = req.body;
         }
-      }
 
-      const propertyData = insertPropertySchema.parse(req.body);
+        // Parse scope of work if it's a JSON string
+        if (propertyData.scopeOfWork && typeof propertyData.scopeOfWork === 'string') {
+          try {
+            propertyData.scopeOfWork = JSON.parse(propertyData.scopeOfWork);
+          } catch (e) {
+            propertyData.scopeOfWork = [];
+          }
+        }
+
+        // Validate the parsed data
+        propertyData = insertPropertySchema.parse(propertyData);
+      } catch (parseError) {
+        console.error("Property data parsing error:", parseError);
+        return res.status(400).json({ 
+          message: "Invalid property data", 
+          details: parseError instanceof Error ? parseError.message : "Validation failed" 
+        });
+      }
       
       const photos: string[] = [];
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };

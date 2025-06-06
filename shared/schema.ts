@@ -146,6 +146,19 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true,
   createdAt: true,
   ownerId: true,
+}).extend({
+  // Make some fields optional for form submission
+  flatNumber: z.string().optional(),
+  floorNumber: z.string().optional(),
+  buildingSociety: z.string().optional(),
+  description: z.string().optional(),
+  bhk: z.number().optional(),
+  commissionTerms: z.string().optional(),
+  scopeOfWork: z.array(z.string()).optional().default([]),
+  agreementDocument: z.string().optional(),
+  ownerApprovalStatus: z.string().optional().default("pending"),
+  consentId: z.string().optional(),
+  approvalTimestamp: z.date().optional(),
 });
 
 export const insertCoListingRequestSchema = createInsertSchema(coListingRequests).omit({
