@@ -18,6 +18,9 @@ import Requirements from "@/pages/requirements/requirements";
 import Profile from "@/pages/profile/profile";
 import EditProfile from "@/pages/profile/edit-profile";
 import ColistingRequests from "@/pages/profile/colisting-requests";
+import ChatList from "@/pages/chat/chat-list";
+import ChatRoom from "@/pages/chat/chat-room";
+import BrokerDirectory from "@/pages/community/broker-directory";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -34,6 +37,9 @@ function Router() {
       <Route path="/my-listings" component={MyListings} />
       <Route path="/consent/:consentId" component={OwnerConsent} />
       <Route path="/requirements" component={Requirements} />
+      <Route path="/chat" component={ChatList} />
+      <Route path="/chat/:chatId" component={ChatRoom} />
+      <Route path="/community/directory" component={BrokerDirectory} />
       <Route path="/profile" component={Profile} />
       <Route path="/edit-profile" component={EditProfile} />
       <Route path="/colisting-requests" component={ColistingRequests} />
