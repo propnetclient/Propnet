@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Share2, MapPin, Calendar, Eye, TrendingUp, Phone } from "lucide-react";
+import { Heart, Share2, MapPin, Calendar, Eye, TrendingUp, Phone, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ContactModal from "@/components/ui/contact-modal";
+import { formatPrice, formatArea, getListingTypeBadgeColor, getListingTypeLabel } from "@/utils/formatters";
 
 interface EnhancedPropertyCardProps {
   property: any;
@@ -40,7 +41,9 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
   };
 
   const handleShare = () => {
-    const shareText = `${property.title}\n📍 ${property.location}\n💰 ${property.price}\n📐 ${property.size}`;
+    const formattedPrice = formatPrice(property.price, property.transactionType, property.rentFrequency);
+    const formattedArea = formatArea(property.size, property.sizeUnit);
+    const shareText = `${property.title}\n📍 ${property.location}\n💰 ${formattedPrice}\n📐 ${formattedArea}`;
     
     if (navigator.share) {
       navigator.share({
@@ -53,6 +56,35 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
       toast({
         title: "Link copied",
         description: "Property details copied to clipboard",
+      });
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      const response = await fetch(`/api/properties/${property.id}/pdf`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${property.title.replace(/\s+/g, '_')}_listing.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        toast({
+          title: "PDF Downloaded",
+          description: "Property listing PDF has been downloaded",
+        });
+      } else {
+        throw new Error('Failed to generate PDF');
+      }
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Unable to generate PDF. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -122,12 +154,8 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-bold text-neutral-900 text-lg leading-tight">{property.title}</h3>
           <div className="flex items-center space-x-1 ml-2">
-            <Badge className={`text-xs ${
-              property.listingType === "exclusive" 
-                ? "bg-accent text-white" 
-                : "bg-blue-100 text-blue-800"
-            }`}>
-              {property.listingType === "exclusive" ? "Exclusive" : "Co-listing"}
+            <Badge className={`text-xs ${getListingTypeBadgeColor(property.listingType || 'shared')}`}>
+              {getListingTypeLabel(property.listingType || 'shared')}
             </Badge>
           </div>
         </div>

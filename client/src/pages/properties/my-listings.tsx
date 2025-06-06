@@ -531,6 +531,29 @@ export default function MyListings() {
                           </FormItem>
                         )}
                       />
+
+                      <FormField
+                        control={form.control}
+                        name="isPubliclyVisible"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 mt-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                Allow this property to appear in public agent feed and search?
+                              </FormLabel>
+                              <p className="text-xs text-muted-foreground">
+                                Enable to make this listing visible in general search and feed. Disable for private listing sharing only.
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
                     </CardContent>
                   </Card>
 
