@@ -1,596 +1,319 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Search, Filter, MapPin, Home, Building2, TrendingUp, SlidersHorizontal, X, Plus, Bell } from "lucide-react";
-import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Search, Filter, MapPin, Building, Home, Calendar, X } from "lucide-react";
 import EnhancedPropertyCard from "@/components/ui/enhanced-property-card";
-import BottomNavigation from "@/components/layout/bottom-navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { insertPropertyRequirementSchema } from "@shared/schema";
-import type { Property, PropertyRequirement } from "@shared/schema";
-import { z } from "zod";
-
-const requirementFormSchema = insertPropertyRequirementSchema.extend({
-  validUntil: z.string().optional(),
-});
+import { formatPrice } from "@/utils/formatters";
 
 export default function PropertySearch() {
-  const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
   const [searchQuery, setSearchQuery] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 200]);
-  const [locationFilter, setLocationFilter] = useState("");
-  const [bhk, setBhk] = useState("");
-  const [listingType, setListingType] = useState("");
-  const [sortBy, setSortBy] = useState("recent");
-  const [showFilters, setShowFilters] = useState(false);
-  const [isRequirementDialogOpen, setIsRequirementDialogOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState({
+    transactionType: "",
+    propertyType: "",
+    bhk: "",
+    minPrice: "",
+    maxPrice: "",
+    location: "",
+    sizeUnit: "",
+    listingType: "",
+    minSize: "",
+    maxSize: ""
+  });
+  const [priceRange, setPriceRange] = useState([0, 10000000]);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["/api/properties"],
   });
 
-  const { data: requirements = [] } = useQuery({
-    queryKey: ["/api/property-requirements"],
-  });
+  // Filter properties based on search and filters
+  const filteredProperties = properties.filter((property: any) => {
+    const matchesSearch = !searchQuery || 
+      property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      property.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      property.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
-  const form = useForm<z.infer<typeof requirementFormSchema>>({
-    resolver: zodResolver(requirementFormSchema),
-    defaultValues: {
-      title: "",
-      propertyType: "",
-      location: "",
-      minPrice: "",
-      maxPrice: "",
-      description: "",
-      validUntil: "",
-    },
-  });
+    const matchesTransactionType = !selectedFilters.transactionType || 
+      property.transactionType === selectedFilters.transactionType;
 
-  const createRequirementMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof requirementFormSchema>) => {
-      const { validUntil, ...requirementData } = data;
-      const payload = {
-        ...requirementData,
-        validUntil: validUntil ? new Date(validUntil).toISOString() : null,
-      };
-      return apiRequest("POST", "/api/property-requirements", payload);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/property-requirements"] });
-      setIsRequirementDialogOpen(false);
-      form.reset();
-      toast({
-        title: "Success",
-        description: "Your property requirement has been posted successfully!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to post requirement. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+    const matchesPropertyType = !selectedFilters.propertyType || 
+      property.propertyType === selectedFilters.propertyType;
 
-  // Advanced filtering logic
-  const filteredProperties = (properties as any[]).filter((property: any) => {
-    const matchesSearch = property.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         property.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         property.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesType = !propertyType || property.propertyType === propertyType;
-    const matchesLocation = !locationFilter || property.location?.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesBhk = !bhk || property.bhk?.toString() === bhk || `${property.bhk} BHK` === bhk;
-    const matchesListingType = !listingType || property.listingType === listingType;
-    
-    // Price filtering with range
-    const priceStr = property.price?.toString() || '0';
-    const price = parseFloat(priceStr.replace(/[^\d.]/g, '')) || 0;
-    const priceInLakhs = price / 100000; // Convert to lakhs
-    const matchesPrice = priceInLakhs >= priceRange[0] && priceInLakhs <= (priceRange[1] === 200 ? Infinity : priceRange[1]);
-    
-    return matchesSearch && matchesType && matchesLocation && matchesBhk && matchesListingType && matchesPrice;
-  }).sort((a: any, b: any) => {
-    switch (sortBy) {
-      case "price-low":
-        const priceA = parseFloat((a.price?.toString() || '0').replace(/[^\d.]/g, '')) || 0;
-        const priceB = parseFloat((b.price?.toString() || '0').replace(/[^\d.]/g, '')) || 0;
-        return priceA - priceB;
-      case "price-high":
-        const priceHighA = parseFloat((a.price?.toString() || '0').replace(/[^\d.]/g, '')) || 0;
-        const priceHighB = parseFloat((b.price?.toString() || '0').replace(/[^\d.]/g, '')) || 0;
-        return priceHighB - priceHighA;
-      case "recent":
-      default:
-        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-    }
-  });
+    const matchesBHK = !selectedFilters.bhk || 
+      property.bhk?.toString() === selectedFilters.bhk;
 
-  const filteredRequirements = (requirements as any[]).filter((requirement: any) => {
-    const matchesSearch = requirement.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         requirement.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         requirement.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesType = !propertyType || requirement.propertyType === propertyType;
-    const matchesLocation = !locationFilter || requirement.location?.toLowerCase().includes(locationFilter.toLowerCase());
-    
-    return matchesSearch && matchesType && matchesLocation;
+    const matchesLocation = !selectedFilters.location || 
+      property.location.toLowerCase().includes(selectedFilters.location.toLowerCase());
+
+    const propertyPrice = parseFloat(property.price.replace(/[^\d.]/g, ''));
+    const matchesPriceRange = propertyPrice >= priceRange[0] && propertyPrice <= priceRange[1];
+
+    const matchesListingType = !selectedFilters.listingType || 
+      property.listingType === selectedFilters.listingType;
+
+    const propertySize = parseFloat(property.size);
+    const matchesMinSize = !selectedFilters.minSize || 
+      propertySize >= parseFloat(selectedFilters.minSize);
+    const matchesMaxSize = !selectedFilters.maxSize || 
+      propertySize <= parseFloat(selectedFilters.maxSize);
+
+    return matchesSearch && matchesTransactionType && matchesPropertyType && 
+           matchesBHK && matchesLocation && matchesPriceRange && matchesListingType &&
+           matchesMinSize && matchesMaxSize;
   });
 
   const clearFilters = () => {
+    setSelectedFilters({
+      transactionType: "",
+      propertyType: "",
+      bhk: "",
+      minPrice: "",
+      maxPrice: "",
+      location: "",
+      sizeUnit: "",
+      listingType: "",
+      minSize: "",
+      maxSize: ""
+    });
+    setPriceRange([0, 10000000]);
     setSearchQuery("");
-    setPropertyType("");
-    setPriceRange([0, 200]);
-    setLocationFilter("");
-    setBhk("");
-    setListingType("");
-    setSortBy("recent");
   };
 
-  const activeFiltersCount = [propertyType, locationFilter, bhk, listingType].filter(Boolean).length +
-    (priceRange[0] > 0 || priceRange[1] < 200 ? 1 : 0);
+  const activeFiltersCount = Object.values(selectedFilters).filter(Boolean).length + 
+    (priceRange[0] > 0 || priceRange[1] < 10000000 ? 1 : 0);
 
-  return (
-    <div className="flex flex-col min-h-screen pb-20">
-      {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-neutral-100 z-10">
-        <div className="flex items-center px-6 py-4">
-          <button 
-            className="text-primary mr-4"
-            onClick={() => setLocation("/feed")}
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <h2 className="text-lg font-semibold text-neutral-900">Search & Requirements</h2>
-        </div>
-
-        {/* Search Bar */}
-        <div className="px-6 pb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
-            <Input
-              placeholder="Search properties and requirements..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4"
-            />
-          </div>
-        </div>
-
-        {/* Quick Filters */}
-        <div className="px-6 pb-4">
-          <div className="flex items-center space-x-3 overflow-x-auto">
-            <Button
-              variant={showFilters ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 whitespace-nowrap"
-            >
-              <SlidersHorizontal size={16} />
-              <span>Filters</span>
-              {activeFiltersCount > 0 && (
-                <Badge className="ml-1 bg-primary text-white text-xs min-w-[20px] h-5">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-            </Button>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Recent</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Dialog open={isRequirementDialogOpen} onOpenChange={setIsRequirementDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="flex items-center space-x-2 whitespace-nowrap">
-                  <Plus size={16} />
-                  <span>Post Requirement</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Post Property Requirement</DialogTitle>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit((data) => createRequirementMutation.mutate(data))} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Requirement Title</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Looking for 2 BHK apartment..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="propertyType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Property Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select property type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Apartment">Apartment</SelectItem>
-                              <SelectItem value="Villa">Villa</SelectItem>
-                              <SelectItem value="Commercial">Commercial</SelectItem>
-                              <SelectItem value="Plot">Plot</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Preferred Location</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter area or city" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="minPrice"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Min Price</FormLabel>
-                            <FormControl>
-                              <Input placeholder="₹50 Lakhs" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="maxPrice"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Max Price</FormLabel>
-                            <FormControl>
-                              <Input placeholder="₹1 Crore" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Additional Details</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Describe your requirements in detail..."
-                              className="resize-none"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="validUntil"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Valid Until (Optional)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="date" 
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex space-x-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setIsRequirementDialogOpen(false)}
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createRequirementMutation.isPending}
-                        className="flex-1"
-                      >
-                        {createRequirementMutation.isPending ? "Posting..." : "Post Requirement"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
+    );
+  }
 
-      {/* Advanced Filters Panel */}
-      {showFilters && (
-        <Card className="mx-6 mt-4">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Advanced Filters</CardTitle>
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  Clear All
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowFilters(false)}>
-                  <X size={16} />
-                </Button>
-              </div>
-            </div>
+  return (
+    <div className="container mx-auto p-4 max-w-7xl">
+      {/* Search Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Property</h1>
+        <p className="text-gray-600">Search through verified listings from trusted agents</p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        <Input
+          placeholder="Search by title, location, or description..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 pr-4 py-3 text-lg"
+        />
+      </div>
+
+      {/* Quick Filters */}
+      <div className="flex flex-wrap gap-3 mb-4">
+        <Select value={selectedFilters.transactionType} onValueChange={(value) => 
+          setSelectedFilters(prev => ({ ...prev, transactionType: value }))}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Buy/Rent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="sale">For Sale</SelectItem>
+            <SelectItem value="rent">For Rent</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedFilters.propertyType} onValueChange={(value) => 
+          setSelectedFilters(prev => ({ ...prev, propertyType: value }))}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Property Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Apartment">Apartment</SelectItem>
+            <SelectItem value="Villa">Villa</SelectItem>
+            <SelectItem value="House">House</SelectItem>
+            <SelectItem value="Office">Office</SelectItem>
+            <SelectItem value="Shop">Shop</SelectItem>
+            <SelectItem value="Plot">Plot</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedFilters.bhk} onValueChange={(value) => 
+          setSelectedFilters(prev => ({ ...prev, bhk: value }))}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="BHK" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 BHK</SelectItem>
+            <SelectItem value="2">2 BHK</SelectItem>
+            <SelectItem value="3">3 BHK</SelectItem>
+            <SelectItem value="4">4 BHK</SelectItem>
+            <SelectItem value="5">5+ BHK</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant="outline"
+          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          className="flex items-center gap-2"
+        >
+          <Filter size={16} />
+          Advanced Filters
+          {activeFiltersCount > 0 && (
+            <Badge variant="secondary" className="ml-1">{activeFiltersCount}</Badge>
+          )}
+        </Button>
+
+        {activeFiltersCount > 0 && (
+          <Button variant="ghost" onClick={clearFilters} className="flex items-center gap-2">
+            <X size={16} />
+            Clear All
+          </Button>
+        )}
+      </div>
+
+      {/* Advanced Filters */}
+      {showAdvancedFilters && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Advanced Search Filters</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Property Type */}
-            <div>
-              <label className="text-sm font-medium text-neutral-700 mb-2 block">Property Type</label>
-              <Select value={propertyType} onValueChange={(value) => setPropertyType(value || "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
-                  <SelectItem value="Apartment">Apartment</SelectItem>
-                  <SelectItem value="Villa">Villa</SelectItem>
-                  <SelectItem value="Commercial">Commercial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Price Range */}
             <div>
-              <label className="text-sm font-medium text-neutral-700 mb-2 block">
-                Price Range: ₹{priceRange[0]}L - ₹{priceRange[1]}L {priceRange[1] === 200 ? "+" : ""}
+              <label className="block text-sm font-medium mb-2">
+                Price Range: {formatPrice(priceRange[0].toString(), selectedFilters.transactionType || 'sale')} - {formatPrice(priceRange[1].toString(), selectedFilters.transactionType || 'sale')}
               </label>
               <Slider
                 value={priceRange}
                 onValueChange={setPriceRange}
-                max={200}
+                max={10000000}
                 min={0}
-                step={10}
+                step={50000}
                 className="w-full"
               />
             </div>
 
-            {/* Location */}
-            <div>
-              <label className="text-sm font-medium text-neutral-700 mb-2 block">Location</label>
-              <Input
-                placeholder="Enter area or city"
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Location</label>
+                <Input
+                  placeholder="Enter location"
+                  value={selectedFilters.location}
+                  onChange={(e) => setSelectedFilters(prev => ({ ...prev, location: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Listing Type</label>
+                <Select value={selectedFilters.listingType} onValueChange={(value) => 
+                  setSelectedFilters(prev => ({ ...prev, listingType: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="exclusive">Exclusive</SelectItem>
+                    <SelectItem value="colisting">Co-Listing</SelectItem>
+                    <SelectItem value="shared">Shared</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Area Unit</label>
+                <Select value={selectedFilters.sizeUnit} onValueChange={(value) => 
+                  setSelectedFilters(prev => ({ ...prev, sizeUnit: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Units" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sq.ft">Square Feet</SelectItem>
+                    <SelectItem value="sq.m">Square Meters</SelectItem>
+                    <SelectItem value="sq.yd">Square Yards</SelectItem>
+                    <SelectItem value="acre">Acres</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* BHK */}
-            <div>
-              <label className="text-sm font-medium text-neutral-700 mb-2 block">BHK</label>
-              <Select value={bhk} onValueChange={(value) => setBhk(value || "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Any BHK" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Any BHK</SelectItem>
-                  <SelectItem value="1 BHK">1 BHK</SelectItem>
-                  <SelectItem value="2 BHK">2 BHK</SelectItem>
-                  <SelectItem value="3 BHK">3 BHK</SelectItem>
-                  <SelectItem value="4+ BHK">4+ BHK</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Listing Type */}
-            <div>
-              <label className="text-sm font-medium text-neutral-700 mb-2 block">Listing Type</label>
-              <Select value={listingType} onValueChange={(value) => setListingType(value || "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Listings" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Listings</SelectItem>
-                  <SelectItem value="exclusive">Exclusive</SelectItem>
-                  <SelectItem value="colisting">Co-listing</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Min Area Size</label>
+                <Input
+                  type="number"
+                  placeholder="Min size"
+                  value={selectedFilters.minSize}
+                  onChange={(e) => setSelectedFilters(prev => ({ ...prev, minSize: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Max Area Size</label>
+                <Input
+                  type="number"
+                  placeholder="Max size"
+                  value={selectedFilters.maxSize}
+                  onChange={(e) => setSelectedFilters(prev => ({ ...prev, maxSize: e.target.value }))}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Tabs for Properties and Requirements */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 shrink-0 max-w-md">
-            <TabsTrigger value="properties" className="flex items-center justify-center space-x-1 text-sm">
-              <Home size={14} />
-              <span>Properties ({filteredProperties.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="requirements" className="flex items-center justify-center space-x-1 text-sm">
-              <Bell size={14} />
-              <span>Requirements ({filteredRequirements.length})</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="properties" className="flex-1 px-6 py-6 overflow-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-neutral-600">
-                {filteredProperties.length} properties found
-              </div>
-              {(searchQuery || activeFiltersCount > 0) && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  Clear search
-                </Button>
-              )}
-            </div>
-
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-              </div>
-            ) : filteredProperties.length === 0 ? (
-              <div className="text-center py-12">
-                <Building2 size={48} className="mx-auto text-neutral-400 mb-4" />
-                <h3 className="text-lg font-medium text-neutral-700 mb-2">No properties found</h3>
-                <p className="text-neutral-500 mb-4">Try adjusting your search criteria or post a requirement</p>
-                <div className="space-x-2">
-                  <Button onClick={clearFilters}>Clear all filters</Button>
-                  <Button variant="outline" onClick={() => setIsRequirementDialogOpen(true)}>
-                    Post Requirement
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredProperties.map((property: any) => (
-                  <EnhancedPropertyCard 
-                    key={property.id} 
-                    property={property}
-                    currentUserId={user?.id}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="requirements" className="flex-1 px-6 py-6 overflow-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-neutral-600">
-                {filteredRequirements.length} requirements found
-              </div>
-              <Button 
-                size="sm" 
-                onClick={() => setIsRequirementDialogOpen(true)}
-                className="flex items-center space-x-1"
-              >
-                <Plus size={14} />
-                <span>Post New</span>
-              </Button>
-            </div>
-
-            {filteredRequirements.length === 0 ? (
-              <div className="text-center py-12">
-                <Bell size={48} className="mx-auto text-neutral-400 mb-4" />
-                <h3 className="text-lg font-medium text-neutral-700 mb-2">No requirements found</h3>
-                <p className="text-neutral-500 mb-4">Be the first to post a property requirement</p>
-                <Button onClick={() => setIsRequirementDialogOpen(true)}>
-                  Post Requirement
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredRequirements.map((requirement: any) => (
-                  <Card key={requirement.id} className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-neutral-900 mb-1">{requirement.title}</h3>
-                        <div className="flex items-center text-sm text-neutral-500 space-x-4">
-                          <span className="flex items-center">
-                            <MapPin size={12} className="mr-1" />
-                            {requirement.location}
-                          </span>
-                          <span className="flex items-center">
-                            <Building2 size={12} className="mr-1" />
-                            {requirement.propertyType}
-                          </span>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        By {requirement.user?.name || 'Agent'}
-                      </Badge>
-                    </div>
-                    
-                    {requirement.description && (
-                      <p className="text-sm text-neutral-600 mb-3">{requirement.description}</p>
-                    )}
-                    
-                    <div className="flex items-center justify-between text-xs text-neutral-400">
-                      <div className="flex space-x-4">
-                        {requirement.minPrice && <span>Min: {requirement.minPrice}</span>}
-                        {requirement.maxPrice && <span>Max: {requirement.maxPrice}</span>}
-                      </div>
-                      <span>
-                        Posted {new Date(requirement.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    
-                    {requirement.validUntil && (
-                      <div className="mt-2 text-xs text-orange-600">
-                        Valid until {new Date(requirement.validUntil).toLocaleDateString()}
-                      </div>
-                    )}
-
-                    {user?.id !== requirement.userId && (
-                      <div className="mt-3 pt-3 border-t border-neutral-100">
-                        <Button size="sm" className="w-full">
-                          Contact for This Requirement
-                        </Button>
-                      </div>
-                    )}
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+      {/* Results */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold">
+          {filteredProperties.length} Properties Found
+        </h2>
+        
+        {searchQuery && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Searching for:</span>
+            <Badge variant="outline">{searchQuery}</Badge>
+          </div>
+        )}
       </div>
 
-      <BottomNavigation />
+      {/* Property Grid */}
+      {filteredProperties.length === 0 ? (
+        <Card className="text-center py-12">
+          <CardContent>
+            <Building className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No properties found</h3>
+            <p className="text-gray-600 mb-4">
+              Try adjusting your search criteria or clearing some filters
+            </p>
+            <Button onClick={clearFilters} variant="outline">
+              Clear All Filters
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredProperties.map((property: any) => (
+            <EnhancedPropertyCard
+              key={property.id}
+              property={property}
+              currentUserId={user?.id}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
