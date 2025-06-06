@@ -29,8 +29,11 @@ export const properties = pgTable("properties", {
   ownerId: integer("owner_id").references(() => users.id).notNull(),
   title: text("title").notNull(),
   propertyType: text("property_type").notNull(), // apartment, villa, commercial, plot
+  transactionType: text("transaction_type").notNull(), // sale, rent
   price: text("price").notNull(),
+  rentFrequency: text("rent_frequency"), // monthly, yearly (for rent properties)
   size: text("size").notNull(),
+  sizeUnit: text("size_unit").notNull().default("sq.ft"), // sq.ft, sq.m, sq.yd, acre
   location: text("location").notNull(),
   fullAddress: text("full_address").notNull(),
   flatNumber: text("flat_number"),
@@ -39,6 +42,7 @@ export const properties = pgTable("properties", {
   description: text("description"),
   bhk: integer("bhk"),
   listingType: text("listing_type").notNull(), // exclusive, colisting, shared
+  isPubliclyVisible: boolean("is_publicly_visible").default(false),
   photos: text("photos").array().default([]),
   ownerName: text("owner_name").notNull(), // encrypted
   ownerPhone: text("owner_phone").notNull(), // encrypted
@@ -146,8 +150,10 @@ export const insertPropertySchema = z.object({
   // Required fields
   title: z.string().min(1, "Property title is required"),
   propertyType: z.string().min(1, "Property type is required"),
+  transactionType: z.string().min(1, "Transaction type is required"),
   price: z.string().min(1, "Price is required"),
   size: z.string().min(1, "Size is required"),
+  sizeUnit: z.string().min(1, "Size unit is required"),
   location: z.string().min(1, "Location is required"),
   fullAddress: z.string().min(1, "Full address is required"),
   listingType: z.string().min(1, "Listing type is required"),
@@ -155,11 +161,13 @@ export const insertPropertySchema = z.object({
   ownerPhone: z.string().min(10, "Valid owner phone is required"),
   
   // Optional fields
+  rentFrequency: z.string().optional(),
   flatNumber: z.string().optional(),
   floorNumber: z.string().optional(),
   buildingSociety: z.string().optional(),
   description: z.string().optional(),
   bhk: z.number().optional(),
+  isPubliclyVisible: z.boolean().optional().default(false),
   commissionTerms: z.string().optional(),
   scopeOfWork: z.array(z.string()).optional().default([]),
   photos: z.array(z.string()).optional().default([]),

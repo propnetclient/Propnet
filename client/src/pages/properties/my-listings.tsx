@@ -50,8 +50,11 @@ export default function MyListings() {
     defaultValues: {
       title: "",
       propertyType: "",
+      transactionType: "sale",
       price: "",
+      rentFrequency: "monthly",
       size: "",
+      sizeUnit: "sq.ft",
       location: "",
       fullAddress: "",
       flatNumber: "",
@@ -60,6 +63,7 @@ export default function MyListings() {
       description: "",
       bhk: 0,
       listingType: "exclusive",
+      isPubliclyVisible: false,
       ownerName: "",
       ownerPhone: "",
       commissionTerms: "",
@@ -242,6 +246,28 @@ export default function MyListings() {
 
                         <FormField
                           control={form.control}
+                          name="transactionType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Transaction Type</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select transaction" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="sale">Sale</SelectItem>
+                                  <SelectItem value="rent">Rent</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
                           name="bhk"
                           render={({ field }) => (
                             <FormItem>
@@ -266,9 +292,54 @@ export default function MyListings() {
                           name="price"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Price</FormLabel>
+                              <FormLabel>
+                                {form.watch("transactionType") === "rent" ? "Monthly Rent" : "Sale Price"}
+                              </FormLabel>
                               <FormControl>
-                                <Input placeholder="₹50 Lakhs" {...field} />
+                                <Input 
+                                  placeholder={form.watch("transactionType") === "rent" ? "₹25,000/month" : "₹50 Lakhs"} 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {form.watch("transactionType") === "rent" && (
+                          <FormField
+                            control={form.control}
+                            name="rentFrequency"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Rent Frequency</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select frequency" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="monthly">Monthly</SelectItem>
+                                    <SelectItem value="yearly">Yearly</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="size"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Area</FormLabel>
+                              <FormControl>
+                                <Input placeholder="1200" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -277,13 +348,23 @@ export default function MyListings() {
 
                         <FormField
                           control={form.control}
-                          name="size"
+                          name="sizeUnit"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Size (sq. ft.)</FormLabel>
-                              <FormControl>
-                                <Input placeholder="1200" {...field} />
-                              </FormControl>
+                              <FormLabel>Area Unit</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select unit" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="sq.ft">Square Feet (sq.ft)</SelectItem>
+                                  <SelectItem value="sq.m">Square Meters (sq.m)</SelectItem>
+                                  <SelectItem value="sq.yd">Square Yards (sq.yd)</SelectItem>
+                                  <SelectItem value="acre">Acres</SelectItem>
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
