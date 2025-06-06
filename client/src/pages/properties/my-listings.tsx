@@ -22,13 +22,7 @@ import FileUpload from "@/components/ui/file-upload";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { z } from "zod";
 
-const propertyFormSchema = insertPropertySchema.extend({
-  ownerName: z.string().min(1, "Owner name is required"),
-  ownerPhone: z.string().min(10, "Valid phone number is required"),
-  commissionTerms: z.string().optional(),
-  scopeOfWork: z.array(z.string()).optional(),
-  agreementDocument: z.string().optional(),
-});
+const propertyFormSchema = insertPropertySchema;
 
 export default function MyListings() {
   const [, setLocation] = useLocation();

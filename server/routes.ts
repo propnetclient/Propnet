@@ -177,32 +177,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
+      // Debug: Log the incoming request body
+      console.log("Request body:", req.body);
+      console.log("Request files:", req.files);
+
       // Parse form data from multipart upload
-      let propertyData;
+      let propertyData = req.body;
+
+      // Parse scope of work if it's a JSON string
+      if (propertyData.scopeOfWork && typeof propertyData.scopeOfWork === 'string') {
+        try {
+          propertyData.scopeOfWork = JSON.parse(propertyData.scopeOfWork);
+        } catch (e) {
+          propertyData.scopeOfWork = [];
+        }
+      }
+
+      // Clean up empty strings and convert them to undefined for optional fields
+      Object.keys(propertyData).forEach(key => {
+        if (propertyData[key] === '') {
+          delete propertyData[key];
+        }
+      });
+
+      console.log("Processed property data:", propertyData);
+
+      // Validate the parsed data with detailed error logging
       try {
-        // Handle both JSON string data and direct form fields
-        if (req.body.data) {
-          propertyData = JSON.parse(req.body.data);
-        } else {
-          propertyData = req.body;
-        }
-
-        // Parse scope of work if it's a JSON string
-        if (propertyData.scopeOfWork && typeof propertyData.scopeOfWork === 'string') {
-          try {
-            propertyData.scopeOfWork = JSON.parse(propertyData.scopeOfWork);
-          } catch (e) {
-            propertyData.scopeOfWork = [];
-          }
-        }
-
-        // Validate the parsed data
         propertyData = insertPropertySchema.parse(propertyData);
-      } catch (parseError) {
-        console.error("Property data parsing error:", parseError);
+      } catch (parseError: any) {
+        console.error("Validation error details:", parseError.errors);
+        const missingFields = parseError.errors.map((err: any) => err.path.join('.')).join(', ');
         return res.status(400).json({ 
           message: "Invalid property data", 
-          details: parseError instanceof Error ? parseError.message : "Validation failed" 
+          details: `Missing required fields: ${missingFields}`,
+          errors: parseError.errors
         });
       }
       
