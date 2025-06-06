@@ -8,12 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, Building2, MapPin, Clock, Shield, Eye, EyeOff, Phone, User, FileText, CheckCircle, XCircle, AlertCircle, Download } from "lucide-react";
+import { ArrowLeft, Plus, Building2, MapPin, Clock, Shield, Eye, EyeOff, Phone, User, FileText, CheckCircle, XCircle, AlertCircle, Download, Edit, Trash2, MoreVertical } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -37,6 +39,8 @@ export default function MyListings() {
   }
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<any>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [agreementFiles, setAgreementFiles] = useState<File[]>([]);
   const [showOwnerPhone, setShowOwnerPhone] = useState<{[key: number]: boolean}>({});
@@ -95,6 +99,73 @@ export default function MyListings() {
         errorMessage = "You need to be logged in to create a property listing.";
       } else if (error?.response?.data?.details) {
         errorMessage = error.response.data.details;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePropertyMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: FormData }) => {
+      const response = await apiRequest("PUT", `/api/properties/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      setIsEditDialogOpen(false);
+      setEditingProperty(null);
+      form.reset();
+      setSelectedFiles([]);
+      setAgreementFiles([]);
+      toast({
+        title: "Property Updated Successfully",
+        description: "Your property listing has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      let errorMessage = "Failed to update property listing. Please try again.";
+      
+      if (error?.response?.status === 401) {
+        errorMessage = "You need to be logged in to update a property listing.";
+      } else if (error?.response?.data?.details) {
+        errorMessage = error.response.data.details;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePropertyMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/properties/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      toast({
+        title: "Property Deleted",
+        description: "Your property listing has been deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      let errorMessage = "Failed to delete property listing. Please try again.";
+      
+      if (error?.response?.status === 401) {
+        errorMessage = "You need to be logged in to delete a property listing.";
       } else if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
