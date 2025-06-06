@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      let agreementDocument = null;
+      let agreementDocument: string | undefined = undefined;
       if (files && files.agreementDocument && files.agreementDocument[0]) {
         agreementDocument = files.agreementDocument[0].filename;
       }

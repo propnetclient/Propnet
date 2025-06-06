@@ -32,9 +32,15 @@ const propertyFormSchema = insertPropertySchema.extend({
 
 export default function MyListings() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Redirect to login if not authenticated
+  if (!authLoading && !user) {
+    setLocation("/");
+    return null;
+  }
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -84,22 +90,44 @@ export default function MyListings() {
         description: "Owner approval request has been sent. Property will go live after approval.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      let errorMessage = "Failed to create property listing. Please try again.";
+      
+      if (error?.response?.status === 401) {
+        errorMessage = "You need to be logged in to create a property listing.";
+      } else if (error?.response?.data?.details) {
+        errorMessage = error.response.data.details;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create property listing. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
   const handleSubmit = (values: z.infer<typeof propertyFormSchema>) => {
+    // Check for form validation errors
+    const errors = form.formState.errors;
+    if (Object.keys(errors).length > 0) {
+      const errorFields = Object.keys(errors).join(', ');
+      toast({
+        title: "Form Validation Error",
+        description: `Please fix the following fields: ${errorFields}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formData = new FormData();
     
     Object.entries(values).forEach(([key, value]) => {
       if (key === 'scopeOfWork' && Array.isArray(value)) {
         formData.append(key, JSON.stringify(value));
-      } else if (value !== undefined && value !== null) {
+      } else if (value !== undefined && value !== null && value !== '') {
         formData.append(key, value.toString());
       }
     });
