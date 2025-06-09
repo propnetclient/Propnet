@@ -30,22 +30,22 @@ export async function extractPropertiesFromText(text: string): Promise<Extracted
     const prompt = `
 You are a real estate data extraction expert. Analyze the following text and extract individual property listings. Each property should be returned as a separate object with structured data.
 
-CRITICAL: Provide ALL required fields for each property. Use reasonable defaults if information is missing.
+CRITICAL: Only extract information that is explicitly mentioned in the text. DO NOT generate fake or placeholder data for missing fields.
 
 Extract these fields for each property:
-- title: Brief descriptive name (REQUIRED - create from available info like "3.5 BHK Apartment in Waterlily")
-- propertyType: "Apartment", "Villa", "Commercial", or "Plot" (REQUIRED)
-- transactionType: "sale" or "rent" (REQUIRED)
-- price: Numeric value as string (REQUIRED - extract just the number)
-- rentFrequency: "monthly" or "yearly" (only if rent)
-- size: Numeric area value as string (REQUIRED - use available info or "1000")
-- sizeUnit: "sq.ft", "sq.m", "sq.yd", or "acre" (REQUIRED - default to "sq.ft")
-- location: General area/locality (REQUIRED - use best available info)
-- fullAddress: Complete address (REQUIRED - use location if not specified)
-- listingType: "shared" or "exclusive" (REQUIRED - default to "shared")
-- ownerName: Property owner's name (REQUIRED - use "Property Owner" if not specified)
-- ownerPhone: Phone number (REQUIRED - use "9999999999" if not specified)
-- commissionTerms: Commission details (REQUIRED - use "Standard terms apply" if not mentioned)
+- title: Brief descriptive name (only if clear from context)
+- propertyType: "Apartment", "Villa", "Commercial", or "Plot" (only if mentioned)
+- transactionType: "sale" or "rent" (only if mentioned)
+- price: Numeric value as string (only if mentioned - extract just the number)
+- rentFrequency: "monthly" or "yearly" (only if rent and frequency is mentioned)
+- size: Numeric area value as string (only if mentioned)
+- sizeUnit: "sq.ft", "sq.m", "sq.yd", or "acre" (only if mentioned)
+- location: General area/locality (only if mentioned)
+- fullAddress: Complete address (only if mentioned)
+- listingType: "shared" or "exclusive" (only if mentioned)
+- ownerName: Property owner's name (only if explicitly mentioned)
+- ownerPhone: Phone number (only if explicitly mentioned)
+- commissionTerms: Commission details (only if mentioned)
 - bhk: Number of bedrooms (as integer)
 - flatNumber: Unit/flat number if mentioned
 - floorNumber: Floor number if mentioned
