@@ -1054,20 +1054,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const propertyData = properties[i];
           
-          // Set comprehensive default values for missing fields
+          // Validate required fields are present
+          const missingFields = [];
+          if (!propertyData.title) missingFields.push('title');
+          if (!propertyData.propertyType) missingFields.push('propertyType');
+          if (!propertyData.transactionType) missingFields.push('transactionType');
+          if (!propertyData.price) missingFields.push('price');
+          if (!propertyData.size) missingFields.push('size');
+          if (!propertyData.location) missingFields.push('location');
+          if (!propertyData.ownerName) missingFields.push('ownerName');
+          if (!propertyData.ownerPhone) missingFields.push('ownerPhone');
+
+          if (missingFields.length > 0) {
+            errors.push({
+              index: i,
+              error: `Missing required fields: ${missingFields.join(', ')}`,
+              property: propertyData.title || `Property ${i + 1}`,
+              missingFields
+            });
+            continue;
+          }
+
+          // Set only minimal default values for truly optional fields
           const processedData = {
-            title: propertyData.title || `Property in ${propertyData.location || 'Prime Location'}`,
-            propertyType: propertyData.propertyType || "Apartment",
-            transactionType: propertyData.transactionType || "rent", 
-            price: propertyData.price || "50000",
-            size: propertyData.size || "1000",
+            ...propertyData,
             sizeUnit: propertyData.sizeUnit || "sq.ft",
-            location: propertyData.location || "Prime Location",
-            fullAddress: propertyData.fullAddress || propertyData.location || "Prime Location",
+            fullAddress: propertyData.fullAddress || propertyData.location,
             listingType: propertyData.listingType || "shared",
-            ownerName: propertyData.ownerName || "Property Owner",
-            ownerPhone: propertyData.ownerPhone || "9999999999",
-            commissionTerms: propertyData.commissionTerms || "Standard terms apply",
+            commissionTerms: propertyData.commissionTerms || "Contact for details",
             rentFrequency: propertyData.rentFrequency || (propertyData.transactionType === "rent" ? "monthly" : undefined),
             bhk: propertyData.bhk || null,
             flatNumber: propertyData.flatNumber || "",

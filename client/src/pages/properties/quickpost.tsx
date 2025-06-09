@@ -142,22 +142,40 @@ export default function QuickPost() {
       queryClient.invalidateQueries({ queryKey: ["/api/my-properties"] });
       queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
       
-      toast({
-        title: "Properties Created",
-        description: `Successfully created ${data.created} out of ${data.total} properties.`,
-      });
-      
       if (data.errors && data.errors.length > 0) {
         toast({
-          title: "Some Properties Failed",
-          description: `${data.errors.length} properties could not be created due to missing information.`,
+          title: "Incomplete Properties Found",
+          description: `${data.errors.length} properties need manual completion. Please fill in missing required fields and try again.`,
           variant: "destructive",
         });
+        
+        // Log detailed errors for debugging
+        console.log("Property creation errors:", data.errors);
+        
+        // Don't clear properties that failed - let user edit them
+        const failedIndices = data.errors.map((e: any) => e.index);
+        const successfulProperties = extractedProperties.filter((_, index) => !failedIndices.includes(index));
+        
+        if (data.created > 0) {
+          toast({
+            title: "Partial Success",
+            description: `${data.created} properties created successfully.`,
+          });
+        }
+        
+        // Keep only failed properties for user to edit
+        const failedProperties = extractedProperties.filter((_, index) => failedIndices.includes(index));
+        setExtractedProperties(failedProperties);
+      } else {
+        toast({
+          title: "All Properties Created",
+          description: `Successfully created ${data.created} properties.`,
+        });
+        
+        // Clear everything on complete success
+        setInputText("");
+        setExtractedProperties([]);
       }
-      
-      // Clear the form and extracted properties
-      setInputText("");
-      setExtractedProperties([]);
     },
     onError: (error: any) => {
       toast({
@@ -273,6 +291,17 @@ export default function QuickPost() {
     );
   };
 
+  const getValidationStatus = (property: ExtractedProperty) => {
+    const requiredFields = ['title', 'propertyType', 'transactionType', 'price', 'size', 'location', 'ownerName', 'ownerPhone'];
+    const missingFields = requiredFields.filter(field => !property[field as keyof ExtractedProperty]);
+    
+    return {
+      isValid: missingFields.length === 0,
+      missingFields,
+      missingCount: missingFields.length
+    };
+  };
+
   return (
     <div className="flex flex-col min-h-screen pb-20">
       {/* Header */}
@@ -371,21 +400,40 @@ Owner: Priya Sharma - 9123456789"
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {extractedProperties.map((property, index) => (
-                <Card key={index} className="border border-neutral-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-neutral-900 mb-1">
-                          {property.title || `Property ${index + 1}`}
-                        </h3>
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Badge variant="outline">{property.propertyType}</Badge>
-                          <Badge variant="outline">{property.transactionType}</Badge>
-                          {property.bhk && <Badge variant="outline">{property.bhk} BHK</Badge>}
-                          {getConfidenceBadge(property.confidence)}
+              {extractedProperties.map((property, index) => {
+                const validationStatus = getValidationStatus(property);
+                return (
+                  <Card key={index} className={`border ${validationStatus.isValid ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="font-semibold text-neutral-900">
+                              {property.title || `Property ${index + 1}`}
+                            </h3>
+                            {!validationStatus.isValid && (
+                              <Badge variant="destructive" className="text-xs">
+                                {validationStatus.missingCount} fields missing
+                              </Badge>
+                            )}
+                            {validationStatus.isValid && (
+                              <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                                Ready to create
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Badge variant="outline">{property.propertyType || 'Not specified'}</Badge>
+                            <Badge variant="outline">{property.transactionType || 'Not specified'}</Badge>
+                            {property.bhk && <Badge variant="outline">{property.bhk} BHK</Badge>}
+                            {getConfidenceBadge(property.confidence)}
+                          </div>
+                          {!validationStatus.isValid && (
+                            <p className="text-xs text-red-600 mb-2">
+                              Missing: {validationStatus.missingFields.join(', ')}
+                            </p>
+                          )}
                         </div>
-                      </div>
                       
                       <div className="flex items-center space-x-1">
                         <Button variant="outline" size="sm" onClick={() => handleEdit(property)}>
@@ -423,7 +471,8 @@ Owner: Priya Sharma - 9123456789"
                     )}
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         )}
