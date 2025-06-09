@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { UserCircle, Plus, Search, Filter, X } from "lucide-react";
+import { UserCircle, Plus, Search, Filter, X, Sparkles } from "lucide-react";
 import EnhancedPropertyCard from "@/components/ui/enhanced-property-card";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -100,12 +100,23 @@ export default function PropertyFeed() {
                 {filteredProperties.length} listings available
               </p>
             </div>
-            <button 
-              className="p-2 text-neutral-400"
-              onClick={() => setLocation("/profile")}
-            >
-              <UserCircle size={28} />
-            </button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLocation("/quickpost")}
+                className="flex items-center space-x-1 text-primary border-primary hover:bg-primary/5"
+              >
+                <Sparkles size={16} />
+                <span className="hidden sm:inline">QuickPost</span>
+              </Button>
+              <button 
+                className="p-2 text-neutral-400"
+                onClick={() => setLocation("/profile")}
+              >
+                <UserCircle size={28} />
+              </button>
+            </div>
           </div>
           
           {/* Search and Filter Bar */}

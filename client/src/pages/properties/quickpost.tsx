@@ -41,7 +41,28 @@ interface ExtractedProperty {
   listingType?: string;
 }
 
-const propertyFormSchema = insertPropertySchema.partial();
+const propertyFormSchema = z.object({
+  title: z.string().optional(),
+  propertyType: z.string().optional(),
+  transactionType: z.enum(["sale", "rent"]).optional(),
+  price: z.string().optional(),
+  rentFrequency: z.enum(["monthly", "yearly"]).optional(),
+  size: z.string().optional(),
+  sizeUnit: z.string().optional(),
+  location: z.string().optional(),
+  fullAddress: z.string().optional(),
+  flatNumber: z.string().optional(),
+  floorNumber: z.string().optional(),
+  buildingSociety: z.string().optional(),
+  description: z.string().optional(),
+  bhk: z.number().optional(),
+  listingType: z.enum(["exclusive", "shared", "co-listing"]).optional(),
+  isPubliclyVisible: z.boolean().optional(),
+  ownerName: z.string().optional(),
+  ownerPhone: z.string().optional(),
+  commissionTerms: z.string().optional(),
+  scopeOfWork: z.array(z.string()).optional(),
+});
 
 export default function QuickPost() {
   const [, setLocation] = useLocation();
