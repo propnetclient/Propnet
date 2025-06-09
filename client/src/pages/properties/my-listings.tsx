@@ -1346,6 +1346,10 @@ export default function MyListings() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setLocation(`/property/${property.id}`)}>
+                          <Eye size={14} className="mr-2" />
+                          View Details
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEdit(property)}>
                           <Edit size={14} className="mr-2" />
                           Edit Property
