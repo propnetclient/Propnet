@@ -25,7 +25,7 @@ export interface ExtractedProperty {
 
 export async function extractPropertiesFromText(text: string): Promise<ExtractedProperty[]> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
 You are a real estate data extraction expert. Analyze the following text and extract individual property listings. Each property should be returned as a separate object with structured data.
@@ -80,7 +80,7 @@ ${text}
 
 export async function enhancePropertyDescription(property: ExtractedProperty): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
 Create a professional property description based on the following details:
