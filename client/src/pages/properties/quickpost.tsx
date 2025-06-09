@@ -461,23 +461,216 @@ Owner: Priya Sharma - 9123456789"
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-neutral-500">Price:</span>
-                        <span className="ml-2 font-medium">{property.price}</span>
+                    <div className="space-y-3">
+                      {/* Show existing fields */}
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-neutral-500">Price:</span>
+                          <span className="ml-2 font-medium">{property.price || 'Not specified'}</span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-500">Size:</span>
+                          <span className="ml-2">{property.size ? `${property.size} ${property.sizeUnit || 'sq.ft'}` : 'Not specified'}</span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-500">Location:</span>
+                          <span className="ml-2">{property.location || 'Not specified'}</span>
+                        </div>
+                        <div>
+                          <span className="text-neutral-500">BHK:</span>
+                          <span className="ml-2">{property.bhk || 'Not specified'}</span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-neutral-500">Size:</span>
-                        <span className="ml-2">{property.size} {property.sizeUnit}</span>
-                      </div>
-                      <div>
-                        <span className="text-neutral-500">Location:</span>
-                        <span className="ml-2">{property.location}</span>
-                      </div>
-                      <div>
-                        <span className="text-neutral-500">Owner:</span>
-                        <span className="ml-2">{property.ownerName}</span>
-                      </div>
+
+                      {/* Show missing required fields as input fields */}
+                      {validationStatus.missingFields.length > 0 && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-xs text-red-600 font-medium mb-2">
+                            Please fill the missing required fields:
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {validationStatus.missingFields.includes('title') && (
+                              <div className="col-span-2">
+                                <label className="text-xs text-neutral-600">Property Title</label>
+                                <Input
+                                  placeholder="e.g., Beautiful 2 BHK Apartment"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, title: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('propertyType') && (
+                              <div>
+                                <label className="text-xs text-neutral-600">Property Type</label>
+                                <Select onValueChange={(value) => {
+                                  const updatedProperty = { ...property, propertyType: value };
+                                  const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                  setExtractedProperties(updatedProperties);
+                                }}>
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue placeholder="Select type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Apartment">Apartment</SelectItem>
+                                    <SelectItem value="Villa">Villa</SelectItem>
+                                    <SelectItem value="Commercial">Commercial</SelectItem>
+                                    <SelectItem value="Plot">Plot</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('transactionType') && (
+                              <div>
+                                <label className="text-xs text-neutral-600">Transaction Type</label>
+                                <Select onValueChange={(value) => {
+                                  const updatedProperty = { ...property, transactionType: value };
+                                  const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                  setExtractedProperties(updatedProperties);
+                                }}>
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue placeholder="Select transaction" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="sale">Sale</SelectItem>
+                                    <SelectItem value="rent">Rent</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('price') && (
+                              <div>
+                                <label className="text-xs text-neutral-600">Price</label>
+                                <Input
+                                  placeholder="e.g., 50000"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, price: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('size') && (
+                              <div>
+                                <label className="text-xs text-neutral-600">Size</label>
+                                <Input
+                                  placeholder="e.g., 1200"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, size: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('location') && (
+                              <div className="col-span-2">
+                                <label className="text-xs text-neutral-600">Location</label>
+                                <Input
+                                  placeholder="e.g., Bandra West, Mumbai"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, location: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('bhk') && (
+                              <div>
+                                <label className="text-xs text-neutral-600">BHK</label>
+                                <Input
+                                  type="number"
+                                  placeholder="e.g., 2"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, bhk: parseInt(e.target.value) || undefined };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('flatNumber') && (
+                              <div>
+                                <label className="text-xs text-neutral-600">Flat/Unit Number</label>
+                                <Input
+                                  placeholder="e.g., A-101"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, flatNumber: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('buildingSociety') && (
+                              <div className="col-span-2">
+                                <label className="text-xs text-neutral-600">Building/Society Name</label>
+                                <Input
+                                  placeholder="e.g., Green Valley Apartments"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, buildingSociety: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('ownerName') && (
+                              <div>
+                                <label className="text-xs text-neutral-600">Owner Name</label>
+                                <Input
+                                  placeholder="e.g., John Doe"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, ownerName: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('ownerPhone') && (
+                              <div>
+                                <label className="text-xs text-neutral-600">Owner Phone</label>
+                                <Input
+                                  placeholder="e.g., 9999999999"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, ownerPhone: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {validationStatus.missingFields.includes('commissionTerms') && (
+                              <div className="col-span-2">
+                                <label className="text-xs text-neutral-600">Commission Terms</label>
+                                <Input
+                                  placeholder="e.g., 2% of property value"
+                                  className="h-8 text-xs"
+                                  onChange={(e) => {
+                                    const updatedProperty = { ...property, commissionTerms: e.target.value };
+                                    const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
+                                    setExtractedProperties(updatedProperties);
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {property.description && (
