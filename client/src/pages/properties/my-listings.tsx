@@ -823,7 +823,7 @@ export default function MyListings() {
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                  {/* Same form content as create dialog but with pre-filled values */}
+                  {/* Property Details - Same as create form */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base">Property Details</CardTitle>
@@ -911,6 +911,91 @@ export default function MyListings() {
                           )}
                         />
 
+                        {form.watch("transactionType") === "rent" && (
+                          <FormField
+                            control={form.control}
+                            name="rentFrequency"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Rent Frequency</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select frequency" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="monthly">Monthly</SelectItem>
+                                    <SelectItem value="yearly">Yearly</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="size"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Size</FormLabel>
+                              <FormControl>
+                                <Input placeholder="1200" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="sizeUnit"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Unit</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Unit" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="sq.ft">sq.ft</SelectItem>
+                                  <SelectItem value="sq.m">sq.m</SelectItem>
+                                  <SelectItem value="sq.yard">sq.yard</SelectItem>
+                                  <SelectItem value="acre">acre</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="bhk"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>BHK</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  placeholder="2" 
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
                           name="location"
@@ -919,6 +1004,64 @@ export default function MyListings() {
                               <FormLabel>Location</FormLabel>
                               <FormControl>
                                 <Input placeholder="Bandra West, Mumbai" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="fullAddress"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Full Address</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Complete address" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="flatNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Flat/Unit Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="A-101" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="floorNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Floor Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="5th Floor" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="buildingSociety"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Building/Society</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Green Valley" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -934,15 +1077,194 @@ export default function MyListings() {
                             <FormLabel>Description (Optional)</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Describe the property features, amenities, etc." 
-                                rows={3}
-                                {...field} 
+                                placeholder="Property details, amenities, nearby facilities..."
+                                className="resize-none"
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
+                      <div>
+                        <label className="text-sm font-medium">Property Photos (Up to 10)</label>
+                        <FileUpload 
+                          onFilesChange={setSelectedFiles}
+                          maxFiles={10}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Listing Type */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Listing Type</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <FormField
+                        control={form.control}
+                        name="listingType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="exclusive-edit"
+                                    value="exclusive"
+                                    checked={field.value === "exclusive"}
+                                    onChange={() => field.onChange("exclusive")}
+                                  />
+                                  <label htmlFor="exclusive-edit" className="text-sm font-medium">
+                                    Exclusive - Only I can list and share it
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="colisting-edit"
+                                    value="co-listing"
+                                    checked={field.value === "co-listing"}
+                                    onChange={() => field.onChange("co-listing")}
+                                  />
+                                  <label htmlFor="colisting-edit" className="text-sm font-medium">
+                                    Allow Co-Listing - Multiple agents can list with permission
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="shared-edit"
+                                    value="shared"
+                                    checked={field.value === "shared"}
+                                    onChange={() => field.onChange("shared")}
+                                  />
+                                  <label htmlFor="shared-edit" className="text-sm font-medium">
+                                    Shared Within Network - Platform-controlled visibility
+                                  </label>
+                                </div>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="isPubliclyVisible"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 mt-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                Allow this property to appear in public agent feed and search?
+                              </FormLabel>
+                              <p className="text-xs text-muted-foreground">
+                                Enable to make this listing visible in general search and feed. Disable for private listing sharing only.
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Owner Details */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center">
+                        <Shield size={16} className="mr-2" />
+                        Owner Details (Encrypted & Secure)
+                      </CardTitle>
+                      <p className="text-xs text-neutral-600">
+                        Owner will receive a consent request with clear terms
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="ownerName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Owner Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Property owner's full name" {...field} />
+                            </FormControl>
+                            <p className="text-xs text-neutral-500">This information is encrypted and never shared publicly</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="ownerPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Owner Phone Number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="+91 9876543210" {...field} />
+                            </FormControl>
+                            <p className="text-xs text-neutral-500">Required for verification and trust</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="commissionTerms"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Commission Terms</FormLabel>
+                            <FormControl>
+                              <Input placeholder="2% of sale value" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div>
+                        <label className="text-sm font-medium">Scope of Work</label>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {scopeOfWorkOptions.map((option) => (
+                            <div key={option} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`${option}-edit`}
+                                checked={form.watch('scopeOfWork')?.includes(option)}
+                                onCheckedChange={(checked) => {
+                                  const current = form.getValues('scopeOfWork') || [];
+                                  if (checked) {
+                                    form.setValue('scopeOfWork', [...current, option]);
+                                  } else {
+                                    form.setValue('scopeOfWork', current.filter(item => item !== option));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`${option}-edit`} className="text-xs">{option}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium">Agreement Document (Optional)</label>
+                        <FileUpload 
+                          onFilesChange={setAgreementFiles}
+                          maxFiles={1}
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Upload agent agreement or authorization letter</p>
+                      </div>
                     </CardContent>
                   </Card>
 
