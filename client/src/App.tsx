@@ -13,6 +13,7 @@ import AddProperty from "@/pages/properties/add-property";
 import BulkUpload from "@/pages/properties/bulk-upload";
 import PropertyDetail from "@/pages/properties/property-detail";
 import MyListings from "@/pages/properties/my-listings";
+import QuickPost from "@/pages/properties/quickpost";
 import OwnerConsent from "@/pages/properties/owner-consent";
 import Requirements from "@/pages/requirements/requirements";
 import Profile from "@/pages/profile/profile";
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/search" component={PropertySearch} />
       <Route path="/add-property" component={AddProperty} />
       <Route path="/bulk-upload" component={BulkUpload} />
+      <Route path="/quickpost" component={QuickPost} />
       <Route path="/property/:id" component={PropertyDetail} />
       <Route path="/my-listings" component={MyListings} />
       <Route path="/consent/:consentId" component={OwnerConsent} />

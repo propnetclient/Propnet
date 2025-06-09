@@ -8,6 +8,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import PDFDocument from "pdfkit";
+import { extractPropertiesFromText, enhancePropertyDescription } from "./gemini";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -997,6 +998,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("PDF generation error:", error);
       res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
+  // QuickPost AI extraction endpoint
+  app.post("/api/quickpost/extract", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { text } = req.body;
+      if (!text || typeof text !== 'string' || text.trim().length === 0) {
+        return res.status(400).json({ message: "Text content is required" });
+      }
+
+      console.log("Extracting properties from text:", text.substring(0, 200) + "...");
+      
+      const extractedProperties = await extractPropertiesFromText(text);
+      
+      console.log(`Extracted ${extractedProperties.length} properties`);
+      
+      res.json({
+        success: true,
+        properties: extractedProperties,
+        count: extractedProperties.length
+      });
+    } catch (error) {
+      console.error("QuickPost extraction error:", error);
+      res.status(500).json({ 
+        message: "Failed to extract properties from text",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // QuickPost bulk create endpoint
+  app.post("/api/quickpost/create", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { properties } = req.body;
+      if (!Array.isArray(properties) || properties.length === 0) {
+        return res.status(400).json({ message: "Properties array is required" });
+      }
+
+      const createdProperties = [];
+      const errors = [];
+
+      for (let i = 0; i < properties.length; i++) {
+        try {
+          const propertyData = properties[i];
+          
+          // Validate required fields
+          if (!propertyData.title || !propertyData.propertyType || !propertyData.transactionType || 
+              !propertyData.price || !propertyData.location || !propertyData.ownerName || 
+              !propertyData.ownerPhone || !propertyData.commissionTerms) {
+            errors.push({
+              index: i,
+              error: "Missing required fields",
+              property: propertyData.title || `Property ${i + 1}`
+            });
+            continue;
+          }
+
+          // Set default values
+          const processedData = {
+            ...propertyData,
+            ownerId: userId,
+            size: propertyData.size || "1000",
+            sizeUnit: propertyData.sizeUnit || "sq.ft",
+            fullAddress: propertyData.fullAddress || propertyData.location,
+            listingType: propertyData.listingType || "shared",
+            isPubliclyVisible: propertyData.listingType !== "exclusive",
+            scopeOfWork: [],
+            photos: [],
+            isActive: true,
+            consentId: `quickpost_${Date.now()}_${i}`,
+            ownerApprovalStatus: propertyData.listingType === "exclusive" ? "pending" : "approved"
+          };
+
+          const property = await storage.createProperty(processedData);
+          createdProperties.push(property);
+          
+        } catch (propertyError) {
+          console.error(`Error creating property ${i}:`, propertyError);
+          errors.push({
+            index: i,
+            error: propertyError instanceof Error ? propertyError.message : "Creation failed",
+            property: properties[i].title || `Property ${i + 1}`
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        created: createdProperties.length,
+        total: properties.length,
+        properties: createdProperties,
+        errors: errors.length > 0 ? errors : undefined
+      });
+      
+    } catch (error) {
+      console.error("QuickPost creation error:", error);
+      res.status(500).json({ message: "Failed to create properties" });
     }
   });
 
