@@ -279,7 +279,7 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation(`/properties/${property.id}`)}
+            onClick={() => setLocation(`/property/${property.id}`)}
             className="flex-1 text-xs"
           >
             <Eye size={12} className="mr-1" />
