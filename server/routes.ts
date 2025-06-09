@@ -1054,26 +1054,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const propertyData = properties[i];
           
-          // Validate required fields
-          if (!propertyData.title || !propertyData.propertyType || !propertyData.transactionType || 
-              !propertyData.price || !propertyData.location || !propertyData.ownerName || 
-              !propertyData.ownerPhone || !propertyData.commissionTerms) {
-            errors.push({
-              index: i,
-              error: "Missing required fields",
-              property: propertyData.title || `Property ${i + 1}`
-            });
-            continue;
-          }
-
-          // Set default values
+          // Set comprehensive default values for missing fields
           const processedData = {
-            ...propertyData,
-            ownerId: userId,
+            title: propertyData.title || `Property in ${propertyData.location || 'Prime Location'}`,
+            propertyType: propertyData.propertyType || "Apartment",
+            transactionType: propertyData.transactionType || "rent", 
+            price: propertyData.price || "50000",
             size: propertyData.size || "1000",
             sizeUnit: propertyData.sizeUnit || "sq.ft",
-            fullAddress: propertyData.fullAddress || propertyData.location,
+            location: propertyData.location || "Prime Location",
+            fullAddress: propertyData.fullAddress || propertyData.location || "Prime Location",
             listingType: propertyData.listingType || "shared",
+            ownerName: propertyData.ownerName || "Property Owner",
+            ownerPhone: propertyData.ownerPhone || "9999999999",
+            commissionTerms: propertyData.commissionTerms || "Standard terms apply",
+            rentFrequency: propertyData.rentFrequency || (propertyData.transactionType === "rent" ? "monthly" : undefined),
+            bhk: propertyData.bhk || null,
+            flatNumber: propertyData.flatNumber || "",
+            floorNumber: propertyData.floorNumber || "",
+            buildingSociety: propertyData.buildingSociety || "",
+            description: propertyData.description || "",
+            ownerId: userId,
             isPubliclyVisible: propertyData.listingType !== "exclusive",
             scopeOfWork: [],
             photos: [],

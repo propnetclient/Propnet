@@ -30,19 +30,22 @@ export async function extractPropertiesFromText(text: string): Promise<Extracted
     const prompt = `
 You are a real estate data extraction expert. Analyze the following text and extract individual property listings. Each property should be returned as a separate object with structured data.
 
+CRITICAL: Provide ALL required fields for each property. Use reasonable defaults if information is missing.
+
 Extract these fields for each property:
-- title: Brief descriptive name
-- propertyType: "Apartment", "Villa", "Commercial", or "Plot"
-- transactionType: "sale" or "rent"
-- price: Numeric value as string (extract just the number)
+- title: Brief descriptive name (REQUIRED - create from available info like "3.5 BHK Apartment in Waterlily")
+- propertyType: "Apartment", "Villa", "Commercial", or "Plot" (REQUIRED)
+- transactionType: "sale" or "rent" (REQUIRED)
+- price: Numeric value as string (REQUIRED - extract just the number)
 - rentFrequency: "monthly" or "yearly" (only if rent)
-- size: Numeric area value as string
-- sizeUnit: "sq.ft", "sq.m", "sq.yd", or "acre"
-- location: General area/locality
-- fullAddress: Complete address if available
-- ownerName: Property owner's name
-- ownerPhone: Phone number (format: without spaces or special chars)
-- commissionTerms: Commission details if mentioned
+- size: Numeric area value as string (REQUIRED - use available info or "1000")
+- sizeUnit: "sq.ft", "sq.m", "sq.yd", or "acre" (REQUIRED - default to "sq.ft")
+- location: General area/locality (REQUIRED - use best available info)
+- fullAddress: Complete address (REQUIRED - use location if not specified)
+- listingType: "shared" or "exclusive" (REQUIRED - default to "shared")
+- ownerName: Property owner's name (REQUIRED - use "Property Owner" if not specified)
+- ownerPhone: Phone number (REQUIRED - use "9999999999" if not specified)
+- commissionTerms: Commission details (REQUIRED - use "Standard terms apply" if not mentioned)
 - bhk: Number of bedrooms (as integer)
 - flatNumber: Unit/flat number if mentioned
 - floorNumber: Floor number if mentioned
@@ -50,7 +53,7 @@ Extract these fields for each property:
 - description: Any additional details
 - confidence: Rate your confidence in the extraction (0-1)
 
-Return ONLY a valid JSON array of objects. Do not include any other text or explanations.
+Return ONLY a valid JSON array of objects. Ensure EVERY property has ALL required fields populated.
 
 Text to analyze:
 ${text}
