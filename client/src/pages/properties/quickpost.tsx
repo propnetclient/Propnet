@@ -292,8 +292,16 @@ export default function QuickPost() {
   };
 
   const getValidationStatus = (property: ExtractedProperty) => {
-    const requiredFields = ['title', 'propertyType', 'transactionType', 'price', 'size', 'location', 'ownerName', 'ownerPhone'];
+    const requiredFields = ['title', 'propertyType', 'transactionType', 'price', 'size', 'location', 'bhk', 'flatNumber', 'buildingSociety'];
     const missingFields = requiredFields.filter(field => !property[field as keyof ExtractedProperty]);
+    
+    // For exclusive and co-listing types, also check owner details
+    const listingType = property.listingType || "shared";
+    if (listingType === "exclusive" || listingType === "co-listing") {
+      if (!property.ownerName) missingFields.push('ownerName');
+      if (!property.ownerPhone) missingFields.push('ownerPhone');
+      if (!property.commissionTerms) missingFields.push('commissionTerms');
+    }
     
     return {
       isValid: missingFields.length === 0,

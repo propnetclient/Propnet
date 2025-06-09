@@ -147,7 +147,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
 });
 
 export const insertPropertySchema = z.object({
-  // Required fields
+  // Always required fields
   title: z.string().min(1, "Property title is required"),
   propertyType: z.string().min(1, "Property type is required"),
   transactionType: z.string().min(1, "Transaction type is required"),
@@ -157,18 +157,20 @@ export const insertPropertySchema = z.object({
   location: z.string().min(1, "Location is required"),
   fullAddress: z.string().min(1, "Full address is required"),
   listingType: z.string().min(1, "Listing type is required"),
-  ownerName: z.string().min(1, "Owner name is required"),
-  ownerPhone: z.string().min(10, "Valid owner phone is required"),
+  bhk: z.number().min(1, "BHK is required"),
+  flatNumber: z.string().min(1, "Flat/Unit number is required"),
+  buildingSociety: z.string().min(1, "Building/Society name is required"),
   
-  // Optional fields
-  rentFrequency: z.string().optional(),
-  flatNumber: z.string().optional(),
-  floorNumber: z.string().optional(),
-  buildingSociety: z.string().optional(),
-  description: z.string().optional(),
-  bhk: z.number().optional(),
-  isPubliclyVisible: z.boolean().optional().default(false),
+  // Optional fields (only required for exclusive/co-listing)
+  ownerName: z.string().optional(),
+  ownerPhone: z.string().optional(),
   commissionTerms: z.string().optional(),
+  
+  // Other optional fields
+  rentFrequency: z.string().optional(),
+  floorNumber: z.string().optional(),
+  description: z.string().optional(),
+  isPubliclyVisible: z.boolean().optional().default(false),
   scopeOfWork: z.array(z.string()).optional().default([]),
   photos: z.array(z.string()).optional().default([]),
   agreementDocument: z.string().optional(),
@@ -176,6 +178,15 @@ export const insertPropertySchema = z.object({
   consentId: z.string().optional(),
   approvalTimestamp: z.date().optional(),
   isActive: z.boolean().optional().default(true),
+}).refine((data) => {
+  // For exclusive and co-listing types, require owner details and commission terms
+  if (data.listingType === "exclusive" || data.listingType === "co-listing") {
+    return data.ownerName && data.ownerPhone && data.commissionTerms;
+  }
+  return true;
+}, {
+  message: "Owner name, phone, and commission terms are required for exclusive/co-listing properties",
+  path: ["ownerName"]
 });
 
 export const insertCoListingRequestSchema = createInsertSchema(coListingRequests).omit({

@@ -1062,8 +1062,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!propertyData.price) missingFields.push('price');
           if (!propertyData.size) missingFields.push('size');
           if (!propertyData.location) missingFields.push('location');
-          if (!propertyData.ownerName) missingFields.push('ownerName');
-          if (!propertyData.ownerPhone) missingFields.push('ownerPhone');
+          if (!propertyData.bhk) missingFields.push('bhk');
+          if (!propertyData.flatNumber) missingFields.push('flatNumber');
+          if (!propertyData.buildingSociety) missingFields.push('buildingSociety');
+
+          // For exclusive and co-listing types, also require owner details
+          const listingType = propertyData.listingType || "shared";
+          if (listingType === "exclusive" || listingType === "co-listing") {
+            if (!propertyData.ownerName) missingFields.push('ownerName');
+            if (!propertyData.ownerPhone) missingFields.push('ownerPhone');
+            if (!propertyData.commissionTerms) missingFields.push('commissionTerms');
+          }
 
           if (missingFields.length > 0) {
             errors.push({

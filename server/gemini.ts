@@ -43,13 +43,13 @@ Extract these fields for each property:
 - location: General area/locality (only if mentioned)
 - fullAddress: Complete address (only if mentioned)
 - listingType: "shared" or "exclusive" (only if mentioned)
+- bhk: Number of bedrooms (as integer - required field)
+- flatNumber: Unit/flat number (required field - extract if mentioned)
+- buildingSociety: Building or society name (required field - extract if mentioned)
+- floorNumber: Floor number if mentioned
 - ownerName: Property owner's name (only if explicitly mentioned)
 - ownerPhone: Phone number (only if explicitly mentioned)
 - commissionTerms: Commission details (only if mentioned)
-- bhk: Number of bedrooms (as integer)
-- flatNumber: Unit/flat number if mentioned
-- floorNumber: Floor number if mentioned
-- buildingSociety: Building or society name
 - description: Any additional details
 - confidence: Rate your confidence in the extraction (0-1)
 
