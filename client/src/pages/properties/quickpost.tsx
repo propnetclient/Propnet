@@ -42,26 +42,34 @@ interface ExtractedProperty {
 }
 
 const propertyFormSchema = z.object({
-  title: z.string().optional(),
-  propertyType: z.string().optional(),
-  transactionType: z.enum(["sale", "rent"]).optional(),
-  price: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
+  propertyType: z.string().min(1, "Property type is required"),
+  transactionType: z.enum(["sale", "rent"]),
+  price: z.string().min(1, "Price is required"),
   rentFrequency: z.enum(["monthly", "yearly"]).optional(),
-  size: z.string().optional(),
-  sizeUnit: z.string().optional(),
-  location: z.string().optional(),
-  fullAddress: z.string().optional(),
-  flatNumber: z.string().optional(),
+  size: z.string().min(1, "Size is required"),
+  sizeUnit: z.string().min(1, "Size unit is required"),
+  location: z.string().min(1, "Location is required"),
+  fullAddress: z.string().min(1, "Full address is required"),
+  bhk: z.number().min(1, "BHK is required"),
+  flatNumber: z.string().min(1, "Flat/Unit number is required"),
+  buildingSociety: z.string().min(1, "Building/Society name is required"),
   floorNumber: z.string().optional(),
-  buildingSociety: z.string().optional(),
   description: z.string().optional(),
-  bhk: z.number().optional(),
-  listingType: z.enum(["exclusive", "shared", "co-listing"]).optional(),
+  listingType: z.enum(["exclusive", "shared", "co-listing"]),
   isPubliclyVisible: z.boolean().optional(),
   ownerName: z.string().optional(),
   ownerPhone: z.string().optional(),
   commissionTerms: z.string().optional(),
   scopeOfWork: z.array(z.string()).optional(),
+}).refine((data) => {
+  if (data.listingType === "exclusive" || data.listingType === "co-listing") {
+    return data.ownerName && data.ownerPhone && data.commissionTerms;
+  }
+  return true;
+}, {
+  message: "Owner details and commission terms required for exclusive/co-listing",
+  path: ["ownerName"]
 });
 
 export default function QuickPost() {
@@ -570,6 +578,20 @@ Owner: Priya Sharma - 9123456789"
 
                   <FormField
                     control={form.control}
+                    name="size"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Size</FormLabel>
+                        <FormControl>
+                          <Input placeholder="1200" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="location"
                     render={({ field }) => (
                       <FormItem>
@@ -577,6 +599,104 @@ Owner: Priya Sharma - 9123456789"
                         <FormControl>
                           <Input placeholder="Bandra West, Mumbai" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="bhk"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>BHK</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="2" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="flatNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Flat/Unit Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="A-101" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="buildingSociety"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Building/Society Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Green Valley Apartments" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="floorNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Floor Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="5th Floor" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="fullAddress"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Full Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Complete address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="listingType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Listing Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select listing type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="shared">Shared</SelectItem>
+                            <SelectItem value="exclusive">Exclusive</SelectItem>
+                            <SelectItem value="co-listing">Co-listing</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
