@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,11 @@ export default function Dashboard() {
   const { user, isLoading: authLoading } = useAuth();
 
   // Redirect to login if not authenticated
-  if (!authLoading && !user) {
-    setLocation("/");
-    return null;
-  }
+  React.useEffect(() => {
+    if (!authLoading && !user) {
+      setLocation("/");
+    }
+  }, [authLoading, user, setLocation]);
 
   const { data: myProperties = [], isLoading: propertiesLoading } = useQuery({
     queryKey: ["/api/my-properties"],
@@ -163,7 +164,10 @@ export default function Dashboard() {
             <h1 className="text-xl font-bold text-neutral-900">Welcome back!</h1>
             <p className="text-sm text-neutral-600">{user?.name || user?.phone}</p>
           </div>
-          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+          <div 
+            className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors"
+            onClick={() => setLocation("/profile")}
+          >
             <span className="text-primary font-semibold">
               {user?.name?.charAt(0) || user?.phone?.charAt(0) || 'U'}
             </span>
