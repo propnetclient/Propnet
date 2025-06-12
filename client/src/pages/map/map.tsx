@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,23 +7,12 @@ import { MapPin, Navigation, Layers, Phone, Eye, Filter } from "lucide-react";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { formatPrice, getListingTypeBadgeColor } from "@/utils/formatters";
 
-// Fix for default markers in react-leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom icons for different property types
-const createCustomIcon = (color: string, text: string) => {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${text}</div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-  });
-};
+declare global {
+  interface Window {
+    google: any;
+    initMap: () => void;
+  }
+}
 
 interface Property {
   id: number;
@@ -50,6 +37,9 @@ export default function Map() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number; lng: number} | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
+  const [map, setMap] = useState<any>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const mapRef = useRef<HTMLDivElement>(null);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["/api/properties"],
@@ -71,6 +61,131 @@ export default function Map() {
       );
     }
   }, []);
+
+  useEffect(() => {
+    // Load Google Maps API
+    const loadGoogleMaps = () => {
+      if (window.google && window.google.maps) {
+        initializeMap();
+        return;
+      }
+
+      window.initMap = initializeMap;
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    };
+
+    const initializeMap = () => {
+      if (!mapRef.current) return;
+
+      const mapInstance = new window.google.maps.Map(mapRef.current, {
+        center: { lat: 23.0225, lng: 72.5714 }, // Ahmedabad
+        zoom: 11,
+        styles: [
+          {
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }]
+          }
+        ]
+      });
+
+      setMap(mapInstance);
+      setIsMapLoaded(true);
+    };
+
+    loadGoogleMaps();
+  }, []);
+
+  useEffect(() => {
+    if (map && isMapLoaded && Array.isArray(properties)) {
+      addMarkersToMap();
+    }
+  }, [map, isMapLoaded, properties, filterType]);
+
+  const addMarkersToMap = () => {
+    if (!map || !window.google) return;
+
+    const filteredProps = properties.filter((property: Property) => {
+      if (filterType === "all") return true;
+      return property.transactionType === filterType;
+    });
+
+    // Clear existing markers
+    // (In a real implementation, you'd track markers to clear them)
+
+    filteredProps.forEach((property: Property, index: number) => {
+      const coords = getPropertyCoordinates(property, index);
+      
+      const marker = new window.google.maps.Marker({
+        position: { lat: coords.lat, lng: coords.lng },
+        map: map,
+        title: property.title,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 15,
+          fillColor: property.transactionType === 'sale' ? '#3B82F6' : '#10B981',
+          fillOpacity: 1,
+          strokeWeight: 2,
+          strokeColor: '#FFFFFF',
+        },
+        label: {
+          text: property.bhk?.toString() || 'P',
+          color: 'white',
+          fontSize: '12px',
+          fontWeight: 'bold'
+        }
+      });
+
+      const infoWindow = new window.google.maps.InfoWindow({
+        content: `
+          <div style="min-width: 200px; padding: 8px;">
+            <div style="font-weight: bold; margin-bottom: 8px;">${property.title}</div>
+            <div style="color: #666; margin-bottom: 8px; font-size: 14px;">${property.location}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-weight: bold; color: #2563eb;">${formatPrice(property.price, property.transactionType)}</span>
+              <span style="background: ${property.transactionType === 'sale' ? '#dbeafe' : '#dcfce7'}; 
+                           color: ${property.transactionType === 'sale' ? '#1d4ed8' : '#166534'}; 
+                           padding: 2px 8px; border-radius: 4px; font-size: 12px;">${property.transactionType}</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button style="flex: 1; background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Contact</button>
+              <button style="flex: 1; background: #6b7280; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Details</button>
+            </div>
+          </div>
+        `
+      });
+
+      marker.addListener('click', () => {
+        setSelectedProperty(property);
+        infoWindow.open(map, marker);
+      });
+    });
+
+    // Add user location marker if available
+    if (userLocation) {
+      new window.google.maps.Marker({
+        position: { lat: userLocation.lat, lng: userLocation.lng },
+        map: map,
+        title: 'Your Location',
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: '#10B981',
+          fillOpacity: 1,
+          strokeWeight: 2,
+          strokeColor: '#FFFFFF',
+        },
+        label: {
+          text: '📍',
+          fontSize: '16px'
+        }
+      });
+    }
+  };
 
   // Generate coordinates for properties based on location
   const getPropertyCoordinates = (property: Property, index: number) => {
@@ -151,81 +266,23 @@ export default function Map() {
         </div>
       </div>
 
-      {/* Interactive Map */}
+      {/* Google Maps */}
       <div className="relative h-[60vh] bg-neutral-100">
-        <MapContainer
-          center={[23.0225, 72.5714]} // Ahmedabad coordinates
-          zoom={11}
-          className="h-full w-full z-0"
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          
-          {/* User Location Marker */}
-          {userLocation && (
-            <Marker
-              position={[userLocation.lat, userLocation.lng]}
-              icon={createCustomIcon('#10B981', '📍')}
-            >
-              <Popup>
-                <div className="text-center">
-                  <strong>Your Location</strong>
-                </div>
-              </Popup>
-            </Marker>
-          )}
-
-          {/* Property Markers */}
-          {filteredProperties.map((property: Property, index: number) => {
-            const coords = getPropertyCoordinates(property, index);
-            const markerColor = property.transactionType === 'sale' ? '#3B82F6' : '#10B981';
-            const markerText = property.bhk?.toString() || 'P';
-
-            return (
-              <Marker
-                key={property.id}
-                position={[coords.lat, coords.lng]}
-                icon={createCustomIcon(markerColor, markerText)}
-                eventHandlers={{
-                  click: () => setSelectedProperty(property),
-                }}
-              >
-                <Popup>
-                  <div className="min-w-[200px]">
-                    <div className="font-semibold text-gray-900 mb-2">
-                      {property.title}
-                    </div>
-                    <div className="text-sm text-gray-600 mb-2">
-                      {property.location}
-                    </div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-bold text-blue-600">
-                        {formatPrice(property.price, property.transactionType)}
-                      </span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        property.transactionType === 'sale' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {property.transactionType}
-                      </span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className="flex-1 bg-blue-500 text-white text-xs py-1 px-2 rounded hover:bg-blue-600">
-                        Contact
-                      </button>
-                      <button className="flex-1 bg-gray-500 text-white text-xs py-1 px-2 rounded hover:bg-gray-600">
-                        Details
-                      </button>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
-        </MapContainer>
+        <div 
+          ref={mapRef}
+          className="h-full w-full"
+          style={{ minHeight: '400px' }}
+        />
+        
+        {!isMapLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
+            <div className="text-center text-neutral-500">
+              <MapPin size={48} className="mx-auto mb-2 text-neutral-400" />
+              <p className="text-sm">Loading Interactive Map...</p>
+              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mt-2" />
+            </div>
+          </div>
+        )}
 
         {/* Map Controls */}
         <div className="absolute top-4 right-4 flex flex-col space-y-2 z-[1000]">
@@ -234,8 +291,9 @@ export default function Map() {
             size="sm" 
             className="bg-white shadow-md"
             onClick={() => {
-              if (userLocation) {
-                console.log("Centering on user location:", userLocation);
+              if (userLocation && map) {
+                map.setCenter({ lat: userLocation.lat, lng: userLocation.lng });
+                map.setZoom(15);
               }
             }}
           >
