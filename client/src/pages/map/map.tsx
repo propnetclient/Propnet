@@ -1,11 +1,31 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation, Layers, Phone, Eye, Filter } from "lucide-react";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { formatPrice, getListingTypeBadgeColor } from "@/utils/formatters";
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Custom icons for different property types
+const createCustomIcon = (color: string, text: string) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${text}</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
+};
 
 interface Property {
   id: number;
@@ -58,14 +78,17 @@ export default function Map() {
       return { lat: property.latitude, lng: property.longitude };
     }
     
-    // Distribute properties in a grid pattern for visualization
-    const gridSize = Math.ceil(Math.sqrt(Array.isArray(properties) ? properties.length : 0));
-    const row = Math.floor(index / gridSize);
-    const col = index % gridSize;
+    // For Gujarat properties, use Ahmedabad as center and distribute around it
+    const ahmedabadLat = 23.0225;
+    const ahmedabadLng = 72.5714;
+    
+    // Create a circular distribution around Ahmedabad
+    const angle = (index * 2 * Math.PI) / Math.max(Array.isArray(properties) ? properties.length : 1, 1);
+    const radius = 0.05 + (index % 3) * 0.02; // Vary radius for different rings
     
     return {
-      lat: 19.0760 + (row * 0.02), // Mumbai base coordinate
-      lng: 72.8777 + (col * 0.02)
+      lat: ahmedabadLat + Math.cos(angle) * radius,
+      lng: ahmedabadLng + Math.sin(angle) * radius
     };
   };
 
@@ -128,67 +151,97 @@ export default function Map() {
         </div>
       </div>
 
-      {/* Map Container */}
+      {/* Interactive Map */}
       <div className="relative h-[60vh] bg-neutral-100">
-        {/* Map Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
-          <div className="text-center text-neutral-500">
-            <MapPin size={48} className="mx-auto mb-2 text-neutral-400" />
-            <p className="text-sm">Interactive Map View</p>
-            <p className="text-xs text-neutral-400">Showing {filteredProperties.length} properties</p>
-          </div>
-        </div>
+        <MapContainer
+          center={[23.0225, 72.5714]} // Ahmedabad coordinates
+          zoom={11}
+          className="h-full w-full z-0"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          {/* User Location Marker */}
+          {userLocation && (
+            <Marker
+              position={[userLocation.lat, userLocation.lng]}
+              icon={createCustomIcon('#10B981', '📍')}
+            >
+              <Popup>
+                <div className="text-center">
+                  <strong>Your Location</strong>
+                </div>
+              </Popup>
+            </Marker>
+          )}
 
-        {/* Property Markers */}
-        <div className="absolute inset-0">
+          {/* Property Markers */}
           {filteredProperties.map((property: Property, index: number) => {
-            const position = {
-              left: `${20 + (index % 6) * 12}%`,
-              top: `${20 + Math.floor(index / 6) * 15}%`
-            };
+            const coords = getPropertyCoordinates(property, index);
+            const markerColor = property.transactionType === 'sale' ? '#3B82F6' : '#10B981';
+            const markerText = property.bhk?.toString() || 'P';
 
             return (
-              <div
+              <Marker
                 key={property.id}
-                className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-                style={position}
-                onClick={() => setSelectedProperty(property)}
+                position={[coords.lat, coords.lng]}
+                icon={createCustomIcon(markerColor, markerText)}
+                eventHandlers={{
+                  click: () => setSelectedProperty(property),
+                }}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-lg ${
-                  property.transactionType === 'sale' ? 'bg-blue-500' : 'bg-green-500'
-                } ${selectedProperty?.id === property.id ? 'ring-4 ring-white' : ''}`}>
-                  {property.bhk || 'P'}
-                </div>
-                {selectedProperty?.id === property.id && (
-                  <div className="absolute top-10 left-1/2 transform -translate-x-1/2 z-10">
-                    <div className="bg-white rounded-lg shadow-lg p-3 min-w-[200px]">
-                      <div className="text-sm font-semibold text-neutral-900 mb-1">
-                        {property.title}
-                      </div>
-                      <div className="text-xs text-neutral-600 mb-2">
-                        {property.location}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-primary">
-                          {formatPrice(property.price, property.transactionType)}
-                        </span>
-                        <Badge 
-                          className={`text-xs ${getListingTypeBadgeColor(property.transactionType)}`}
-                        >
-                          {property.transactionType}
-                        </Badge>
-                      </div>
+                <Popup>
+                  <div className="min-w-[200px]">
+                    <div className="font-semibold text-gray-900 mb-2">
+                      {property.title}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">
+                      {property.location}
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-bold text-blue-600">
+                        {formatPrice(property.price, property.transactionType)}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        property.transactionType === 'sale' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {property.transactionType}
+                      </span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button className="flex-1 bg-blue-500 text-white text-xs py-1 px-2 rounded hover:bg-blue-600">
+                        Contact
+                      </button>
+                      <button className="flex-1 bg-gray-500 text-white text-xs py-1 px-2 rounded hover:bg-gray-600">
+                        Details
+                      </button>
                     </div>
                   </div>
-                )}
-              </div>
+                </Popup>
+              </Marker>
             );
           })}
-        </div>
+        </MapContainer>
 
         {/* Map Controls */}
-        <div className="absolute top-4 right-4 flex flex-col space-y-2">
-          <Button variant="outline" size="sm" className="bg-white">
+        <div className="absolute top-4 right-4 flex flex-col space-y-2 z-[1000]">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-white shadow-md"
+            onClick={() => {
+              if (userLocation) {
+                console.log("Centering on user location:", userLocation);
+              }
+            }}
+          >
+            <Navigation size={16} />
+          </Button>
+          <Button variant="outline" size="sm" className="bg-white shadow-md">
             <Layers size={16} />
           </Button>
         </div>
