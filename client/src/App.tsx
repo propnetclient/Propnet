@@ -40,6 +40,8 @@ function Router() {
       <Route path="/my-listings" component={MyListings} />
       <Route path="/consent/:consentId" component={OwnerConsent} />
       <Route path="/requirements" component={Requirements} />
+      <Route path="/map" component={Map} />
+      <Route path="/messages" component={Messages} />
       <Route path="/profile" component={Profile} />
       <Route path="/edit-profile" component={EditProfile} />
       <Route path="/colisting-requests" component={ColistingRequests} />
