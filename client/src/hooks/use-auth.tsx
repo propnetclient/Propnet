@@ -18,7 +18,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data, isLoading } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    cacheTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       const response = await fetch("/api/auth/me", {
         credentials: "include",
@@ -32,10 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    if (data && !user) {
+    if (data) {
       setUser(data);
     }
-  }, [data, user]);
+  }, [data]);
 
   const login = (userData: User) => {
     setUser(userData);

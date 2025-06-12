@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function OtpVerification() {
@@ -14,6 +14,7 @@ export default function OtpVerification() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { toast } = useToast();
   const { login } = useAuth();
+  const queryClient = useQueryClient();
 
   const phone = localStorage.getItem("tempPhone") || "";
 
@@ -31,6 +32,10 @@ export default function OtpVerification() {
     onSuccess: (data) => {
       login(data.user);
       localStorage.removeItem("tempPhone");
+      
+      // Invalidate auth queries to prevent double login
+      queryClient.setQueryData(["/api/auth/me"], { user: data.user });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       
       if (data.isKycComplete) {
         setLocation("/dashboard");
