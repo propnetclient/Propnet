@@ -1,6 +1,6 @@
 import { users, properties, coListings, coListingRequests, propertyRequirements, conversations, messages, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or } from "drizzle-orm";
+import { eq, and, or, not, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -315,56 +315,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserConversations(userId: number): Promise<(Conversation & { otherParticipant: User; property?: Property; lastMessage?: Message; unreadCount: number })[]> {
+    // Get all conversations for this user
     const userConversations = await db
-      .select({
-        conversation: conversations,
-        participant1: users,
-        participant2: users,
-        property: properties,
-      })
+      .select()
       .from(conversations)
-      .leftJoin(users, eq(conversations.participant1Id, users.id))
-      .leftJoin(users, eq(conversations.participant2Id, users.id))
-      .leftJoin(properties, eq(conversations.propertyId, properties.id))
       .where(or(
         eq(conversations.participant1Id, userId),
         eq(conversations.participant2Id, userId)
       ))
-      .orderBy(conversations.lastMessageAt);
+      .orderBy(desc(conversations.lastMessageAt));
 
     const conversationsWithDetails = [];
     
     for (const conv of userConversations) {
-      const otherParticipantId = conv.conversation.participant1Id === userId 
-        ? conv.conversation.participant2Id 
-        : conv.conversation.participant1Id;
+      const otherParticipantId = conv.participant1Id === userId 
+        ? conv.participant2Id 
+        : conv.participant1Id;
       
+      // Get other participant details
       const [otherParticipant] = await db
         .select()
         .from(users)
         .where(eq(users.id, otherParticipantId));
 
-      const [lastMessage] = await db
+      // Get property details if exists
+      let property = undefined;
+      if (conv.propertyId) {
+        const [propertyData] = await db
+          .select()
+          .from(properties)
+          .where(eq(properties.id, conv.propertyId));
+        property = propertyData;
+      }
+
+      // Get last message (most recent)
+      const lastMessages = await db
         .select()
         .from(messages)
-        .where(eq(messages.conversationId, conv.conversation.id))
-        .orderBy(messages.createdAt)
+        .where(eq(messages.conversationId, conv.id))
+        .orderBy(desc(messages.createdAt))
         .limit(1);
+      
+      const lastMessage = lastMessages.length > 0 ? lastMessages[0] : undefined;
 
+      // Count unread messages from other participant
       const unreadMessages = await db
         .select()
         .from(messages)
         .where(and(
-          eq(messages.conversationId, conv.conversation.id),
+          eq(messages.conversationId, conv.id),
           eq(messages.isRead, false),
           eq(messages.senderId, otherParticipantId)
         ));
 
       conversationsWithDetails.push({
-        ...conv.conversation,
+        ...conv,
         otherParticipant,
-        property: conv.property || undefined,
-        lastMessage: lastMessage || undefined,
+        property,
+        lastMessage,
         unreadCount: unreadMessages.length
       });
     }
@@ -435,12 +443,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markMessagesAsRead(conversationId: number, userId: number): Promise<void> {
+    // Mark messages as read where the current user is NOT the sender
     await db
       .update(messages)
       .set({ isRead: true })
       .where(and(
         eq(messages.conversationId, conversationId),
-        eq(messages.senderId, userId),
+        not(eq(messages.senderId, userId)), // Mark messages from others as read
         eq(messages.isRead, false)
       ));
   }
