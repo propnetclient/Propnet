@@ -40,6 +40,9 @@ export default function Map() {
   const [filterType, setFilterType] = useState<string>("all");
   const [map, setMap] = useState<any>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [currentMarkers, setCurrentMarkers] = useState<any[]>([]);
+  const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
+  const [propertyCoordinates, setPropertyCoordinates] = useState<{[key: number]: {lat: number, lng: number}}>({});
   const mapRef = useRef<HTMLDivElement>(null);
 
   const { data: properties = [], isLoading } = useQuery({
@@ -118,13 +121,21 @@ export default function Map() {
   const addMarkersToMap = async () => {
     if (!map || !window.google) return;
 
+    // Clear existing property markers
+    currentMarkers.forEach(marker => {
+      marker.setMap(null);
+    });
+    setCurrentMarkers([]);
+
     const filteredProps = Array.isArray(properties) ? properties.filter((property: Property) => {
       if (filterType === "all") return true;
       return property.transactionType === filterType;
     }) : [];
 
-    // Clear existing markers
-    // (In a real implementation, you'd track markers to clear them)
+    // Update visible properties list
+    setVisibleProperties(filteredProps);
+
+    const newMarkers: any[] = [];
 
     for (const property of filteredProps) {
       try {
@@ -176,10 +187,15 @@ export default function Map() {
           setSelectedProperty(property);
           infoWindow.open(map, marker);
         });
+
+        newMarkers.push(marker);
       } catch (error) {
         console.error('Failed to add marker for property:', property.id, error);
       }
     }
+
+    // Store new markers
+    setCurrentMarkers(newMarkers);
 
     // Add user location marker if available
     if (userLocation) {
@@ -202,8 +218,6 @@ export default function Map() {
       });
     }
   };
-
-  const [propertyCoordinates, setPropertyCoordinates] = useState<{[key: number]: {lat: number, lng: number}}>({});
 
   // Geocode property locations
   const geocodeProperty = async (property: Property) => {
@@ -252,11 +266,6 @@ export default function Map() {
     };
   };
 
-  const filteredProperties = Array.isArray(properties) ? properties.filter((property: Property) => {
-    if (filterType === "all") return true;
-    return property.transactionType === filterType;
-  }) : [];
-
   const propertyTypes = ["all", "sale", "rent"];
 
   if (isLoading) {
@@ -274,7 +283,7 @@ export default function Map() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-neutral-900">Property Map</h1>
-            <p className="text-sm text-neutral-600">{filteredProperties.length} properties found</p>
+            <p className="text-sm text-neutral-600">{visibleProperties.length} properties found</p>
           </div>
           <Button
             variant="outline"
@@ -352,9 +361,11 @@ export default function Map() {
 
       {/* Property List */}
       <div className="px-6 py-4">
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Properties in View</h2>
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+          Properties in View ({visibleProperties.length})
+        </h2>
         <div className="space-y-3">
-          {filteredProperties.slice(0, 5).map((property: Property) => (
+          {visibleProperties.slice(0, 5).map((property: Property) => (
             <Card 
               key={property.id} 
               className={`cursor-pointer transition-all ${
