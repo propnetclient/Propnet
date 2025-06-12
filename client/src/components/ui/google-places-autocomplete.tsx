@@ -49,11 +49,9 @@ export default function GooglePlacesAutocomplete({
       if (data.success && data.predictions) {
         setSuggestions(data.predictions);
       } else {
-        console.error('Places API error:', data.message);
         setSuggestions([]);
       }
     } catch (error) {
-      console.error('Error fetching place suggestions:', error);
       setSuggestions([]);
     } finally {
       setLoading(false);
@@ -165,11 +163,16 @@ export default function GooglePlacesAutocomplete({
       )}
 
       {showSuggestions && suggestions.length === 0 && value.length >= 2 && !loading && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg p-4">
-          <div className="text-center text-neutral-500">
-            <Building2 size={24} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Manual entry allowed</p>
-            <p className="text-xs text-neutral-400 mt-1">Type your building/society name directly</p>
+        <div className="absolute z-50 w-full mt-1 bg-white border border-amber-200 rounded-lg shadow-lg p-4 bg-amber-50">
+          <div className="text-center text-amber-700">
+            <Building2 size={24} className="mx-auto mb-2" />
+            <p className="text-sm font-medium">Google Places API Setup Required</p>
+            <p className="text-xs mt-1">
+              Enable Places API service in Google Cloud Console
+            </p>
+            <p className="text-xs text-amber-600 mt-1">
+              You can type building names manually for now
+            </p>
           </div>
         </div>
       )}

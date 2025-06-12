@@ -1147,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Google Maps API key not configured" });
       }
 
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=${types}&key=${GOOGLE_MAPS_API_KEY}&components=country:in`;
+      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=establishment&key=${GOOGLE_MAPS_API_KEY}&components=country:in`;
       
       const response = await fetch(url);
       const data = await response.json();
