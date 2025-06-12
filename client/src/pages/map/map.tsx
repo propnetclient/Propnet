@@ -68,6 +68,18 @@ export default function Map() {
   }, []);
 
   useEffect(() => {
+    // Add global function for property details
+    (window as any).propertyDetails = (propertyId: number) => {
+      // Navigate to property details page or show modal
+      console.log('Show details for property:', propertyId);
+      // You can implement navigation to a details page here
+      // For now, we'll just show an alert with property info
+      const property = visibleProperties.find(p => p.id === propertyId);
+      if (property) {
+        alert(`Property Details:\n${property.title}\n${property.location}\nPrice: ${formatPrice(property.price, property.transactionType)}\nOwner: ${property.owner.name}\nPhone: ${property.owner.phone}`);
+      }
+    };
+
     // Load Google Maps API
     const loadGoogleMaps = async () => {
       if (window.google && window.google.maps) {
@@ -179,8 +191,8 @@ export default function Map() {
                              padding: 2px 8px; border-radius: 4px; font-size: 12px;">${property.transactionType}</span>
               </div>
               <div style="display: flex; gap: 8px;">
-                <button style="flex: 1; background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Contact</button>
-                <button style="flex: 1; background: #6b7280; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Details</button>
+                <button onclick="window.open('tel:${property.owner.phone}', '_self')" style="flex: 1; background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Contact</button>
+                <button onclick="window.propertyDetails(${property.id})" style="flex: 1; background: #6b7280; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Details</button>
               </div>
             </div>
           `
@@ -416,13 +428,27 @@ export default function Map() {
                         {formatPrice(property.price, property.transactionType)}
                       </span>
                       <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`tel:${property.owner.phone}`, '_self');
+                          }}
+                        >
                           <Phone size={12} className="mr-1" />
                           Contact
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            (window as any).propertyDetails(property.id);
+                          }}
+                        >
                           <Eye size={12} className="mr-1" />
-                          View
+                          Details
                         </Button>
                       </div>
                     </div>
