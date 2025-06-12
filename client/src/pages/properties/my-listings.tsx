@@ -573,7 +573,7 @@ export default function MyListings() {
                                   value={field.value || ""}
                                   onChange={(value) => field.onChange(value)}
                                   placeholder="Search for building or society..."
-                                  types={["establishment", "premise"]}
+                                  types={["establishment"]}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1071,7 +1071,7 @@ export default function MyListings() {
                                   value={field.value || ""}
                                   onChange={(value) => field.onChange(value)}
                                   placeholder="Search for building or society..."
-                                  types={["establishment", "premise"]}
+                                  types={["establishment"]}
                                 />
                               </FormControl>
                               <FormMessage />
