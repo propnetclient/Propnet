@@ -45,6 +45,8 @@ export default function Map() {
   const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
   const [propertyCoordinates, setPropertyCoordinates] = useState<{[key: number]: {lat: number, lng: number}}>({});
   const [markersMap, setMarkersMap] = useState<{[key: number]: any}>({});
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsProperty, setDetailsProperty] = useState<Property | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
 
   const { data: properties = [], isLoading } = useQuery({
@@ -446,7 +448,8 @@ export default function Map() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            (window as any).propertyDetails(property.id);
+                            setDetailsProperty(property);
+                            setShowDetailsModal(true);
                           }}
                         >
                           <Eye size={12} className="mr-1" />
@@ -466,6 +469,89 @@ export default function Map() {
       <div className="h-20"></div>
       
       <BottomNavigation />
+
+      {/* Property Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Home size={20} />
+              Property Details
+            </DialogTitle>
+          </DialogHeader>
+          {detailsProperty && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-lg">{detailsProperty.title}</h3>
+                <p className="text-sm text-muted-foreground">{detailsProperty.propertyType}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Price</p>
+                  <p className="font-semibold text-primary">
+                    {formatPrice(detailsProperty.price, detailsProperty.transactionType)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Size</p>
+                  <p className="font-semibold">{detailsProperty.size} {detailsProperty.sizeUnit}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Location</p>
+                <div className="flex items-start gap-2">
+                  <MapPin size={16} className="mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm">{detailsProperty.location}</p>
+                    {detailsProperty.buildingSociety && (
+                      <p className="text-xs text-muted-foreground">{detailsProperty.buildingSociety}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {detailsProperty.bhk && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Configuration</p>
+                  <p className="text-sm">{detailsProperty.bhk} BHK</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Owner Details</p>
+                <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <User size={16} className="text-muted-foreground" />
+                    <span className="text-sm font-medium">{detailsProperty.owner.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone size={16} className="text-muted-foreground" />
+                    <span className="text-sm">{detailsProperty.owner.phone}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  className="flex-1" 
+                  onClick={() => window.open(`tel:${detailsProperty.owner.phone}`, '_self')}
+                >
+                  <Phone size={16} className="mr-2" />
+                  Call Owner
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDetailsModal(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
