@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   MessageCircle, 
   Search, 
@@ -12,10 +13,12 @@ import {
   Clock,
   Send,
   MoreVertical,
-  Building2
+  Building2,
+  Plus
 } from "lucide-react";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Conversation {
   id: number;
@@ -42,85 +45,68 @@ interface Message {
 
 export default function Messages() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<any | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
 
-  // Mock conversations data - in real app, this would come from API
-  const mockConversations: Conversation[] = [
-    {
-      id: 1,
-      propertyId: 3,
-      propertyTitle: "North Park 2 BHK",
-      otherUser: {
-        id: 2,
-        name: "Rajesh Kumar",
-        phone: "9876543210"
-      },
-      lastMessage: "Is this property still available?",
-      lastMessageTime: "2 hours ago",
-      unreadCount: 2,
-      type: "inquiry"
-    },
-    {
-      id: 2,
-      propertyId: 4,
-      propertyTitle: "Sea View Apartment",
-      otherUser: {
-        id: 3,
-        name: "Priya Sharma",
-        phone: "9123456789"
-      },
-      lastMessage: "Can we schedule a visit tomorrow?",
-      lastMessageTime: "5 hours ago",
-      unreadCount: 0,
-      type: "inquiry"
-    },
-    {
-      id: 3,
-      propertyId: 0,
-      propertyTitle: "Co-listing Request",
-      otherUser: {
-        id: 4,
-        name: "Amit Patel",
-        phone: "9988776655"
-      },
-      lastMessage: "I'd like to co-list your Bandra property",
-      lastMessageTime: "1 day ago",
-      unreadCount: 1,
-      type: "colisting"
-    }
-  ];
+  // Fetch user conversations
+  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
+    queryKey: ["/api/conversations"],
+  });
 
-  // Mock messages for selected conversation
-  const mockMessages: Message[] = selectedConversation ? [
-    {
-      id: 1,
-      senderId: selectedConversation.otherUser.id,
-      message: "Hi, I'm interested in the property you listed",
-      timestamp: "2 hours ago",
-      type: "text"
-    },
-    {
-      id: 2,
-      senderId: user?.id || 0,
-      message: "Thank you for your interest! The property is still available.",
-      timestamp: "2 hours ago",
-      type: "text"
-    },
-    {
-      id: 3,
-      senderId: selectedConversation.otherUser.id,
-      message: selectedConversation.lastMessage,
-      timestamp: selectedConversation.lastMessageTime,
-      type: "text"
-    }
-  ] : [];
+  // Fetch network users for new conversations
+  const { data: networkUsers = [] } = useQuery({
+    queryKey: ["/api/network-users"],
+  });
 
-  const filteredConversations = mockConversations.filter(conv =>
-    conv.propertyTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.otherUser.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fetch messages for selected conversation
+  const { data: messages = [] } = useQuery({
+    queryKey: ["/api/conversations", selectedConversation?.id, "messages"],
+    enabled: !!selectedConversation,
+  });
+
+  // Create new conversation mutation
+  const createConversationMutation = useMutation({
+    mutationFn: async ({ participantId, propertyId, type }: { participantId: number; propertyId?: number; type?: string }) => {
+      const response = await apiRequest("POST", "/api/conversations", {
+        participantId,
+        propertyId,
+        type
+      });
+      return response.json();
+    },
+    onSuccess: (conversation) => {
+      setSelectedConversation(conversation);
+      setShowNewChatDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
+  });
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ conversationId, content }: { conversationId: number; content: string }) => {
+      const response = await apiRequest("POST", `/api/conversations/${conversationId}/messages`, {
+        content
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      setNewMessage("");
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedConversation?.id, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
+  });
+
+  const filteredConversations = Array.isArray(conversations) ? conversations.filter((conv: any) =>
+    (conv.property?.title || "General Chat").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.otherParticipant?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
+
+  const startNewConversation = (participantId: number) => {
+    createConversationMutation.mutate({ participantId, type: "general" });
+  };
 
   const getConversationTypeColor = (type: string) => {
     switch (type) {
@@ -135,9 +121,10 @@ export default function Messages() {
 
   const handleSendMessage = () => {
     if (newMessage.trim() && selectedConversation) {
-      // In real app, this would send the message via API
-      console.log("Sending message:", newMessage);
-      setNewMessage("");
+      sendMessageMutation.mutate({
+        conversationId: selectedConversation.id,
+        content: newMessage.trim()
+      });
     }
   };
 
@@ -159,8 +146,8 @@ export default function Messages() {
                 <User size={20} className="text-primary" />
               </div>
               <div>
-                <h2 className="font-semibold text-neutral-900">{selectedConversation.otherUser.name}</h2>
-                <p className="text-sm text-neutral-600">{selectedConversation.propertyTitle}</p>
+                <h2 className="font-semibold text-neutral-900">{selectedConversation.otherParticipant?.name}</h2>
+                <p className="text-sm text-neutral-600">{selectedConversation.property?.title || "General Chat"}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -176,7 +163,7 @@ export default function Messages() {
 
         {/* Messages */}
         <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto">
-          {mockMessages.map((message) => (
+          {Array.isArray(messages) && messages.map((message: any) => (
             <div
               key={message.id}
               className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
@@ -186,11 +173,11 @@ export default function Messages() {
                   ? 'bg-primary text-white' 
                   : 'bg-white border border-neutral-200'
               }`}>
-                <p className="text-sm">{message.message}</p>
+                <p className="text-sm">{message.content}</p>
                 <p className={`text-xs mt-1 ${
                   message.senderId === user?.id ? 'text-primary-200' : 'text-neutral-500'
                 }`}>
-                  {message.timestamp}
+                  {new Date(message.createdAt).toLocaleTimeString()}
                 </p>
               </div>
             </div>
@@ -228,10 +215,47 @@ export default function Messages() {
             <h1 className="text-xl font-bold text-neutral-900">Messages</h1>
             <p className="text-sm text-neutral-600">{filteredConversations.length} conversations</p>
           </div>
-          <Button variant="outline" size="sm">
-            <MessageCircle size={16} className="mr-1" />
-            New Chat
-          </Button>
+          <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Plus size={16} className="mr-1" />
+                New Chat
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Start New Conversation</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+                  <Input
+                    placeholder="Search network users..."
+                    className="pl-10"
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {Array.isArray(networkUsers) && networkUsers.map((networkUser: any) => (
+                    <Card 
+                      key={networkUser.id}
+                      className="p-3 cursor-pointer hover:bg-neutral-50"
+                      onClick={() => startNewConversation(networkUser.id)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                          <User size={16} className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{networkUser.name}</p>
+                          <p className="text-xs text-neutral-600">{networkUser.agencyName}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -264,7 +288,7 @@ export default function Messages() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {filteredConversations.map((conversation) => (
+            {filteredConversations.map((conversation: any) => (
               <Card 
                 key={conversation.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
@@ -278,7 +302,7 @@ export default function Messages() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-semibold text-neutral-900 text-sm truncate">
-                          {conversation.otherUser.name}
+                          {conversation.otherParticipant?.name || "Unknown User"}
                         </h3>
                         <div className="flex items-center space-x-2">
                           {conversation.unreadCount > 0 && (
@@ -291,13 +315,15 @@ export default function Messages() {
                           </Badge>
                         </div>
                       </div>
-                      <p className="text-xs text-neutral-600 mb-2">{conversation.propertyTitle}</p>
+                      <p className="text-xs text-neutral-600 mb-2">
+                        {conversation.property?.title || "General Chat"}
+                      </p>
                       <p className="text-sm text-neutral-700 truncate mb-1">
-                        {conversation.lastMessage}
+                        {conversation.lastMessage?.content || "Start a conversation..."}
                       </p>
                       <div className="flex items-center text-xs text-neutral-500">
                         <Clock size={12} className="mr-1" />
-                        {conversation.lastMessageTime}
+                        {conversation.lastMessageAt ? new Date(conversation.lastMessageAt).toLocaleDateString() : "Just now"}
                       </div>
                     </div>
                   </div>

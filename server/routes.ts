@@ -1133,6 +1133,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Messaging API endpoints
+  app.get("/api/network-users", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const networkUsers = await storage.getNetworkUsers(userId);
+      res.json(networkUsers);
+    } catch (error) {
+      console.error("Get network users error:", error);
+      res.status(500).json({ message: "Failed to fetch network users" });
+    }
+  });
+
+  app.get("/api/conversations", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const conversations = await storage.getUserConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Get conversations error:", error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+
+  app.post("/api/conversations", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { participantId, propertyId, type = "general" } = req.body;
+      
+      // Check if conversation already exists
+      const existingConversation = await storage.getConversation(userId, participantId, propertyId);
+      
+      if (existingConversation) {
+        return res.json(existingConversation);
+      }
+
+      const conversationData = insertConversationSchema.parse({
+        participant1Id: userId,
+        participant2Id: participantId,
+        propertyId: propertyId || null,
+        type
+      });
+
+      const conversation = await storage.createConversation(conversationData);
+      res.json(conversation);
+    } catch (error) {
+      console.error("Create conversation error:", error);
+      res.status(400).json({ message: "Failed to create conversation" });
+    }
+  });
+
+  app.get("/api/conversations/:id/messages", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const conversationId = parseInt(req.params.id);
+      const messages = await storage.getConversationMessages(conversationId);
+      
+      // Mark messages as read
+      await storage.markMessagesAsRead(conversationId, userId);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error("Get messages error:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/conversations/:id/messages", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const conversationId = parseInt(req.params.id);
+      const { content, messageType = "text" } = req.body;
+
+      if (!content || content.trim() === "") {
+        return res.status(400).json({ message: "Message content cannot be empty" });
+      }
+
+      const messageData = insertMessageSchema.parse({
+        conversationId,
+        senderId: userId,
+        content: content.trim(),
+        messageType,
+        isRead: false
+      });
+
+      const message = await storage.sendMessage(messageData);
+      res.json(message);
+    } catch (error) {
+      console.error("Send message error:", error);
+      res.status(400).json({ message: "Failed to send message" });
+    }
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
 
