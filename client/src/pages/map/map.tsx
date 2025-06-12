@@ -25,6 +25,7 @@ interface Property {
   size: string;
   sizeUnit: string;
   bhk?: number;
+  buildingSociety?: string;
   owner: {
     name: string;
     phone: string;
@@ -114,7 +115,7 @@ export default function Map() {
     }
   }, [map, isMapLoaded, properties, filterType]);
 
-  const addMarkersToMap = () => {
+  const addMarkersToMap = async () => {
     if (!map || !window.google) return;
 
     const filteredProps = Array.isArray(properties) ? properties.filter((property: Property) => {
@@ -125,53 +126,60 @@ export default function Map() {
     // Clear existing markers
     // (In a real implementation, you'd track markers to clear them)
 
-    filteredProps.forEach((property: Property, index: number) => {
-      const coords = getPropertyCoordinates(property, index);
-      
-      const marker = new window.google.maps.Marker({
-        position: { lat: coords.lat, lng: coords.lng },
-        map: map,
-        title: property.title,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 15,
-          fillColor: property.transactionType === 'sale' ? '#3B82F6' : '#10B981',
-          fillOpacity: 1,
-          strokeWeight: 2,
-          strokeColor: '#FFFFFF',
-        },
-        label: {
-          text: property.bhk?.toString() || 'P',
-          color: 'white',
-          fontSize: '12px',
-          fontWeight: 'bold'
-        }
-      });
+    for (const property of filteredProps) {
+      try {
+        const coords = await geocodeProperty(property);
+        
+        const marker = new window.google.maps.Marker({
+          position: { lat: coords.lat, lng: coords.lng },
+          map: map,
+          title: property.title,
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 15,
+            fillColor: property.transactionType === 'sale' ? '#3B82F6' : '#10B981',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#FFFFFF',
+          },
+          label: {
+            text: property.bhk?.toString() || 'P',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }
+        });
 
-      const infoWindow = new window.google.maps.InfoWindow({
-        content: `
-          <div style="min-width: 200px; padding: 8px;">
-            <div style="font-weight: bold; margin-bottom: 8px;">${property.title}</div>
-            <div style="color: #666; margin-bottom: 8px; font-size: 14px;">${property.location}</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              <span style="font-weight: bold; color: #2563eb;">${formatPrice(property.price, property.transactionType)}</span>
-              <span style="background: ${property.transactionType === 'sale' ? '#dbeafe' : '#dcfce7'}; 
-                           color: ${property.transactionType === 'sale' ? '#1d4ed8' : '#166534'}; 
-                           padding: 2px 8px; border-radius: 4px; font-size: 12px;">${property.transactionType}</span>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button style="flex: 1; background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Contact</button>
-              <button style="flex: 1; background: #6b7280; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Details</button>
-            </div>
-          </div>
-        `
-      });
+        const buildingInfo = property.buildingSociety ? `<div style="color: #888; font-size: 12px; margin-bottom: 4px;">${property.buildingSociety}</div>` : '';
 
-      marker.addListener('click', () => {
-        setSelectedProperty(property);
-        infoWindow.open(map, marker);
-      });
-    });
+        const infoWindow = new window.google.maps.InfoWindow({
+          content: `
+            <div style="min-width: 200px; padding: 8px;">
+              <div style="font-weight: bold; margin-bottom: 8px;">${property.title}</div>
+              ${buildingInfo}
+              <div style="color: #666; margin-bottom: 8px; font-size: 14px;">${property.location}</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-weight: bold; color: #2563eb;">${formatPrice(property.price, property.transactionType)}</span>
+                <span style="background: ${property.transactionType === 'sale' ? '#dbeafe' : '#dcfce7'}; 
+                             color: ${property.transactionType === 'sale' ? '#1d4ed8' : '#166534'}; 
+                             padding: 2px 8px; border-radius: 4px; font-size: 12px;">${property.transactionType}</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button style="flex: 1; background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Contact</button>
+                <button style="flex: 1; background: #6b7280; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Details</button>
+              </div>
+            </div>
+          `
+        });
+
+        marker.addListener('click', () => {
+          setSelectedProperty(property);
+          infoWindow.open(map, marker);
+        });
+      } catch (error) {
+        console.error('Failed to add marker for property:', property.id, error);
+      }
+    }
 
     // Add user location marker if available
     if (userLocation) {
@@ -195,19 +203,48 @@ export default function Map() {
     }
   };
 
-  // Generate coordinates for properties based on location
-  const getPropertyCoordinates = (property: Property, index: number) => {
+  const [propertyCoordinates, setPropertyCoordinates] = useState<{[key: number]: {lat: number, lng: number}}>({});
+
+  // Geocode property locations
+  const geocodeProperty = async (property: Property) => {
     if (property.latitude && property.longitude) {
       return { lat: property.latitude, lng: property.longitude };
     }
-    
-    // For Gujarat properties, use Ahmedabad as center and distribute around it
+
+    if (propertyCoordinates[property.id]) {
+      return propertyCoordinates[property.id];
+    }
+
+    try {
+      // Create address string from building/society and location
+      const addressParts = [
+        property.buildingSociety,
+        property.location,
+        'Gujarat, India'
+      ].filter(Boolean);
+      
+      const address = addressParts.join(', ');
+
+      const response = await fetch(`/api/places/geocode?address=${encodeURIComponent(address)}`);
+      const data = await response.json();
+
+      if (data.success) {
+        const coords = { lat: data.latitude, lng: data.longitude };
+        setPropertyCoordinates(prev => ({
+          ...prev,
+          [property.id]: coords
+        }));
+        return coords;
+      }
+    } catch (error) {
+      console.error('Geocoding failed for property:', property.id, error);
+    }
+
+    // Fallback to distributed positioning around Ahmedabad
     const ahmedabadLat = 23.0225;
     const ahmedabadLng = 72.5714;
-    
-    // Create a circular distribution around Ahmedabad
-    const angle = (index * 2 * Math.PI) / Math.max(Array.isArray(properties) ? properties.length : 1, 1);
-    const radius = 0.05 + (index % 3) * 0.02; // Vary radius for different rings
+    const angle = (property.id * 2 * Math.PI) / 10;
+    const radius = 0.02 + (property.id % 3) * 0.01;
     
     return {
       lat: ahmedabadLat + Math.cos(angle) * radius,

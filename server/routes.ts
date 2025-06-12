@@ -1142,6 +1142,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ key: GOOGLE_MAPS_API_KEY });
   });
 
+  // Geocoding endpoint for property locations
+  app.get("/api/places/geocode", async (req, res) => {
+    try {
+      const { address } = req.query;
+      
+      if (!address || typeof address !== 'string') {
+        return res.status(400).json({ message: "Address parameter is required" });
+      }
+
+      const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+      if (!GOOGLE_MAPS_API_KEY) {
+        return res.status(500).json({ message: "Google Maps API key not configured" });
+      }
+
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}&region=in&components=country:in`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        res.json({
+          success: true,
+          latitude: location.lat,
+          longitude: location.lng,
+          formatted_address: data.results[0].formatted_address
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          message: "Location not found"
+        });
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      res.status(500).json({ message: "Failed to geocode address" });
+    }
+  });
+
   // Google Places API endpoints
   app.get("/api/places/autocomplete", async (req, res) => {
     try {
