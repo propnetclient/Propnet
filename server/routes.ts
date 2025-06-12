@@ -1147,15 +1147,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Google Maps API key not configured" });
       }
 
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=establishment&key=${GOOGLE_MAPS_API_KEY}&components=country:in`;
+      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=establishment&key=${GOOGLE_MAPS_API_KEY}&components=country:in&region=in&location=23.0225,72.5714&radius=50000`;
       
       const response = await fetch(url);
       const data = await response.json();
       
       if (data.status === 'OK') {
+        // Filter predictions to prioritize Gujarat and Indian locations
+        const filteredPredictions = data.predictions.filter((prediction: any) => {
+          const description = prediction.description.toLowerCase();
+          const secondaryText = prediction.structured_formatting?.secondary_text?.toLowerCase() || '';
+          
+          // Prioritize Gujarat locations
+          if (description.includes('gujarat') || secondaryText.includes('gujarat') ||
+              description.includes('ahmedabad') || description.includes('surat') ||
+              description.includes('vadodara') || description.includes('rajkot') ||
+              description.includes('gandhinagar') || description.includes('bhavnagar')) {
+            return true;
+          }
+          
+          // Include other Indian locations but exclude international
+          return description.includes('india') || secondaryText.includes('india');
+        });
+
         res.json({
           success: true,
-          predictions: data.predictions
+          predictions: filteredPredictions.slice(0, 8) // Limit to 8 results
         });
       } else {
         res.status(400).json({
