@@ -17,6 +17,8 @@ import MyListings from "@/pages/properties/my-listings";
 import QuickPost from "@/pages/properties/quickpost";
 import OwnerConsent from "@/pages/properties/owner-consent";
 import Requirements from "@/pages/requirements/requirements";
+import Map from "@/pages/map/map";
+import Messages from "@/pages/messages/messages";
 import Profile from "@/pages/profile/profile";
 import EditProfile from "@/pages/profile/edit-profile";
 import ColistingRequests from "@/pages/profile/colisting-requests";
