@@ -90,12 +90,35 @@ export const propertyRequirements = pgTable("property_requirements", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  participant1Id: integer("participant1_id").notNull().references(() => users.id),
+  participant2Id: integer("participant2_id").notNull().references(() => users.id),
+  propertyId: integer("property_id").references(() => properties.id),
+  type: text("type").notNull().default("general"), // 'general', 'property_inquiry', 'colisting'
+  lastMessageAt: timestamp("last_message_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  senderId: integer("sender_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  messageType: text("message_type").notNull().default("text"), // 'text', 'property_share', 'contact_request'
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   properties: many(properties),
   coListings: many(coListings),
   coListingRequests: many(coListingRequests),
   propertyRequirements: many(propertyRequirements),
+  sentMessages: many(messages),
+  conversations1: many(conversations, { relationName: "participant1" }),
+  conversations2: many(conversations, { relationName: "participant2" }),
 }));
 
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
@@ -105,6 +128,36 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   }),
   coListings: many(coListings),
   coListingRequests: many(coListingRequests),
+  conversations: many(conversations),
+}));
+
+export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+  participant1: one(users, {
+    fields: [conversations.participant1Id],
+    references: [users.id],
+    relationName: "participant1",
+  }),
+  participant2: one(users, {
+    fields: [conversations.participant2Id],
+    references: [users.id],
+    relationName: "participant2",
+  }),
+  property: one(properties, {
+    fields: [conversations.propertyId],
+    references: [properties.id],
+  }),
+  messages: many(messages),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  conversation: one(conversations, {
+    fields: [messages.conversationId],
+    references: [conversations.id],
+  }),
+  sender: one(users, {
+    fields: [messages.senderId],
+    references: [users.id],
+  }),
 }));
 
 export const coListingsRelations = relations(coListings, ({ one }) => ({
@@ -201,6 +254,17 @@ export const insertPropertyRequirementSchema = createInsertSchema(propertyRequir
   userId: true,
 });
 
+export const insertConversationSchema = createInsertSchema(conversations).omit({
+  id: true,
+  createdAt: true,
+  lastMessageAt: true,
+});
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -211,3 +275,7 @@ export type CoListingRequest = typeof coListingRequests.$inferSelect;
 export type InsertCoListingRequest = z.infer<typeof insertCoListingRequestSchema>;
 export type PropertyRequirement = typeof propertyRequirements.$inferSelect;
 export type InsertPropertyRequirement = z.infer<typeof insertPropertyRequirementSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
