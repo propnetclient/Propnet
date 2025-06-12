@@ -641,7 +641,8 @@ Owner: Priya Sharma - 9123456789"
                                 <Input
                                   placeholder="e.g., John Doe"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.ownerName || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, ownerName: e.target.value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
@@ -655,7 +656,8 @@ Owner: Priya Sharma - 9123456789"
                                 <Input
                                   placeholder="e.g., 9999999999"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.ownerPhone || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, ownerPhone: e.target.value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
@@ -669,7 +671,8 @@ Owner: Priya Sharma - 9123456789"
                                 <Input
                                   placeholder="e.g., 2% of property value"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.commissionTerms || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, commissionTerms: e.target.value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
