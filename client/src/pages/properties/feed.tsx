@@ -7,13 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { UserCircle, Plus, Search, Filter, X, Sparkles } from "lucide-react";
-import EnhancedPropertyCard from "@/components/ui/enhanced-property-card";
+import CompactPropertyCard from "@/components/ui/compact-property-card";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/utils/formatters";
 
 export default function PropertyFeed() {
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedTab, setSelectedTab] = useState("sale");
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [, setLocation] = useLocation();
@@ -42,6 +42,9 @@ export default function PropertyFeed() {
       property.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
       property.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
+    // Tab filter (transaction type)
+    const matchesTab = selectedTab === "all" || property.transactionType === selectedTab;
+
     // Advanced filters
     const matchesTransactionType = !filters.transactionType || 
       property.transactionType === filters.transactionType;
@@ -57,7 +60,7 @@ export default function PropertyFeed() {
     const propertyPrice = parseFloat(property.price.replace(/[^\d.]/g, ''));
     const matchesPriceRange = propertyPrice >= priceRange[0] && propertyPrice <= priceRange[1];
 
-    return matchesSearch && matchesTransactionType && matchesPropertyType && 
+    return matchesSearch && matchesTab && matchesTransactionType && matchesPropertyType && 
            matchesBHK && matchesLocation && matchesListingType && matchesPriceRange;
   }) : [];
 
@@ -255,9 +258,9 @@ export default function PropertyFeed() {
             </div>
             <h3 className="text-lg font-medium text-neutral-900 mb-2">No Properties Found</h3>
             <p className="text-neutral-500 mb-4">
-              {selectedFilter === "All" 
+              {selectedTab === "all" 
                 ? "Be the first to add a property to the network"
-                : `No ${selectedFilter.toLowerCase()} properties available`
+                : `No ${selectedTab === "sale" ? "sale" : "rental"} properties available`
               }
             </p>
             <Button onClick={() => setLocation("/add-property")}>
@@ -267,7 +270,7 @@ export default function PropertyFeed() {
         ) : (
           <div className="space-y-4">
             {filteredProperties.map((property: any) => (
-              <EnhancedPropertyCard 
+              <CompactPropertyCard 
                 key={property.id} 
                 property={property}
                 currentUserId={user?.id}
