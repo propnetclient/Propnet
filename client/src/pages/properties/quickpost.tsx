@@ -496,7 +496,8 @@ Owner: Priya Sharma - 9123456789"
                                 <Input
                                   placeholder="e.g., Beautiful 2 BHK Apartment"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.title || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, title: e.target.value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
@@ -548,7 +549,8 @@ Owner: Priya Sharma - 9123456789"
                                 <Input
                                   placeholder="e.g., 50000"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.price || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, price: e.target.value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
@@ -562,7 +564,8 @@ Owner: Priya Sharma - 9123456789"
                                 <Input
                                   placeholder="e.g., 1200"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.size || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, size: e.target.value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
@@ -576,7 +579,8 @@ Owner: Priya Sharma - 9123456789"
                                 <Input
                                   placeholder="e.g., Bandra West, Mumbai"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.location || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, location: e.target.value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
@@ -591,7 +595,8 @@ Owner: Priya Sharma - 9123456789"
                                   type="number"
                                   placeholder="e.g., 2"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.bhk?.toString() || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, bhk: parseInt(e.target.value) || undefined };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
@@ -605,7 +610,8 @@ Owner: Priya Sharma - 9123456789"
                                 <Input
                                   placeholder="e.g., A-101"
                                   className="h-8 text-xs"
-                                  onChange={(e) => {
+                                  defaultValue={property.flatNumber || ""}
+                                  onBlur={(e) => {
                                     const updatedProperty = { ...property, flatNumber: e.target.value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
