@@ -1,4 +1,4 @@
-import { users, properties, coListings, coListingRequests, propertyRequirements, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement } from "@shared/schema";
+import { users, properties, coListings, coListingRequests, propertyRequirements, conversations, messages, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or } from "drizzle-orm";
 
@@ -35,6 +35,15 @@ export interface IStorage {
   getConsentData(consentId: string): Promise<any>;
   updatePropertyApproval(consentId: string, status: string): Promise<Property>;
   checkDuplicateProperty(propertyData: any): Promise<Property[]>;
+
+  // Messaging methods
+  getNetworkUsers(currentUserId: number): Promise<User[]>;
+  getUserConversations(userId: number): Promise<(Conversation & { otherParticipant: User; property?: Property; lastMessage?: Message; unreadCount: number })[]>;
+  getConversation(participant1Id: number, participant2Id: number, propertyId?: number): Promise<Conversation | undefined>;
+  createConversation(conversation: InsertConversation): Promise<Conversation>;
+  getConversationMessages(conversationId: number): Promise<(Message & { sender: User })[]>;
+  sendMessage(message: InsertMessage): Promise<Message>;
+  markMessagesAsRead(conversationId: number, userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -290,6 +299,150 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.consentId, consentId))
       .returning();
     return property;
+  }
+
+  // Messaging methods implementation
+  async getNetworkUsers(currentUserId: number): Promise<User[]> {
+    const networkUsers = await db
+      .select()
+      .from(users)
+      .where(and(
+        eq(users.isVerified, true),
+        eq(users.isKycComplete, true)
+      ));
+    
+    return networkUsers.filter(user => user.id !== currentUserId);
+  }
+
+  async getUserConversations(userId: number): Promise<(Conversation & { otherParticipant: User; property?: Property; lastMessage?: Message; unreadCount: number })[]> {
+    const userConversations = await db
+      .select({
+        conversation: conversations,
+        participant1: users,
+        participant2: users,
+        property: properties,
+      })
+      .from(conversations)
+      .leftJoin(users, eq(conversations.participant1Id, users.id))
+      .leftJoin(users, eq(conversations.participant2Id, users.id))
+      .leftJoin(properties, eq(conversations.propertyId, properties.id))
+      .where(or(
+        eq(conversations.participant1Id, userId),
+        eq(conversations.participant2Id, userId)
+      ))
+      .orderBy(conversations.lastMessageAt);
+
+    const conversationsWithDetails = [];
+    
+    for (const conv of userConversations) {
+      const otherParticipantId = conv.conversation.participant1Id === userId 
+        ? conv.conversation.participant2Id 
+        : conv.conversation.participant1Id;
+      
+      const [otherParticipant] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, otherParticipantId));
+
+      const [lastMessage] = await db
+        .select()
+        .from(messages)
+        .where(eq(messages.conversationId, conv.conversation.id))
+        .orderBy(messages.createdAt)
+        .limit(1);
+
+      const unreadMessages = await db
+        .select()
+        .from(messages)
+        .where(and(
+          eq(messages.conversationId, conv.conversation.id),
+          eq(messages.isRead, false),
+          eq(messages.senderId, otherParticipantId)
+        ));
+
+      conversationsWithDetails.push({
+        ...conv.conversation,
+        otherParticipant,
+        property: conv.property || undefined,
+        lastMessage: lastMessage || undefined,
+        unreadCount: unreadMessages.length
+      });
+    }
+    
+    return conversationsWithDetails;
+  }
+
+  async getConversation(participant1Id: number, participant2Id: number, propertyId?: number): Promise<Conversation | undefined> {
+    const query = propertyId 
+      ? and(
+          or(
+            and(eq(conversations.participant1Id, participant1Id), eq(conversations.participant2Id, participant2Id)),
+            and(eq(conversations.participant1Id, participant2Id), eq(conversations.participant2Id, participant1Id))
+          ),
+          eq(conversations.propertyId, propertyId)
+        )
+      : or(
+          and(eq(conversations.participant1Id, participant1Id), eq(conversations.participant2Id, participant2Id)),
+          and(eq(conversations.participant1Id, participant2Id), eq(conversations.participant2Id, participant1Id))
+        );
+
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(query);
+    
+    return conversation;
+  }
+
+  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+    const [newConversation] = await db
+      .insert(conversations)
+      .values(conversation)
+      .returning();
+    return newConversation;
+  }
+
+  async getConversationMessages(conversationId: number): Promise<(Message & { sender: User })[]> {
+    const messagesWithSender = await db
+      .select({
+        message: messages,
+        sender: users,
+      })
+      .from(messages)
+      .leftJoin(users, eq(messages.senderId, users.id))
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(messages.createdAt);
+
+    return messagesWithSender.map(row => ({
+      ...row.message,
+      sender: row.sender!
+    }));
+  }
+
+  async sendMessage(message: InsertMessage): Promise<Message> {
+    const [newMessage] = await db
+      .insert(messages)
+      .values(message)
+      .returning();
+
+    // Update conversation's last message timestamp
+    await db
+      .update(conversations)
+      .set({ lastMessageAt: new Date() })
+      .where(eq(conversations.id, message.conversationId));
+
+    return newMessage;
+  }
+
+  async markMessagesAsRead(conversationId: number, userId: number): Promise<void> {
+    await db
+      .update(messages)
+      .set({ isRead: true })
+      .where(and(
+        eq(messages.conversationId, conversationId),
+        eq(messages.senderId, userId),
+        eq(messages.isRead, false)
+      ));
   }
 }
 
