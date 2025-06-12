@@ -151,36 +151,36 @@ export default function PropertyFeed() {
           </div>
 
           {/* Transaction Type Tabs */}
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+          <div className="flex space-x-2">
             <button
               onClick={() => setSelectedTab("sale")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                 selectedTab === "sale"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               For Sale
             </button>
             <button
               onClick={() => setSelectedTab("rent")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                 selectedTab === "rent"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               For Rent
             </button>
             <button
               onClick={() => setSelectedTab("all")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                 selectedTab === "all"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              All
+              Sold
             </button>
           </div>
         </div>
@@ -284,9 +284,9 @@ export default function PropertyFeed() {
       </div>
 
       {/* Property List */}
-      <div className="flex-1 px-4 py-4">
+      <div className="flex-1 px-4 pt-4 pb-6">
         {filteredProperties.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center bg-white rounded-lg shadow-sm">
+          <div className="flex flex-col items-center justify-center h-64 text-center bg-white rounded-2xl shadow-sm">
             <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
               <Plus className="text-neutral-400" size={24} />
             </div>
@@ -302,7 +302,7 @@ export default function PropertyFeed() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {filteredProperties.map((property: any) => (
               <CompactPropertyCard 
                 key={property.id} 

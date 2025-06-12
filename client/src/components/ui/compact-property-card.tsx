@@ -51,107 +51,104 @@ export default function CompactPropertyCard({ property, currentUserId }: Compact
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 mb-3">
-        <div className="flex">
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 mb-4">
+        <div className="flex h-[140px]">
           {/* Content Section - Left */}
-          <div className="flex-1 p-4">
-            {/* Property Type Badge */}
-            <div className="mb-2">
-              <Badge 
-                variant="secondary" 
-                className="text-xs text-blue-600 bg-blue-50 font-medium"
-              >
-                {property.propertyType}
-              </Badge>
+          <div className="flex-1 p-4 flex flex-col justify-between">
+            {/* Top Section */}
+            <div>
+              {/* Property Type Badge */}
+              <div className="mb-2">
+                <span className="text-xs text-blue-600 bg-transparent font-medium uppercase tracking-wide">
+                  {property.propertyType}
+                </span>
+              </div>
+
+              {/* Title */}
+              <h3 className="font-bold text-gray-900 text-base leading-tight mb-2 line-clamp-2">
+                {property.title}
+              </h3>
+
+              {/* Property Details */}
+              <div className="flex items-center text-blue-600 text-sm mb-2 space-x-1">
+                {property.bhk && (
+                  <>
+                    <span>{property.bhk} bed{property.bhk > 1 ? 's' : ''}</span>
+                    <span>•</span>
+                  </>
+                )}
+                {property.bathrooms && (
+                  <>
+                    <span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span>
+                    <span>•</span>
+                  </>
+                )}
+                <span>{formatArea(property.size, property.sizeUnit || 'sq ft')}</span>
+              </div>
             </div>
 
-            {/* Title */}
-            <h3 className="font-bold text-neutral-900 text-lg leading-tight mb-1 line-clamp-2">
-              {property.title}
-            </h3>
-
-            {/* Property Details */}
-            <div className="flex items-center text-blue-600 text-sm mb-3 space-x-4">
-              {property.bhk && (
-                <span>{property.bhk} bed{property.bhk > 1 ? 's' : ''}</span>
-              )}
-              {property.bathrooms && (
-                <span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span>
-              )}
-              <span>{formatArea(property.size, property.sizeUnit || 'sq ft')}</span>
-            </div>
-
-            {/* Location */}
-            <div className="flex items-center text-neutral-600 text-sm mb-2">
-              <MapPin size={14} className="mr-1 flex-shrink-0" />
-              <span className="truncate">{property.location}</span>
-            </div>
-
-            {/* Price */}
-            <div className="text-xl font-bold text-neutral-900 mb-3">
-              {formatPrice(property.price, property.transactionType, property.rentFrequency)}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowContactModal(true)}
-                className="text-xs px-3 py-1.5 h-auto"
-              >
-                <Phone size={12} className="mr-1" />
-                Contact
-              </Button>
-              
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setLocation(`/property/${property.id}`)}
-                className="text-xs px-3 py-1.5 h-auto"
-              >
-                <Eye size={12} className="mr-1" />
-                Details
-              </Button>
-
-              <div className="flex space-x-1 ml-auto">
+            {/* Bottom Section */}
+            <div className="flex items-center justify-between">
+              <div className="flex space-x-1">
                 <button
                   onClick={handleLike}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    isLiked ? "bg-red-50 text-red-500" : "bg-neutral-50 text-neutral-400"
+                  className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                    isLiked ? "bg-red-50 text-red-500" : "bg-gray-100 text-gray-400"
                   } transition-colors`}
                 >
-                  <Heart size={14} fill={isLiked ? "currentColor" : "none"} />
+                  <Heart size={12} fill={isLiked ? "currentColor" : "none"} />
                 </button>
                 <button
                   onClick={handleShare}
-                  className="w-8 h-8 bg-neutral-50 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-600 transition-colors"
+                  className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <Share2 size={14} />
+                  <Share2 size={12} />
                 </button>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowContactModal(true)}
+                  className="text-xs px-2 py-1 h-6 border-gray-300"
+                >
+                  <Phone size={10} className="mr-1" />
+                  Contact
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setLocation(`/property/${property.id}`)}
+                  className="text-xs px-2 py-1 h-6"
+                >
+                  <Eye size={10} className="mr-1" />
+                  Details
+                </Button>
               </div>
             </div>
           </div>
 
           {/* Image Section - Right */}
-          <div className="w-32 sm:w-40 flex-shrink-0">
+          <div className="w-[120px] flex-shrink-0 relative">
             {hasPhotos ? (
-              <div className="relative h-full min-h-[160px]">
+              <div className="relative h-full w-full">
                 <img 
                   src={`/uploads/${property.photos[0]}`} 
                   alt={property.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-tr-2xl rounded-br-2xl"
                 />
                 {property.photos && property.photos.length > 1 && (
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-1.5 py-0.5 rounded text-xs">
                     +{property.photos.length - 1}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="w-full h-full min-h-[160px] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center rounded-tr-2xl rounded-br-2xl">
                 <div className="text-blue-400 text-center">
-                  <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-blue-200 flex items-center justify-center">
+                  <div className="w-6 h-6 mx-auto mb-1 rounded-full bg-blue-200 flex items-center justify-center">
                     <span className="text-blue-600 text-xs font-medium">
                       {property.propertyType?.charAt(0) || 'P'}
                     </span>
@@ -163,14 +160,17 @@ export default function CompactPropertyCard({ property, currentUserId }: Compact
           </div>
         </div>
 
-        {/* Listing Type Badge - Bottom */}
-        {property.listingType && (
-          <div className="px-4 pb-3">
-            <Badge className={`text-xs ${getListingTypeBadgeColor(property.listingType)}`}>
-              {getListingTypeLabel(property.listingType)}
-            </Badge>
+        {/* Bottom Info Bar */}
+        <div className="px-4 py-3 bg-gray-50 flex items-center justify-between">
+          <div className="flex items-center text-gray-600 text-sm">
+            <MapPin size={12} className="mr-1 flex-shrink-0" />
+            <span className="truncate text-xs">{property.location}</span>
           </div>
-        )}
+          
+          <div className="text-lg font-bold text-gray-900">
+            {formatPrice(property.price, property.transactionType, property.rentFrequency)}
+          </div>
+        </div>
       </div>
 
       <ContactModal

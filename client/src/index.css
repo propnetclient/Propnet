@@ -33,6 +33,14 @@
   --neutral-900: 220 13% 18%;
 }
 
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .dark {
   --background: 224 71% 4%;
   --foreground: 213 31% 91%;
