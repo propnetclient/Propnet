@@ -33,7 +33,7 @@ export default function KYC() {
     },
     onSuccess: (data) => {
       updateUser(data.user);
-      setLocation("/feed");
+      setLocation("/dashboard");
       toast({
         title: "Success",
         description: "Profile completed successfully. Welcome to PropNet!",

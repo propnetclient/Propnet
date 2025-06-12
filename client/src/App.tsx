@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import Login from "@/pages/auth/login";
 import OtpVerification from "@/pages/auth/otp-verification";
 import KYC from "@/pages/auth/kyc";
+import Dashboard from "@/pages/dashboard/dashboard";
 import PropertyFeed from "@/pages/properties/feed";
 import PropertySearch from "@/pages/properties/search";
 import AddProperty from "@/pages/properties/add-property";
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/" component={Login} />
       <Route path="/otp-verification" component={OtpVerification} />
       <Route path="/kyc" component={KYC} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/feed" component={PropertyFeed} />
       <Route path="/search" component={PropertySearch} />
       <Route path="/add-property" component={AddProperty} />
