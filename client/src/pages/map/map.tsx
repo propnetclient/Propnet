@@ -43,6 +43,7 @@ export default function Map() {
   const [currentMarkers, setCurrentMarkers] = useState<any[]>([]);
   const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
   const [propertyCoordinates, setPropertyCoordinates] = useState<{[key: number]: {lat: number, lng: number}}>({});
+  const [markersMap, setMarkersMap] = useState<{[key: number]: any}>({});
   const mapRef = useRef<HTMLDivElement>(null);
 
   const { data: properties = [], isLoading } = useQuery({
@@ -126,6 +127,7 @@ export default function Map() {
       marker.setMap(null);
     });
     setCurrentMarkers([]);
+    setMarkersMap({});
 
     const filteredProps = Array.isArray(properties) ? properties.filter((property: Property) => {
       if (filterType === "all") return true;
@@ -136,6 +138,7 @@ export default function Map() {
     setVisibleProperties(filteredProps);
 
     const newMarkers: any[] = [];
+    const newMarkersMap: {[key: number]: any} = {};
 
     for (const property of filteredProps) {
       try {
@@ -189,6 +192,7 @@ export default function Map() {
         });
 
         newMarkers.push(marker);
+        newMarkersMap[property.id] = { marker, infoWindow };
       } catch (error) {
         console.error('Failed to add marker for property:', property.id, error);
       }
@@ -196,6 +200,7 @@ export default function Map() {
 
     // Store new markers
     setCurrentMarkers(newMarkers);
+    setMarkersMap(newMarkersMap);
 
     // Add user location marker if available
     if (userLocation) {
@@ -216,6 +221,29 @@ export default function Map() {
           fontSize: '16px'
         }
       });
+    }
+  };
+
+  // Function to center map on selected property
+  const centerOnProperty = async (property: Property) => {
+    if (!map || !window.google) return;
+
+    try {
+      // Get or fetch coordinates for the property
+      const coords = await geocodeProperty(property);
+      
+      // Center the map on the property
+      map.setCenter({ lat: coords.lat, lng: coords.lng });
+      map.setZoom(16); // Zoom in for detailed view
+
+      // Open the info window for this property if marker exists
+      const markerData = markersMap[property.id];
+      if (markerData) {
+        markerData.infoWindow.open(map, markerData.marker);
+        setSelectedProperty(property);
+      }
+    } catch (error) {
+      console.error('Failed to center on property:', property.id, error);
     }
   };
 
@@ -368,10 +396,10 @@ export default function Map() {
           {visibleProperties.slice(0, 5).map((property: Property) => (
             <Card 
               key={property.id} 
-              className={`cursor-pointer transition-all ${
+              className={`cursor-pointer transition-all hover:shadow-lg ${
                 selectedProperty?.id === property.id ? 'ring-2 ring-primary' : ''
               }`}
-              onClick={() => setSelectedProperty(property)}
+              onClick={() => centerOnProperty(property)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
