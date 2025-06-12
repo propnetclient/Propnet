@@ -52,7 +52,7 @@ export default function Messages() {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
 
   // Fetch user conversations
-  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
+  const { data: conversations = [], isLoading: conversationsLoading, refetch: refetchConversations } = useQuery({
     queryKey: ["/api/conversations"],
   });
 
@@ -81,6 +81,7 @@ export default function Messages() {
       setSelectedConversation(conversation);
       setShowNewChatDialog(false);
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      refetchConversations();
     },
   });
 
