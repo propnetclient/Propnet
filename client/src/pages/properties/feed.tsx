@@ -92,7 +92,7 @@ export default function PropertyFeed() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-20">
+    <div className="flex flex-col min-h-screen pb-20 bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-neutral-100 z-10">
         <div className="px-4 py-3">
@@ -123,21 +123,21 @@ export default function PropertyFeed() {
           </div>
           
           {/* Search and Filter Bar */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <Input
-                placeholder="Search properties..."
+                placeholder="Search by address, city, or ZIP code"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border-gray-200 focus:border-primary bg-gray-50 focus:bg-white transition-colors"
+                className="pl-10 pr-4 py-3 border-gray-200 focus:border-primary bg-gray-50 focus:bg-white transition-colors rounded-lg"
               />
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-2 min-w-fit ${
+              className={`flex items-center gap-2 px-3 py-3 min-w-fit rounded-lg ${
                 activeFiltersCount > 0 ? 'border-primary text-primary bg-primary/5' : 'bg-gray-50'
               }`}
             >
@@ -148,6 +148,40 @@ export default function PropertyFeed() {
                 </span>
               )}
             </Button>
+          </div>
+
+          {/* Transaction Type Tabs */}
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setSelectedTab("sale")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                selectedTab === "sale"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              For Sale
+            </button>
+            <button
+              onClick={() => setSelectedTab("rent")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                selectedTab === "rent"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              For Rent
+            </button>
+            <button
+              onClick={() => setSelectedTab("all")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                selectedTab === "all"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              All
+            </button>
           </div>
         </div>
 
@@ -250,9 +284,9 @@ export default function PropertyFeed() {
       </div>
 
       {/* Property List */}
-      <div className="flex-1 px-6">
+      <div className="flex-1 px-4 py-4">
         {filteredProperties.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
+          <div className="flex flex-col items-center justify-center h-64 text-center bg-white rounded-lg shadow-sm">
             <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
               <Plus className="text-neutral-400" size={24} />
             </div>
@@ -268,7 +302,7 @@ export default function PropertyFeed() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredProperties.map((property: any) => (
               <CompactPropertyCard 
                 key={property.id} 
