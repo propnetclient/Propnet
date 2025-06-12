@@ -223,7 +223,12 @@ export default function Messages() {
             <h1 className="text-xl font-bold text-neutral-900">Messages</h1>
             <p className="text-sm text-neutral-600">{filteredConversations.length} conversations</p>
           </div>
-          <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+          <Dialog open={showNewChatDialog} onOpenChange={(open) => {
+            setShowNewChatDialog(open);
+            if (!open) {
+              setUserSearchQuery(""); // Reset search when dialog closes
+            }
+          }}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <Plus size={16} className="mr-1" />
