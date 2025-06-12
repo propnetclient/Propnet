@@ -185,7 +185,7 @@ export default function Map() {
 
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="min-width: 200px; padding: 8px;">
+            <div id="info-${property.id}" style="min-width: 200px; padding: 8px;">
               <div style="font-weight: bold; margin-bottom: 8px;">${property.title}</div>
               ${buildingInfo}
               <div style="color: #666; margin-bottom: 8px; font-size: 14px;">${property.location}</div>
@@ -195,31 +195,28 @@ export default function Map() {
                              color: ${property.transactionType === 'sale' ? '#1d4ed8' : '#166534'}; 
                              padding: 2px 8px; border-radius: 4px; font-size: 12px;">${property.transactionType}</span>
               </div>
-              <div style="text-align: center; font-size: 11px; color: #888; border-top: 1px solid #eee; padding-top: 8px;">
-                Click marker again to view full details
-              </div>
+              <button id="details-btn-${property.id}" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 8px;">
+                View Full Details
+              </button>
             </div>
           `
         });
 
-        let clickCount = 0;
         marker.addListener('click', () => {
-          clickCount++;
-          if (clickCount === 1) {
-            // First click - open info window
-            setSelectedProperty(property);
-            infoWindow.open(map, marker);
-          } else {
-            // Second click - show full details
-            clickCount = 0; // Reset counter
-            infoWindow.close();
-            (window as any).openListing(property.id);
-          }
-        });
-
-        // Reset click count when info window is closed
-        infoWindow.addListener('closeclick', () => {
-          clickCount = 0;
+          setSelectedProperty(property);
+          infoWindow.open(map, marker);
+          
+          // Add click listener to the details button after info window opens
+          setTimeout(() => {
+            const detailsBtn = document.getElementById(`details-btn-${property.id}`);
+            if (detailsBtn) {
+              detailsBtn.addEventListener('click', () => {
+                infoWindow.close();
+                setDetailsProperty(property);
+                setShowDetailsModal(true);
+              });
+            }
+          }, 100);
         });
 
         newMarkers.push(marker);
