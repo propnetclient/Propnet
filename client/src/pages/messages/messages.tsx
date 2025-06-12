@@ -50,6 +50,7 @@ export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState<any | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
 
   // Fetch user conversations
   const { data: conversations = [], isLoading: conversationsLoading, refetch: refetchConversations } = useQuery({
@@ -103,6 +104,12 @@ export default function Messages() {
   const filteredConversations = Array.isArray(conversations) ? conversations.filter((conv: any) =>
     (conv.property?.title || "General Chat").toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.otherParticipant?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : [];
+
+  // Filter network users for new chat dialog
+  const filteredNetworkUsers = Array.isArray(networkUsers) ? networkUsers.filter((networkUser: any) =>
+    networkUser.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+    networkUser.agencyName?.toLowerCase().includes(userSearchQuery.toLowerCase())
   ) : [];
 
   const startNewConversation = (participantId: number) => {
@@ -231,28 +238,48 @@ export default function Messages() {
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
                   <Input
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
                     placeholder="Search network users..."
                     className="pl-10"
                   />
                 </div>
                 <div className="max-h-64 overflow-y-auto space-y-2">
-                  {Array.isArray(networkUsers) && networkUsers.map((networkUser: any) => (
-                    <Card 
-                      key={networkUser.id}
-                      className="p-3 cursor-pointer hover:bg-neutral-50"
-                      onClick={() => startNewConversation(networkUser.id)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                          <User size={16} className="text-primary" />
+                  {!Array.isArray(networkUsers) || networkUsers.length === 0 ? (
+                    <div className="text-center py-8 text-neutral-500">
+                      <User size={32} className="mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Loading network users...</p>
+                    </div>
+                  ) : filteredNetworkUsers.length === 0 && userSearchQuery ? (
+                    <div className="text-center py-8 text-neutral-500">
+                      <User size={32} className="mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No users found matching "{userSearchQuery}"</p>
+                    </div>
+                  ) : (
+                    filteredNetworkUsers.map((networkUser: any) => (
+                      <Card 
+                        key={networkUser.id}
+                        className="p-3 cursor-pointer hover:bg-neutral-50 transition-colors"
+                        onClick={() => startNewConversation(networkUser.id)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <User size={18} className="text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm text-neutral-900">{networkUser.name}</p>
+                            <p className="text-xs text-neutral-600">{networkUser.agencyName}</p>
+                            {networkUser.phone && (
+                              <p className="text-xs text-neutral-500">{networkUser.phone}</p>
+                            )}
+                          </div>
+                          <div className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                            Verified
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-sm">{networkUser.name}</p>
-                          <p className="text-xs text-neutral-600">{networkUser.agencyName}</p>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    ))
+                  )}
                 </div>
               </div>
             </DialogContent>
