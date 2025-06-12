@@ -1133,6 +1133,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Maps API key endpoint
+  app.get("/api/config/google-maps-key", async (req, res) => {
+    const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+    if (!GOOGLE_MAPS_API_KEY) {
+      return res.status(500).json({ message: "Google Maps API key not configured" });
+    }
+    res.json({ key: GOOGLE_MAPS_API_KEY });
+  });
+
   // Google Places API endpoints
   app.get("/api/places/autocomplete", async (req, res) => {
     try {

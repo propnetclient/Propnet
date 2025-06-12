@@ -64,18 +64,26 @@ export default function Map() {
 
   useEffect(() => {
     // Load Google Maps API
-    const loadGoogleMaps = () => {
+    const loadGoogleMaps = async () => {
       if (window.google && window.google.maps) {
         initializeMap();
         return;
       }
 
-      window.initMap = initializeMap;
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}&callback=initMap`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
+      try {
+        // Fetch Google Maps API key from server
+        const response = await fetch('/api/config/google-maps-key');
+        const { key } = await response.json();
+
+        window.initMap = initializeMap;
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error('Failed to load Google Maps API key:', error);
+      }
     };
 
     const initializeMap = () => {
@@ -109,10 +117,10 @@ export default function Map() {
   const addMarkersToMap = () => {
     if (!map || !window.google) return;
 
-    const filteredProps = properties.filter((property: Property) => {
+    const filteredProps = Array.isArray(properties) ? properties.filter((property: Property) => {
       if (filterType === "all") return true;
       return property.transactionType === filterType;
-    });
+    }) : [];
 
     // Clear existing markers
     // (In a real implementation, you'd track markers to clear them)
