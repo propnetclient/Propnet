@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Navigation, Layers, Phone, Eye, Filter } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { MapPin, Navigation, Layers, Phone, Eye, Filter, Home, User } from "lucide-react";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { formatPrice, getListingTypeBadgeColor } from "@/utils/formatters";
 
@@ -68,15 +69,17 @@ export default function Map() {
   }, []);
 
   useEffect(() => {
-    // Add global function for property details
-    (window as any).propertyDetails = (propertyId: number) => {
-      // Navigate to property details page or show modal
-      console.log('Show details for property:', propertyId);
-      // You can implement navigation to a details page here
-      // For now, we'll just show an alert with property info
+    // Add global function for opening listings from map
+    (window as any).openListing = (propertyId: number) => {
+      // Scroll to the property in the list and highlight it
       const property = visibleProperties.find(p => p.id === propertyId);
       if (property) {
-        alert(`Property Details:\n${property.title}\n${property.location}\nPrice: ${formatPrice(property.price, property.transactionType)}\nOwner: ${property.owner.name}\nPhone: ${property.owner.phone}`);
+        setSelectedProperty(property);
+        // Scroll to the property list section
+        const listElement = document.querySelector('.property-list-section');
+        if (listElement) {
+          listElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       }
     };
 
@@ -180,19 +183,18 @@ export default function Map() {
 
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="min-width: 200px; padding: 8px;">
+            <div style="min-width: 200px; padding: 8px; cursor: pointer;" onclick="window.openListing(${property.id})">
               <div style="font-weight: bold; margin-bottom: 8px;">${property.title}</div>
               ${buildingInfo}
               <div style="color: #666; margin-bottom: 8px; font-size: 14px;">${property.location}</div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span style="font-weight: bold; color: #2563eb;">${formatPrice(property.price, property.transactionType)}</span>
                 <span style="background: ${property.transactionType === 'sale' ? '#dbeafe' : '#dcfce7'}; 
                              color: ${property.transactionType === 'sale' ? '#1d4ed8' : '#166534'}; 
                              padding: 2px 8px; border-radius: 4px; font-size: 12px;">${property.transactionType}</span>
               </div>
-              <div style="display: flex; gap: 8px;">
-                <button onclick="window.open('tel:${property.owner.phone}', '_self')" style="flex: 1; background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Contact</button>
-                <button onclick="window.propertyDetails(${property.id})" style="flex: 1; background: #6b7280; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Details</button>
+              <div style="text-align: center; font-size: 11px; color: #888; border-top: 1px solid #eee; padding-top: 8px;">
+                Click to view full details
               </div>
             </div>
           `
@@ -400,7 +402,7 @@ export default function Map() {
       </div>
 
       {/* Property List */}
-      <div className="px-6 py-4">
+      <div className="px-6 py-4 property-list-section">
         <h2 className="text-lg font-semibold text-neutral-900 mb-4">
           Properties in View ({visibleProperties.length})
         </h2>
