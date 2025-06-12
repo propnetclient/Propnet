@@ -569,7 +569,12 @@ export default function MyListings() {
                             <FormItem>
                               <FormLabel>Building/Society</FormLabel>
                               <FormControl>
-                                <Input placeholder="Sunshine Residency" {...field} />
+                                <GooglePlacesAutocomplete
+                                  value={field.value || ""}
+                                  onChange={(value) => field.onChange(value)}
+                                  placeholder="Search for building or society..."
+                                  types={["establishment", "premise"]}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1062,7 +1067,12 @@ export default function MyListings() {
                             <FormItem>
                               <FormLabel>Building/Society</FormLabel>
                               <FormControl>
-                                <Input placeholder="Green Valley" {...field} />
+                                <GooglePlacesAutocomplete
+                                  value={field.value || ""}
+                                  onChange={(value) => field.onChange(value)}
+                                  placeholder="Search for building or society..."
+                                  types={["establishment", "premise"]}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
