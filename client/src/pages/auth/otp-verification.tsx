@@ -33,7 +33,7 @@ export default function OtpVerification() {
       localStorage.removeItem("tempPhone");
       
       if (data.isKycComplete) {
-        setLocation("/feed");
+        setLocation("/dashboard");
       } else {
         setLocation("/kyc");
       }
