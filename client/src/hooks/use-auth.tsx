@@ -15,11 +15,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes (formerly cacheTime)
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
@@ -35,10 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    if (data) {
+    if (data && !isLoading) {
       setUser(data);
+    } else if (isError && !isLoading) {
+      setUser(null);
     }
-  }, [data]);
+  }, [data, isLoading, isError]);
 
   const login = (userData: User) => {
     setUser(userData);

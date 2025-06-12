@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,20 @@ import { Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Login() {
   const [phone, setPhone] = useState("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user, isLoading } = useAuth();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (user && !isLoading) {
+      setLocation("/dashboard");
+    }
+  }, [user, isLoading, setLocation]);
 
   const sendOtpMutation = useMutation({
     mutationFn: async (phone: string) => {
