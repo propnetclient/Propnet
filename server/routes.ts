@@ -1133,6 +1133,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Places API endpoints
+  app.get("/api/places/autocomplete", async (req, res) => {
+    try {
+      const { input, types = "establishment,geocode" } = req.query;
+      
+      if (!input || typeof input !== 'string') {
+        return res.status(400).json({ message: "Input parameter is required" });
+      }
+
+      const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+      if (!GOOGLE_MAPS_API_KEY) {
+        return res.status(500).json({ message: "Google Maps API key not configured" });
+      }
+
+      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=${types}&key=${GOOGLE_MAPS_API_KEY}&components=country:in`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.status === 'OK') {
+        res.json({
+          success: true,
+          predictions: data.predictions
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: data.error_message || "Failed to fetch place suggestions"
+        });
+      }
+    } catch (error) {
+      console.error("Places autocomplete error:", error);
+      res.status(500).json({ message: "Failed to fetch place suggestions" });
+    }
+  });
+
+  app.get("/api/places/details", async (req, res) => {
+    try {
+      const { place_id } = req.query;
+      
+      if (!place_id || typeof place_id !== 'string') {
+        return res.status(400).json({ message: "Place ID parameter is required" });
+      }
+
+      const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+      if (!GOOGLE_MAPS_API_KEY) {
+        return res.status(500).json({ message: "Google Maps API key not configured" });
+      }
+
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=name,formatted_address,geometry,types&key=${GOOGLE_MAPS_API_KEY}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.status === 'OK') {
+        res.json({
+          success: true,
+          result: data.result
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: data.error_message || "Failed to fetch place details"
+        });
+      }
+    } catch (error) {
+      console.error("Places details error:", error);
+      res.status(500).json({ message: "Failed to fetch place details" });
+    }
+  });
+
   // Messaging API endpoints
   app.get("/api/network-users", async (req, res) => {
     try {

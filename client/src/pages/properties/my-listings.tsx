@@ -22,6 +22,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertPropertySchema } from "@shared/schema";
 import FileUpload from "@/components/ui/file-upload";
 import BottomNavigation from "@/components/layout/bottom-navigation";
+import GooglePlacesAutocomplete from "@/components/ui/google-places-autocomplete";
 import { z } from "zod";
 
 const propertyFormSchema = insertPropertySchema;

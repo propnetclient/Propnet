@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertPropertySchema } from "@shared/schema";
 import BottomNavigation from "@/components/layout/bottom-navigation";
+import GooglePlacesAutocomplete from "@/components/ui/google-places-autocomplete";
 import { z } from "zod";
 
 interface ExtractedProperty {
@@ -615,14 +616,16 @@ Owner: Priya Sharma - 9123456789"
                             {validationStatus.missingFields.includes('buildingSociety') && (
                               <div className="col-span-2">
                                 <label className="text-xs text-neutral-600">Building/Society Name</label>
-                                <Input
-                                  placeholder="e.g., Green Valley Apartments"
-                                  className="h-8 text-xs"
-                                  onChange={(e) => {
-                                    const updatedProperty = { ...property, buildingSociety: e.target.value };
+                                <GooglePlacesAutocomplete
+                                  value={property.buildingSociety || ""}
+                                  onChange={(value) => {
+                                    const updatedProperty = { ...property, buildingSociety: value };
                                     const updatedProperties = extractedProperties.map(p => p === property ? updatedProperty : p);
                                     setExtractedProperties(updatedProperties);
                                   }}
+                                  placeholder="Search for building or society..."
+                                  types={["establishment", "premise"]}
+                                  className="text-xs"
                                 />
                               </div>
                             )}
@@ -837,7 +840,12 @@ Owner: Priya Sharma - 9123456789"
                       <FormItem>
                         <FormLabel>Building/Society Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Green Valley Apartments" {...field} />
+                          <GooglePlacesAutocomplete
+                            value={field.value || ""}
+                            onChange={(value) => field.onChange(value)}
+                            placeholder="Search for building or society..."
+                            types={["establishment", "premise"]}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
