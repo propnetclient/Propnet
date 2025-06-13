@@ -91,8 +91,6 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
     }
   };
 
-  const priceValue = parseFloat(property.price.replace(/[^\d.]/g, ''));
-  const isPremium = priceValue > 100; // Above 1Cr
   const hasPhotos = property.photos && property.photos.length > 0;
 
   return (
@@ -117,14 +115,7 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
             </Badge>
           </div>
 
-          {isPremium && (
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs">
-                <TrendingUp size={12} className="mr-1" />
-                Premium
-              </Badge>
-            </div>
-          )}
+
 
           <div className="absolute bottom-3 right-3 flex space-x-2">
             <button
@@ -163,12 +154,7 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
             }`}>
               {property.propertyType}
             </Badge>
-            {isPremium && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs">
-                <TrendingUp size={12} className="mr-1" />
-                Premium
-              </Badge>
-            )}
+
           </div>
         )}
         
