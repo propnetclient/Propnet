@@ -21,13 +21,10 @@ export default function PropertyFeed() {
 
   // Filter state
   const [filters, setFilters] = useState({
-    transactionType: "",
     propertyType: "",
     bhk: "",
     location: "",
     listingType: "",
-    minPrice: "",
-    maxPrice: "",
   });
   const [priceRange, setPriceRange] = useState([0, 10000000]);
 
@@ -46,8 +43,6 @@ export default function PropertyFeed() {
     const matchesTab = selectedTab === "all" || property.transactionType === selectedTab;
 
     // Advanced filters
-    const matchesTransactionType = !filters.transactionType || 
-      property.transactionType === filters.transactionType;
     const matchesPropertyType = !filters.propertyType || 
       property.propertyType === filters.propertyType;
     const matchesBHK = !filters.bhk || 
@@ -60,19 +55,16 @@ export default function PropertyFeed() {
     const propertyPrice = parseFloat(property.price.replace(/[^\d.]/g, ''));
     const matchesPriceRange = propertyPrice >= priceRange[0] && propertyPrice <= priceRange[1];
 
-    return matchesSearch && matchesTab && matchesTransactionType && matchesPropertyType && 
+    return matchesSearch && matchesTab && matchesPropertyType && 
            matchesBHK && matchesLocation && matchesListingType && matchesPriceRange;
   }) : [];
 
   const clearFilters = () => {
     setFilters({
-      transactionType: "",
       propertyType: "",
       bhk: "",
       location: "",
       listingType: "",
-      minPrice: "",
-      maxPrice: "",
     });
     setPriceRange([0, 10000000]);
     setSearchQuery("");
@@ -181,37 +173,27 @@ export default function PropertyFeed() {
           <Card className="mx-4 mb-3 border-t-0 rounded-t-none shadow-sm">
             <CardContent className="p-4 space-y-4">
               {/* Quick Filters Row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Select value={filters.transactionType} onValueChange={(value) => 
-                  setFilters(prev => ({ ...prev, transactionType: value }))}>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Buy/Rent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sale">For Sale</SelectItem>
-                    <SelectItem value="rent">For Rent</SelectItem>
-                  </SelectContent>
-                </Select>
-
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <Select value={filters.propertyType} onValueChange={(value) => 
                   setFilters(prev => ({ ...prev, propertyType: value }))}>
                   <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Type" />
+                    <SelectValue placeholder="Property Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Apartment">Apartment</SelectItem>
                     <SelectItem value="Villa">Villa</SelectItem>
-                    <SelectItem value="House">House</SelectItem>
-                    <SelectItem value="Office">Office</SelectItem>
-                    <SelectItem value="Shop">Shop</SelectItem>
-                    <SelectItem value="Plot">Plot</SelectItem>
+                    <SelectItem value="House">Independent House</SelectItem>
+                    <SelectItem value="Plot">Plot/Land</SelectItem>
+                    <SelectItem value="Office">Office Space</SelectItem>
+                    <SelectItem value="Shop">Shop/Showroom</SelectItem>
+                    <SelectItem value="Warehouse">Warehouse</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={filters.bhk} onValueChange={(value) => 
                   setFilters(prev => ({ ...prev, bhk: value }))}>
                   <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="BHK" />
+                    <SelectValue placeholder="Bedrooms" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1">1 BHK</SelectItem>
@@ -225,12 +207,12 @@ export default function PropertyFeed() {
                 <Select value={filters.listingType} onValueChange={(value) => 
                   setFilters(prev => ({ ...prev, listingType: value }))}>
                   <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Listing" />
+                    <SelectValue placeholder="Listing Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="exclusive">Exclusive</SelectItem>
                     <SelectItem value="colisting">Co-Listing</SelectItem>
-                    <SelectItem value="shared">Shared</SelectItem>
+                    <SelectItem value="shared">Open Market</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -238,7 +220,7 @@ export default function PropertyFeed() {
               {/* Price Range */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Price Range: {formatPrice(priceRange[0].toString(), filters.transactionType || 'sale')} - {formatPrice(priceRange[1].toString(), filters.transactionType || 'sale')}
+                  Price Range: {formatPrice(priceRange[0].toString(), selectedTab)} - {formatPrice(priceRange[1].toString(), selectedTab)}
                 </label>
                 <Slider
                   value={priceRange}
