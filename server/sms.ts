@@ -1,31 +1,35 @@
 import { config } from './config';
 
-// SMS service implementation
+// SMS service implementation using Twilio
 export async function sendSMS(phone: string, message: string): Promise<boolean> {
-  if (!config.isProduction) {
+  // Force real SMS delivery when Twilio credentials are available
+  const hasCredentials = config.sms.accountSid && config.sms.authToken && config.sms.phoneNumber;
+  
+  if (!hasCredentials) {
     console.log(`Development SMS to ${phone}: ${message}`);
     return true;
   }
   
-  // Production SMS implementation
-  if (!config.sms.accountSid || !config.sms.authToken || !config.sms.phoneNumber) {
-    throw new Error('SMS service not configured. Missing Twilio credentials.');
-  }
-  
   try {
-    // Twilio integration would go here
-    // const twilio = require('twilio');
-    // const client = twilio(config.sms.accountSid, config.sms.authToken);
-    // await client.messages.create({
-    //   body: message,
-    //   from: config.sms.phoneNumber,
-    //   to: phone
-    // });
+    // Import Twilio dynamically to avoid requiring it in development
+    const twilio = await import('twilio');
+    const client = twilio.default(config.sms.accountSid, config.sms.authToken);
     
-    console.warn('SMS service integration pending - Twilio setup required');
-    return false;
+    // Format phone number for international delivery
+    const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
+    
+    const messageResponse = await client.messages.create({
+      body: message,
+      from: config.sms.phoneNumber,
+      to: formattedPhone
+    });
+    
+    console.log(`SMS sent successfully to ${formattedPhone}, SID: ${messageResponse.sid}`);
+    return true;
   } catch (error) {
     console.error('SMS sending failed:', error);
+    // Fall back to console logging in case of Twilio errors
+    console.log(`Fallback SMS to ${phone}: ${message}`);
     return false;
   }
 }
