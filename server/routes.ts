@@ -12,6 +12,7 @@ import { extractPropertiesFromText, enhancePropertyDescription } from "./gemini"
 import { generateOTP, storeOTP, validateOTP, checkRateLimit, requireAuth } from "./auth";
 import { registerAnalyticsRoutes } from "./analytics-routes";
 import { cache } from "./cache";
+import { sendSMS } from "./sms";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -41,8 +42,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/send-otp", async (req, res) => {
     try {
       const { phone } = z.object({ 
-        phone: z.string().regex(/^[6-9]\d{9}$/, "Invalid Indian phone number") 
+        phone: z.string().min(10, "Phone number required") 
       }).parse(req.body);
+      
+      // Normalize phone number
+      const normalizedPhone = phone.replace(/\D/g, '').slice(-10);
       
       // Check rate limiting
       const rateCheck = checkRateLimit(phone);
@@ -52,11 +56,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate and store secure OTP
       const otp = generateOTP();
-      storeOTP(phone, otp);
+      storeOTP(normalizedPhone, otp);
       
       // Send SMS using Twilio credentials
       const smsMessage = `Your PropNet verification code is: ${otp}. Valid for 5 minutes.`;
-      const smsSuccess = await sendSMS(phone, smsMessage);
+      const smsSuccess = await sendSMS(normalizedPhone, smsMessage);
       
       // Development fallback only if SMS fails
       if (!smsSuccess && process.env.NODE_ENV !== 'production') {
@@ -65,7 +69,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true, message: "OTP sent successfully" });
     } catch (error) {
-      res.status(400).json({ message: "Invalid phone number format" });
+      console.error("Send OTP error:", error);
+      res.status(400).json({ message: error instanceof Error ? error.message : "Invalid phone number format" });
     }
   });
 
