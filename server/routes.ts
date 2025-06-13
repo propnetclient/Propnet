@@ -54,9 +54,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const otp = generateOTP();
       storeOTP(phone, otp);
       
-      // In production, integrate with SMS service like Twilio
-      // For development, log OTP (remove in production)
-      if (process.env.NODE_ENV !== 'production') {
+      // Send SMS using Twilio credentials
+      const smsMessage = `Your PropNet verification code is: ${otp}. Valid for 5 minutes.`;
+      const smsSuccess = await sendSMS(phone, smsMessage);
+      
+      // Development fallback only if SMS fails
+      if (!smsSuccess && process.env.NODE_ENV !== 'production') {
         console.log(`Development OTP for ${phone}: ${otp}`);
       }
       

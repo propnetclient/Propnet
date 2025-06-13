@@ -2,7 +2,12 @@ import { config } from './config';
 
 // SMS service implementation using Twilio
 export async function sendSMS(phone: string, message: string): Promise<boolean> {
-  // Force real SMS delivery when Twilio credentials are available
+  // Debug credential availability
+  console.log('SMS Service Debug:');
+  console.log('Account SID:', config.sms.accountSid ? 'Present' : 'Missing');
+  console.log('Auth Token:', config.sms.authToken ? 'Present' : 'Missing');
+  console.log('Phone Number:', config.sms.phoneNumber || 'Missing');
+  
   const hasCredentials = config.sms.accountSid && config.sms.authToken && config.sms.phoneNumber;
   
   if (!hasCredentials) {
