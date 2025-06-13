@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import PDFDocument from "pdfkit";
 import { extractPropertiesFromText, enhancePropertyDescription } from "./gemini";
+import { generateOTP, storeOTP, validateOTP, checkRateLimit, requireAuth } from "./auth";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -34,18 +35,32 @@ if (!fs.existsSync('uploads')) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth routes
+  // Auth routes with rate limiting and security
   app.post("/api/auth/send-otp", async (req, res) => {
     try {
-      const { phone } = z.object({ phone: z.string() }).parse(req.body);
+      const { phone } = z.object({ 
+        phone: z.string().regex(/^[6-9]\d{9}$/, "Invalid Indian phone number") 
+      }).parse(req.body);
+      
+      // Check rate limiting
+      const rateCheck = checkRateLimit(phone);
+      if (!rateCheck.allowed) {
+        return res.status(429).json({ message: rateCheck.message });
+      }
+      
+      // Generate and store secure OTP
+      const otp = generateOTP();
+      storeOTP(phone, otp);
       
       // In production, integrate with SMS service like Twilio
-      // For now, we'll simulate OTP sending
-      console.log(`OTP for ${phone}: 123456`);
+      // For development, log OTP (remove in production)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Development OTP for ${phone}: ${otp}`);
+      }
       
       res.json({ success: true, message: "OTP sent successfully" });
     } catch (error) {
-      res.status(400).json({ message: "Invalid phone number" });
+      res.status(400).json({ message: "Invalid phone number format" });
     }
   });
 
