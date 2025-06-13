@@ -3,13 +3,13 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, User, Home, Handshake, Settings, LogOut, ChevronRight, BarChart3, Award } from "lucide-react";
+// Removed Tabs import as analytics tab is no longer needed
+import { ArrowLeft, User, Home, Handshake, Settings, LogOut, ChevronRight, Award } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import BottomNavigation from "@/components/layout/bottom-navigation";
-import AnalyticsDashboard from "@/components/ui/analytics-dashboard";
+
 
 export default function Profile() {
   const [, setLocation] = useLocation();
@@ -90,19 +90,7 @@ export default function Profile() {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 shrink-0 max-w-md">
-            <TabsTrigger value="overview" className="flex items-center justify-center space-x-1 text-sm">
-              <User size={14} />
-              <span>Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center justify-center space-x-1 text-sm">
-              <BarChart3 size={14} />
-              <span>Analytics</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="px-6 py-6">
+        <div className="px-6 py-6">
             {/* Profile Header */}
             <div className="text-center mb-8">
               <div className="w-24 h-24 bg-neutral-200 rounded-full mx-auto mb-4 flex items-center justify-center relative">
@@ -201,12 +189,7 @@ export default function Profile() {
                 )}
               </button>
             </div>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="flex-1 overflow-y-auto px-6 py-6">
-            <AnalyticsDashboard userId={user?.id || 0} />
-          </TabsContent>
-        </Tabs>
+        </div>
       </div>
 
       <BottomNavigation />
