@@ -10,6 +10,8 @@ import fs from "fs";
 import PDFDocument from "pdfkit";
 import { extractPropertiesFromText, enhancePropertyDescription } from "./gemini";
 import { generateOTP, storeOTP, validateOTP, checkRateLimit, requireAuth } from "./auth";
+import { registerAnalyticsRoutes } from "./analytics-routes";
+import { cache } from "./cache";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -252,6 +254,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         consentId,
         ownerApprovalStatus: 'pending'
       });
+
+      // Invalidate cache after property creation
+      cache.invalidatePattern('properties');
+      cache.invalidatePattern(`user-${userId}-properties`);
 
       // Check for duplicate properties before creating
       const duplicates = await storage.checkDuplicateProperty(propertyData);
@@ -1379,6 +1385,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: "Failed to send message" });
     }
   });
+
+  // Register analytics routes
+  registerAnalyticsRoutes(app);
 
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));

@@ -1,6 +1,7 @@
 import { users, properties, coListings, coListingRequests, propertyRequirements, conversations, messages, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, not, desc } from "drizzle-orm";
+import { withCache, cache } from "./cache";
 
 export interface IStorage {
   // User methods
