@@ -172,16 +172,7 @@ export default function PropertyFeed() {
             >
               For Rent
             </button>
-            <button
-              onClick={() => setSelectedTab("all")}
-              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                selectedTab === "all"
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Sold
-            </button>
+
           </div>
         </div>
 
