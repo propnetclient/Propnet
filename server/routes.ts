@@ -272,9 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // In a real implementation, you would send SMS/WhatsApp to owner here
-      console.log(`Owner approval request sent for property ${property.id} to ${propertyData.ownerPhone}`);
-      console.log(`Consent ID: ${consentId}`);
-      console.log(`Consent URL: ${process.env.BASE_URL || 'http://localhost:5000'}/consent/${consentId}`);
+      // Property created with consent ID: ${consentId}
       
       res.json({ 
         success: true, 
