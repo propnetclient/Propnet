@@ -134,7 +134,7 @@ export default function Profile() {
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="text-center p-4 bg-neutral-50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{myProperties.length}</div>
+              <div className="text-2xl font-bold text-primary">{Array.isArray(myProperties) ? myProperties.length : 0}</div>
               <div className="text-xs text-neutral-500">Active Listings</div>
             </div>
             <div className="text-center p-4 bg-neutral-50 rounded-lg">
