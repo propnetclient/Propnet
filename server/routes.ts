@@ -224,6 +224,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (propertyData.isActive) {
         propertyData.isActive = propertyData.isActive === 'true';
       }
+      
+      if (propertyData.isPubliclyVisible) {
+        propertyData.isPubliclyVisible = propertyData.isPubliclyVisible === 'true';
+      }
 
       console.log("Processed property data:", propertyData);
 
