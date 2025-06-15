@@ -225,7 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         propertyData.isActive = propertyData.isActive === 'true';
       }
       
-      if (propertyData.isPubliclyVisible) {
+      if (propertyData.isPubliclyVisible !== undefined) {
         propertyData.isPubliclyVisible = propertyData.isPubliclyVisible === 'true';
       }
 
@@ -236,11 +236,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         propertyData = insertPropertySchema.parse(propertyData);
       } catch (parseError: any) {
         console.error("Validation error details:", parseError.errors);
-        const missingFields = parseError.errors.map((err: any) => err.path.join('.')).join(', ');
+        
+        // Create user-friendly error messages
+        const fieldErrors = parseError.errors.map((err: any) => {
+          const field = err.path.join('.');
+          const fieldName = field
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase());
+          
+          if (err.code === 'invalid_type') {
+            return `${fieldName}: Expected ${err.expected}, received ${err.received}`;
+          }
+          return `${fieldName}: ${err.message}`;
+        });
+        
         return res.status(400).json({ 
-          message: "Invalid property data", 
-          details: `Missing required fields: ${missingFields}`,
-          errors: parseError.errors
+          message: "Please check the following fields:", 
+          details: fieldErrors.join('; '),
+          fieldErrors: fieldErrors,
+          validationErrors: parseError.errors
         });
       }
       
