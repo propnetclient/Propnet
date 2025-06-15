@@ -13,6 +13,7 @@ import { generateOTP, storeOTP, validateOTP, checkRateLimit, requireAuth } from 
 import { registerAnalyticsRoutes } from "./analytics-routes";
 import { cache } from "./cache";
 import { sendSMS } from "./sms";
+import { config } from "./config";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -242,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const field = err.path.join('.');
           const fieldName = field
             .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, str => str.toUpperCase());
+            .replace(/^./, (str: string) => str.toUpperCase());
           
           if (err.code === 'invalid_type') {
             return `${fieldName}: Expected ${err.expected}, received ${err.received}`;
@@ -283,6 +284,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         consentId,
         ownerApprovalStatus: 'pending'
       });
+
+      // Send SMS notification to property owner for consent
+      if (propertyData.ownerPhone && (propertyData.listingType === 'exclusive' || propertyData.listingType === 'colisting')) {
+        const user = await storage.getUser(userId);
+        const agentName = user?.name || 'Real Estate Agent';
+        const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+        const consentUrl = `${baseUrl}/owner-consent/${consentId}`;
+        
+        const consentMessage = `${agentName} wants to list your property "${propertyData.title}" on PropNet. Please review and approve: ${consentUrl}`;
+        
+        try {
+          await sendSMS(propertyData.ownerPhone, consentMessage);
+          console.log(`Owner consent SMS sent to ${propertyData.ownerPhone} for property: ${propertyData.title}`);
+        } catch (smsError) {
+          console.warn('Failed to send owner consent SMS:', smsError);
+          // Property is still created even if SMS fails
+        }
+      }
 
       // Invalidate cache after property creation
       cache.invalidatePattern('properties');
