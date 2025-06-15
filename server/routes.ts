@@ -62,9 +62,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const smsMessage = `Your PropNet verification code is: ${otp}. Valid for 5 minutes.`;
       const smsSuccess = await sendSMS(normalizedPhone, smsMessage);
       
+      // Always log OTP for trial account limitations
+      console.log(`OTP for ${normalizedPhone}: ${otp} (Trial Account Fallback)`);
+      
       // Development fallback only if SMS fails
       if (!smsSuccess && process.env.NODE_ENV !== 'production') {
-        console.log(`Development OTP for ${phone}: ${otp}`);
+        console.log(`SMS Delivery Failed - Development OTP for ${phone}: ${otp}`);
       }
       
       res.json({ success: true, message: "OTP sent successfully" });

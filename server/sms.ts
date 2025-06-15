@@ -30,11 +30,25 @@ export async function sendSMS(phone: string, message: string): Promise<boolean> 
     });
     
     console.log(`SMS sent successfully to ${formattedPhone}, SID: ${messageResponse.sid}`);
+    
+    // Check delivery status after a short delay
+    setTimeout(async () => {
+      try {
+        const messageStatus = await client.messages(messageResponse.sid).fetch();
+        console.log(`SMS Status for ${formattedPhone}: ${messageStatus.status}`);
+        if (messageStatus.errorCode) {
+          console.error(`SMS Error ${messageStatus.errorCode}: ${messageStatus.errorMessage}`);
+        }
+      } catch (statusError) {
+        console.warn('Could not check SMS status:', statusError);
+      }
+    }, 3000);
+    
     return true;
   } catch (error) {
     console.error('SMS sending failed:', error);
-    // Fall back to console logging in case of Twilio errors
-    console.log(`Fallback SMS to ${phone}: ${message}`);
+    // For trial accounts that can't deliver to unverified numbers, log the OTP
+    console.log(`Trial Account - OTP for ${phone}: ${message.match(/\d{6}/)?.[0] || 'N/A'}`);
     return false;
   }
 }
