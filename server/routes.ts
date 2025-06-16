@@ -292,11 +292,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
         const consentUrl = `${baseUrl}/owner-consent/${consentId}`;
         
-        const consentMessage = `${agentName} wants to list your property "${propertyData.title}" on PropNet. Please review and approve: ${consentUrl}`;
+        // Customized message based on listing type
+        let consentMessage = '';
+        if (propertyData.listingType === 'exclusive') {
+          consentMessage = `${agentName} requests EXCLUSIVE marketing rights for "${propertyData.title}". This grants sole representation with professional marketing & promotion. Review terms: ${consentUrl}`;
+        } else {
+          consentMessage = `${agentName} requests CO-LISTING rights for "${propertyData.title}". This allows collaborative marketing with other verified agents. Review partnership: ${consentUrl}`;
+        }
         
         try {
           await sendSMS(propertyData.ownerPhone, consentMessage);
-          console.log(`Owner consent SMS sent to ${propertyData.ownerPhone} for property: ${propertyData.title}`);
+          console.log(`Owner consent SMS sent to ${propertyData.ownerPhone} for ${propertyData.listingType} property: ${propertyData.title}`);
         } catch (smsError) {
           console.warn('Failed to send owner consent SMS:', smsError);
           // Property is still created even if SMS fails
