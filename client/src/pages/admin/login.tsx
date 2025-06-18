@@ -25,7 +25,8 @@ export default function AdminLogin() {
     },
     onSuccess: (data) => {
       if (data.success) {
-        localStorage.setItem('adminSessionToken', data.sessionToken || 'authenticated');
+        // The session token is automatically set as an HTTP-only cookie by the server
+        // No need to store it in localStorage
         setLocation('/admin/dashboard');
       } else {
         setError(data.message || 'Login failed');

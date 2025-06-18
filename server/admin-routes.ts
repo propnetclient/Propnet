@@ -25,14 +25,21 @@ const passwordChangeSchema = z.object({
 // Admin authentication middleware
 export const requireAdminAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('Admin auth middleware - cookies:', req.cookies);
+    console.log('Admin auth middleware - headers authorization:', req.headers.authorization);
+    
     const sessionToken = req.headers.authorization?.replace('Bearer ', '') || 
                         req.cookies?.adminSessionToken;
+
+    console.log('Session token found:', !!sessionToken);
 
     if (!sessionToken) {
       return res.status(401).json({ message: "Admin authentication required" });
     }
 
     const authResult = await adminAuth.verifyAdminSession(sessionToken, req);
+    console.log('Auth result:', authResult);
+    
     if (!authResult.success) {
       return res.status(401).json({ message: authResult.message || "Invalid admin session" });
     }
