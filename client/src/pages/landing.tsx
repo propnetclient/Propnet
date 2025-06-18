@@ -160,7 +160,7 @@ export default function Landing() {
       <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-12 md:py-20">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight">
               The Real Estate Network
               <br />
               <span className="text-yellow-300">Built for Brokers.</span>
@@ -173,7 +173,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-6 md:mb-8 px-4">
               <Button
                 size="lg"
-                className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-6 md:px-8 py-3 w-full sm:w-auto font-medium"
+                className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-8 md:px-10 py-4 w-full sm:w-auto font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                 onClick={() =>
                   document
                     .getElementById("beta-form")
@@ -481,7 +481,7 @@ export default function Landing() {
       <section className="py-16 bg-blue-600 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-8">
-            We're here to make you pro.
+            Trust · Clarity · Reward
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
@@ -498,7 +498,7 @@ export default function Landing() {
             <Button
               size="lg"
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-blue-600"
+              className="border-white text-yellow-400 hover:bg-white hover:text-blue-600"
               onClick={() => setShowSuggestionForm(true)}
             >
               <MessageSquare className="w-4 h-4 mr-2" />
@@ -520,7 +520,7 @@ export default function Landing() {
             
             <div className="text-center md:text-right">
               <p className="text-gray-400 text-sm">
-                &copy; 2025 PropNet. Built for brokers, by brokers.
+                &copy; 2025 PropNet. All rights reserved.
               </p>
             </div>
           </div>
