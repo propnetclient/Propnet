@@ -73,14 +73,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Suggestions route for landing page
   app.post("/api/suggestions", async (req, res) => {
     try {
-      const { name, suggestion } = z.object({
+      const { name, contact, suggestion } = z.object({
         name: z.string().min(1, "Name is required"),
+        contact: z.string().min(1, "Contact information is required"),
         suggestion: z.string().min(10, "Suggestion must be at least 10 characters")
       }).parse(req.body);
       
       // Store suggestion information
       console.log(`Feature Suggestion:
         Name: ${name}
+        Contact: ${contact}
         Suggestion: ${suggestion}
         Submitted at: ${new Date().toISOString()}
       `);

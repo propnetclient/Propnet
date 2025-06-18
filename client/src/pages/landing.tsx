@@ -40,6 +40,7 @@ export default function Landing() {
 
   const [suggestionData, setSuggestionData] = useState({
     name: "",
+    contact: "",
     suggestion: "",
   });
 
@@ -79,7 +80,7 @@ export default function Landing() {
         title: "Suggestion Submitted!",
         description: "Thank you for your feedback. We'll review it carefully.",
       });
-      setSuggestionData({ name: "", suggestion: "" });
+      setSuggestionData({ name: "", contact: "", suggestion: "" });
       setShowSuggestionForm(false);
     },
     onError: () => {
@@ -110,10 +111,10 @@ export default function Landing() {
   const handleSuggestionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!suggestionData.name || !suggestionData.suggestion) {
+    if (!suggestionData.name || !suggestionData.contact || !suggestionData.suggestion) {
       toast({
         title: "Missing Information",
-        description: "Please fill in your name and suggestion.",
+        description: "Please fill in all required fields.",
         variant: "destructive",
       });
       return;
@@ -592,13 +593,26 @@ export default function Landing() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Contact (Mobile/Email) *
+                  </label>
+                  <Input
+                    value={suggestionData.contact}
+                    onChange={(e) => updateSuggestionData("contact", e.target.value)}
+                    placeholder="Your mobile number or email"
+                    className="h-11"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                     Your Suggestion *
                   </label>
                   <Textarea
                     value={suggestionData.suggestion}
                     onChange={(e) => updateSuggestionData("suggestion", e.target.value)}
                     placeholder="Tell us what feature or improvement you'd like to see..."
-                    className="min-h-[100px]"
+                    className="min-h-[100px] text-gray-900 dark:text-white"
                     required
                   />
                 </div>
