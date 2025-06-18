@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Building2, Shield, CheckCircle, XCircle, Users, FileCheck, DollarSign, MapPin, Search, Star, Play, TrendingUp, Clock, Zap } from "lucide-react";
+import { Building2, Shield, CheckCircle, XCircle, Users, FileCheck, IndianRupee, MapPin, Search, Star, Play, TrendingUp, Clock, Zap } from "lucide-react";
 
 export default function Landing() {
   const [formData, setFormData] = useState({
@@ -195,7 +195,7 @@ export default function Landing() {
 
               <Card className="border-l-4 border-l-yellow-500">
                 <CardHeader>
-                  <DollarSign className="h-10 w-10 text-yellow-600 mb-2" />
+                  <IndianRupee className="h-10 w-10 text-yellow-600 mb-2" />
                   <CardTitle>Commission Protection Tools</CardTitle>
                   <CardDescription>
                     Set clear terms with your client: role, responsibility, and commission. Get digital consent.
@@ -265,7 +265,7 @@ export default function Landing() {
               
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm flex flex-col md:flex-row items-center gap-4 text-left">
                 <div className="flex-shrink-0">
-                  <DollarSign className="w-12 h-12 md:w-16 md:h-16 text-yellow-600" />
+                  <IndianRupee className="w-12 h-12 md:w-16 md:h-16 text-yellow-600" />
                 </div>
                 <div className="text-center md:text-left">
                   <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white">
@@ -323,7 +323,7 @@ export default function Landing() {
                 Get Early Access
               </h2>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 mb-2">
-                We're onboarding the first 250 verified brokers in India.
+                We're onboarding the first 250 verified brokers in Ahmedabad.
               </p>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-300">
                 Interested in testing our platform?
