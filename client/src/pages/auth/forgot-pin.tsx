@@ -40,10 +40,11 @@ export default function ForgotPin() {
   // Send OTP for PIN reset
   const sendOtpMutation = useMutation({
     mutationFn: async (phone: string) => {
-      return apiRequest("/api/pin-auth/send-otp", "POST", { 
+      const res = await apiRequest("POST", "/api/pin-auth/send-otp", { 
         phone, 
         purpose: "pin_reset" 
       });
+      return res.json();
     },
     onSuccess: (data: any) => {
       setCurrentStep('verify');
@@ -75,11 +76,12 @@ export default function ForgotPin() {
   // Verify OTP for PIN reset
   const verifyOtpMutation = useMutation({
     mutationFn: async (data: { phone: string; otp: string }) => {
-      return apiRequest("/api/pin-auth/verify-otp", "POST", {
+      const res = await apiRequest("POST", "/api/pin-auth/verify-otp", {
         phone: data.phone,
         otp: data.otp,
         purpose: "pin_reset"
       });
+      return res.json();
     },
     onSuccess: () => {
       setCurrentStep('newpin');
@@ -100,7 +102,8 @@ export default function ForgotPin() {
   // Reset PIN
   const resetPinMutation = useMutation({
     mutationFn: async (data: { phone: string; newPin: string }) => {
-      return apiRequest("/api/pin-auth/reset-pin", "POST", data);
+      const res = await apiRequest("POST", "/api/pin-auth/reset-pin", data);
+      return res.json();
     },
     onSuccess: (data: any) => {
       login(data.user);
@@ -244,12 +247,15 @@ export default function ForgotPin() {
                   {sendOtpMutation.isPending ? "Sending..." : "Send Reset Code"}
                 </Button>
 
-                <Link href="/login">
-                  <Button variant="outline" className="w-full">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Login
-                  </Button>
-                </Link>
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.location.href = '/login'}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Login
+                </Button>
               </div>
             </form>
           )}

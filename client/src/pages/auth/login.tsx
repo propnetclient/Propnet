@@ -327,10 +327,8 @@ export default function Login() {
               </div>
 
               <div className="text-center">
-                <Link href="/auth/forgot-pin">
-                  <a className="text-sm text-blue-600 hover:text-blue-800">
-                    Forgot PIN?
-                  </a>
+                <Link href="/auth/forgot-pin" className="text-sm text-blue-600 hover:text-blue-800">
+                  Forgot PIN?
                 </Link>
               </div>
             </form>
