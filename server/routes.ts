@@ -1606,8 +1606,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      // For now, return empty array since tables don't exist yet
-      res.json([]);
+      const clients = await storage.getClients(userId);
+      res.json(clients);
     } catch (error) {
       console.error("Get clients error:", error);
       res.status(500).json({ message: "Failed to fetch clients" });
@@ -1621,8 +1621,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      // For now, return mock success response
-      res.json({ id: 1, ...req.body, userId, createdAt: new Date() });
+      const client = await storage.createClient({ ...req.body, userId });
+      res.json(client);
     } catch (error) {
       console.error("Create client error:", error);
       res.status(500).json({ message: "Failed to create client" });
@@ -1637,8 +1637,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      // For now, return empty array since tables don't exist yet
-      res.json([]);
+      const deals = await storage.getDeals(userId);
+      res.json(deals);
     } catch (error) {
       console.error("Get deals error:", error);
       res.status(500).json({ message: "Failed to fetch deals" });
@@ -1652,8 +1652,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      // For now, return mock success response
-      res.json({ id: 1, ...req.body, userId, createdAt: new Date() });
+      const deal = await storage.createDeal({ ...req.body, userId });
+      res.json(deal);
     } catch (error) {
       console.error("Create deal error:", error);
       res.status(500).json({ message: "Failed to create deal" });
@@ -1668,8 +1668,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      // For now, return empty array since tables don't exist yet
-      res.json([]);
+      const tasks = await storage.getTasks(userId);
+      res.json(tasks);
     } catch (error) {
       console.error("Get tasks error:", error);
       res.status(500).json({ message: "Failed to fetch tasks" });
@@ -1683,8 +1683,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      // For now, return mock success response
-      res.json({ id: 1, ...req.body, userId, createdAt: new Date() });
+      const task = await storage.createTask({ ...req.body, userId });
+      res.json(task);
     } catch (error) {
       console.error("Create task error:", error);
       res.status(500).json({ message: "Failed to create task" });

@@ -568,6 +568,90 @@ export class DatabaseStorage implements IStorage {
     
     return user;
   }
+
+  // Client management methods
+  async getClients(userId: number): Promise<Client[]> {
+    return db.select().from(clients).where(eq(clients.userId, userId));
+  }
+
+  async getClient(id: number): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client || undefined;
+  }
+
+  async createClient(client: InsertClient & { userId: number }): Promise<Client> {
+    const [newClient] = await db.insert(clients).values(client).returning();
+    return newClient;
+  }
+
+  async updateClient(id: number, updates: Partial<InsertClient>): Promise<Client> {
+    const [updatedClient] = await db
+      .update(clients)
+      .set(updates)
+      .where(eq(clients.id, id))
+      .returning();
+    return updatedClient;
+  }
+
+  async deleteClient(id: number): Promise<void> {
+    await db.delete(clients).where(eq(clients.id, id));
+  }
+
+  // Deal management methods
+  async getDeals(userId: number): Promise<Deal[]> {
+    return db.select().from(deals).where(eq(deals.userId, userId));
+  }
+
+  async getDeal(id: number): Promise<Deal | undefined> {
+    const [deal] = await db.select().from(deals).where(eq(deals.id, id));
+    return deal || undefined;
+  }
+
+  async createDeal(deal: InsertDeal & { userId: number }): Promise<Deal> {
+    const [newDeal] = await db.insert(deals).values(deal).returning();
+    return newDeal;
+  }
+
+  async updateDeal(id: number, updates: Partial<InsertDeal>): Promise<Deal> {
+    const [updatedDeal] = await db
+      .update(deals)
+      .set(updates)
+      .where(eq(deals.id, id))
+      .returning();
+    return updatedDeal;
+  }
+
+  async deleteDeal(id: number): Promise<void> {
+    await db.delete(deals).where(eq(deals.id, id));
+  }
+
+  // Task management methods
+  async getTasks(userId: number): Promise<Task[]> {
+    return db.select().from(tasks).where(eq(tasks.userId, userId));
+  }
+
+  async getTask(id: number): Promise<Task | undefined> {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task || undefined;
+  }
+
+  async createTask(task: InsertTask & { userId: number }): Promise<Task> {
+    const [newTask] = await db.insert(tasks).values(task).returning();
+    return newTask;
+  }
+
+  async updateTask(id: number, updates: Partial<InsertTask>): Promise<Task> {
+    const [updatedTask] = await db
+      .update(tasks)
+      .set(updates)
+      .where(eq(tasks.id, id))
+      .returning();
+    return updatedTask;
+  }
+
+  async deleteTask(id: number): Promise<void> {
+    await db.delete(tasks).where(eq(tasks.id, id));
+  }
 }
 
 export const storage = new DatabaseStorage();
