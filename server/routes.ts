@@ -70,6 +70,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Suggestions route for landing page
+  app.post("/api/suggestions", async (req, res) => {
+    try {
+      const { name, suggestion } = z.object({
+        name: z.string().min(1, "Name is required"),
+        suggestion: z.string().min(10, "Suggestion must be at least 10 characters")
+      }).parse(req.body);
+      
+      // Store suggestion information
+      console.log(`Feature Suggestion:
+        Name: ${name}
+        Suggestion: ${suggestion}
+        Submitted at: ${new Date().toISOString()}
+      `);
+      
+      // In production, store this in database and/or send to email service
+      res.json({ 
+        success: true, 
+        message: "Thank you for your suggestion! We'll review it carefully." 
+      });
+    } catch (error) {
+      console.error("Suggestion submission error:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Invalid suggestion data" 
+      });
+    }
+  });
+
   // Auth routes with rate limiting and security
   app.post("/api/auth/send-otp", async (req, res) => {
     try {

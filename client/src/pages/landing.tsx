@@ -107,8 +107,27 @@ export default function Landing() {
     betaSignupMutation.mutate(formData);
   };
 
+  const handleSuggestionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!suggestionData.name || !suggestionData.suggestion) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in your name and suggestion.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    suggestionMutation.mutate(suggestionData);
+  };
+
   const updateFormData = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateSuggestionData = (field: string, value: string) => {
+    setSuggestionData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -467,6 +486,11 @@ export default function Landing() {
             <Button
               size="lg"
               className="bg-yellow-400 text-blue-900 hover:bg-yellow-300"
+              onClick={() =>
+                document
+                  .getElementById("beta-form")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
             >
               Join The Network
             </Button>
@@ -474,8 +498,10 @@ export default function Landing() {
               size="lg"
               variant="outline"
               className="border-white text-white hover:bg-white hover:text-blue-600"
+              onClick={() => setShowSuggestionForm(true)}
             >
-              Suggest a Feature
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Suggestions
             </Button>
           </div>
         </div>
@@ -535,6 +561,70 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Suggestion Modal */}
+      {showSuggestionForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Share Your Suggestion
+              </CardTitle>
+              <CardDescription>
+                Help us improve PropNet with your feedback
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSuggestionSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Your Name *
+                  </label>
+                  <Input
+                    value={suggestionData.name}
+                    onChange={(e) => updateSuggestionData("name", e.target.value)}
+                    placeholder="Your full name"
+                    className="h-11"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Your Suggestion *
+                  </label>
+                  <Textarea
+                    value={suggestionData.suggestion}
+                    onChange={(e) => updateSuggestionData("suggestion", e.target.value)}
+                    placeholder="Tell us what feature or improvement you'd like to see..."
+                    className="min-h-[100px]"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 h-11 text-base font-medium"
+                    disabled={suggestionMutation.isPending}
+                  >
+                    {suggestionMutation.isPending ? "Submitting..." : "Submit Suggestion"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 h-11"
+                    onClick={() => setShowSuggestionForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
