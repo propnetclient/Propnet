@@ -51,6 +51,10 @@ export interface IStorage {
   getBetaSignupByPhone(phone: string): Promise<BetaSignup | undefined>;
   createSuggestion(suggestion: InsertSuggestion): Promise<Suggestion>;
   authenticateUser(phone: string): Promise<User | undefined>;
+  
+  // Admin methods
+  getAllBetaSignups(): Promise<BetaSignup[]>;
+  updateBetaSignupStatus(id: number, status: string, notes?: string): Promise<BetaSignup>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -501,6 +505,31 @@ export class DatabaseStorage implements IStorage {
     }
     
     return user;
+  }
+
+  // Admin methods
+  async getAllBetaSignups(): Promise<BetaSignup[]> {
+    const signups = await db.select().from(betaSignups).orderBy(desc(betaSignups.createdAt));
+    return signups;
+  }
+
+  async updateBetaSignupStatus(id: number, status: string, notes?: string): Promise<BetaSignup> {
+    const updateData: any = { 
+      status,
+      notes 
+    };
+    
+    if (status === "approved") {
+      updateData.approvedAt = new Date();
+    }
+
+    const [updated] = await db
+      .update(betaSignups)
+      .set(updateData)
+      .where(eq(betaSignups.id, id))
+      .returning();
+    
+    return updated;
   }
 }
 

@@ -23,6 +23,7 @@ import Messages from "@/pages/messages/messages";
 import Profile from "@/pages/profile/profile";
 import EditProfile from "@/pages/profile/edit-profile";
 import ColistingRequests from "@/pages/profile/colisting-requests";
+import AdminPanel from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/edit-profile" component={EditProfile} />
       <Route path="/colisting-requests" component={ColistingRequests} />
+      <Route path="/admin" component={AdminPanel} />
       <Route component={NotFound} />
     </Switch>
   );

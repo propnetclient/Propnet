@@ -127,6 +127,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Admin routes for beta signup management
+  app.get("/api/admin/beta-signups", async (req, res) => {
+    try {
+      const signups = await storage.getAllBetaSignups();
+      res.json(signups);
+    } catch (error: any) {
+      console.error("Admin signups fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch beta signups" });
+    }
+  });
+
+  app.patch("/api/admin/beta-signups/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, notes } = z.object({
+        status: z.enum(["pending", "approved", "rejected"]),
+        notes: z.string().optional()
+      }).parse(req.body);
+
+      const updated = await storage.updateBetaSignupStatus(parseInt(id), status, notes);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Admin status update error:", error);
+      res.status(400).json({ message: error.message || "Failed to update status" });
+    }
+  });
+
 
 
   // Auth routes with rate limiting and security
