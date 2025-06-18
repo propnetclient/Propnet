@@ -341,5 +341,34 @@ export type InsertBetaSignup = z.infer<typeof insertBetaSignupSchema>;
 export type Suggestion = typeof suggestions.$inferSelect;
 export type InsertSuggestion = z.infer<typeof insertSuggestionSchema>;
 
+// Admin Users table
+export const adminUsers = pgTable("admin_users", {
+  id: serial("id").primaryKey(),
+  username: varchar("username", { length: 50 }).unique().notNull(),
+  email: varchar("email", { length: 255 }).unique().notNull(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  approvedDevices: text("approved_devices").array(),
+  isActive: boolean("is_active").default(true),
+  lastLoginAt: timestamp("last_login_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Admin Sessions table
+export const adminSessions = pgTable("admin_sessions", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => adminUsers.id, { onDelete: 'cascade' }).notNull(),
+  sessionToken: varchar("session_token", { length: 128 }).unique().notNull(),
+  deviceFingerprint: varchar("device_fingerprint", { length: 64 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = typeof adminUsers.$inferInsert;
+export type AdminSession = typeof adminSessions.$inferSelect;
+export type InsertAdminSession = typeof adminSessions.$inferInsert;
+
 // Import analytics tables
 export * from "./analytics-schema";

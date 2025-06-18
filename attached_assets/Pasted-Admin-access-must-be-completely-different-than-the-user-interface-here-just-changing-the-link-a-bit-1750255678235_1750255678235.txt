@@ -1,0 +1,49 @@
+Admin access must be completely different than the user interface, here just changing the link a bit leads to admin console that might be problematic, also there should be an admin login so no one lese can access it.
+
+
+Currently, the admin console is accessible by simply modifying the URL (e.g., /admin). This creates a serious security risk, as it allows unauthorized users to potentially discover or access admin routes without proper authentication or access control.
+
+Goal:
+Implement a completely isolated admin interface with its own authentication layer, separate from the user-facing experience. Only verified admin users should be able to access the admin panel.
+
+Separate Admin Route Handling:
+Do not allow access to admin routes (e.g., /admin, /dashboard/admin, etc.) through URL guessing or without verification.
+
+Admin panel should be served from a clearly separated route (e.g., /secure-admin or a subdomain like ___ if feasible).
+
+Admin Authentication:
+
+Implement a dedicated login flow for admins, separate from the user login.
+
+Admin login must include:
+Strong password requirements.
+Restrict admin access to verified devices only, using device fingerprinting or secure token binding.
+On first login, store a signed identifier for the device and require admin re-approval or OTP verification for any new device.
+
+Access Control: Protect all admin routes with server-side role checks (isAdmin: true).
+Unauthorized users attempting to access admin routes should be redirected or shown a 403 page.
+
+Avoid using common route names like /admin for sensitive admin dashboards.
+
+Consider using environment-controlled or versioned route segments (e.g., /control/portal-v2) to reduce discoverability.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Need to verify the user submitted mobile number once may be while requesting for early access or while signing up before creating the profile.
+Also user can set a pin as a password so no need for OTP again and again and again. Also you can keep the user logged in if he wants so no need to log in again and again. Also if he forgets the pin he can reset it.
+
+
+AG/GJ/GANDHINAGAR/GANDHINAGAR/AUDA/AA01016/270130R2

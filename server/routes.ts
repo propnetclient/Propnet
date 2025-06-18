@@ -12,6 +12,7 @@ import { extractPropertiesFromText, enhancePropertyDescription } from "./gemini"
 import { generateOTP, storeOTP, validateOTP, checkRateLimit, requireAuth } from "./auth";
 import { registerAnalyticsRoutes } from "./analytics-routes";
 import { pinAuthRoutes } from "./pin-auth-routes";
+import { adminRoutes } from "./admin-routes";
 import { cache } from "./cache";
 import { sendSMS } from "./sms";
 import { config } from "./config";
@@ -42,6 +43,9 @@ if (!fs.existsSync('uploads')) {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Register PIN-based authentication routes
   app.use("/api/pin-auth", pinAuthRoutes);
+
+  // Register secure admin routes with obscured path
+  app.use("/api/secure-portal", adminRoutes);
 
   // Beta signup route for landing page
   app.post("/api/beta-signup", async (req, res) => {
