@@ -156,6 +156,26 @@ PropNet is a comprehensive real estate marketplace platform built with React fro
 
 ## Recent Changes
 
+### Streamlined OTP + PIN Authentication System (June 18, 2025)
+- Implemented comprehensive OTP + PIN authentication flow replacing traditional OTP-only system
+- Added phone verification with one-time OTP during signup/early access (never repeated for verified numbers)
+- Created secure PIN-based login system with bcrypt hashing for future access
+- Built rate limiting for OTP requests (3 requests per 15 minutes) to prevent abuse
+- Added persistent session management with "keep me logged in" option
+- Implemented PIN reset functionality requiring OTP re-verification for security
+- Enhanced database schema with phone verification flags, PIN storage, and session tokens
+- Created dedicated authentication pages: PIN login, phone verification, and PIN setup
+- Added OTP sessions tracking with attempt limits and expiry management
+- Integrated new auth routes (/api/pin-auth/*) alongside existing authentication system
+
+### Enhanced Profile Completion System (June 18, 2025)
+- Updated Gujarat RERA ID validation to support real-world flexible formats
+- Implemented dropdown-based multi-select for area of expertise with grouped categories
+- Added comprehensive validation for AG/GJ/ prefix format with district/city/authority segments
+- Enhanced RERA ID validation accepts formats like AG/GJ/AHMEDABAD/AHMEDABAD CITY/AUDA/AA01234/150123R1
+- Updated tooltips and placeholder text with accurate Gujarat RERA examples
+- Maintained structure integrity while accepting legitimate format variations
+
 ### Beta User Management System (June 18, 2025)
 - Implemented complete beta approval workflow for controlled user onboarding
 - Added admin panel at /admin for managing beta signup requests

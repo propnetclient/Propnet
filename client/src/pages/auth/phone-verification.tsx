@@ -24,7 +24,7 @@ export default function PhoneVerification() {
   const [resendTimer, setResendTimer] = useState(0);
   const { toast } = useToast();
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   // Send OTP mutation
   const sendOtpMutation = useMutation({
@@ -34,7 +34,7 @@ export default function PhoneVerification() {
         purpose: "verification" 
       });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setShowOtpInput(true);
       setResendTimer(60); // 60 second cooldown
       toast({
@@ -71,7 +71,7 @@ export default function PhoneVerification() {
         purpose: "verification"
       });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       if (data.user) {
         login(data.user);
       }
@@ -82,11 +82,11 @@ export default function PhoneVerification() {
       });
 
       if (data.requiresPinSetup) {
-        navigate("/auth/setup-pin");
+        setLocation("/auth/setup-pin");
       } else if (data.requiresProfileComplete) {
-        navigate("/auth/complete-profile");
+        setLocation("/auth/complete-profile");
       } else {
-        navigate("/");
+        setLocation("/");
       }
     },
     onError: (error) => {
