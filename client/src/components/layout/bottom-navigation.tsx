@@ -9,7 +9,7 @@ export default function BottomNavigation() {
     { icon: Search, label: "Feed", path: "/feed" },
     { icon: Map, label: "Map", path: "/map" },
     { icon: MessageCircle, label: "Messages", path: "/messages" },
-    { icon: User, label: "Clients", path: "/profile" },
+    { icon: User, label: "Profile", path: "/profile" },
   ];
 
   return (
