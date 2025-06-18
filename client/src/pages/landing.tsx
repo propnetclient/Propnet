@@ -96,6 +96,30 @@ export default function Landing() {
     },
   });
 
+  const loginMutation = useMutation({
+    mutationFn: async (data: typeof loginData) => {
+      return apiRequest("POST", "/api/auth/login", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Welcome!",
+        description: "Login successful. Redirecting to dashboard...",
+      });
+      setShowLoginModal(false);
+      // Redirect to dashboard
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Phone number not approved for beta access",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -133,6 +157,25 @@ export default function Landing() {
 
   const updateSuggestionData = (field: string, value: string) => {
     setSuggestionData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateLoginData = (field: string, value: string) => {
+    setLoginData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!loginData.phone) {
+      toast({
+        title: "Phone Required",
+        description: "Please enter your phone number to login.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    loginMutation.mutate(loginData);
   };
 
   return (
@@ -531,6 +574,12 @@ export default function Landing() {
               <p className="text-gray-400 text-sm">
                 &copy; 2025 PropNet. All rights reserved.
               </p>
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="text-gray-500 hover:text-gray-300 text-xs mt-1 underline-offset-2 hover:underline transition-colors"
+              >
+                Beta User Login
+              </button>
             </div>
           </div>
         </div>
@@ -603,6 +652,55 @@ export default function Landing() {
                     variant="outline"
                     className="flex-1 h-11"
                     onClick={() => setShowSuggestionForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Login Modal for Approved Beta Users */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-sm">
+            <CardHeader>
+              <CardTitle className="text-lg text-center">Beta User Login</CardTitle>
+              <CardDescription className="text-center">
+                Enter your approved phone number
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Phone Number *
+                  </label>
+                  <Input
+                    type="tel"
+                    value={loginData.phone}
+                    onChange={(e) => updateLoginData("phone", e.target.value)}
+                    placeholder="Your registered phone number"
+                    className="h-11"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 h-11 text-base font-medium"
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending ? "Logging in..." : "Login"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 h-11"
+                    onClick={() => setShowLoginModal(false)}
                   >
                     Cancel
                   </Button>
