@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertPropertySchema } from "@shared/schema";
 import FileUpload from "@/components/ui/file-upload";
-import BottomNavigation from "@/components/layout/bottom-navigation";
+import MobileNavigation from "@/components/layout/mobile-navigation";
 import GooglePlacesAutocomplete from "@/components/ui/google-places-autocomplete";
 import { z } from "zod";
 
@@ -1472,7 +1472,7 @@ export default function MyListings() {
         )}
       </div>
 
-      <BottomNavigation />
+      <MobileNavigation />
     </div>
   );
 }

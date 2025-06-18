@@ -7,7 +7,7 @@ import { ArrowLeft, User, Home, Handshake, Settings, LogOut, ChevronRight, Award
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import BottomNavigation from "@/components/layout/bottom-navigation";
+import MobileNavigation from "@/components/layout/mobile-navigation";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
@@ -189,7 +189,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <BottomNavigation />
+      <MobileNavigation />
     </div>
   );
 }

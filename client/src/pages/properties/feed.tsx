@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { UserCircle, Plus, Search, Filter, X, Sparkles } from "lucide-react";
 import CompactPropertyCard from "@/components/ui/compact-property-card";
-import BottomNavigation from "@/components/layout/bottom-navigation";
+import MobileNavigation from "@/components/layout/mobile-navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/utils/formatters";
 
@@ -295,7 +295,7 @@ export default function PropertyFeed() {
         <Plus size={24} />
       </button>
 
-      <BottomNavigation />
+      <MobileNavigation />
     </div>
   );
 }

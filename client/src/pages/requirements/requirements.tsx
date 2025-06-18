@@ -15,7 +15,7 @@ import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import BottomNavigation from "@/components/layout/bottom-navigation";
+import MobileNavigation from "@/components/layout/mobile-navigation";
 
 const requirementSchema = z.object({
   propertyType: z.string().min(1, "Property type is required"),
@@ -606,7 +606,7 @@ export default function Requirements() {
         )}
       </div>
 
-      <BottomNavigation />
+      <MobileNavigation />
     </div>
   );
 }

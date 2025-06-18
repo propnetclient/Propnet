@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertPropertySchema } from "@shared/schema";
-import BottomNavigation from "@/components/layout/bottom-navigation";
+import MobileNavigation from "@/components/layout/mobile-navigation";
 import GooglePlacesAutocomplete from "@/components/ui/google-places-autocomplete";
 import { z } from "zod";
 
@@ -960,7 +960,7 @@ Owner: Priya Sharma - 9123456789"
         </Dialog>
       </div>
 
-      <BottomNavigation />
+      <MobileNavigation />
     </div>
   );
 }
