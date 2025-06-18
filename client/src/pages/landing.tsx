@@ -228,27 +228,32 @@ export default function Landing() {
       </section>
 
       {/* Target Audience */}
-      <section className="py-16 bg-blue-50 dark:bg-blue-950/20">
+      <section className="py-12 md:py-16 bg-blue-50 dark:bg-blue-950/20">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+          <div className="max-w-5xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 md:mb-8">
               Built For: Brokers & Agents in the Secondary Market
             </h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg">
-                <TrendingUp className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Stop losing leads due to system gaps</h3>
+            <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm min-h-[140px] flex flex-col items-center justify-center text-center">
+                <TrendingUp className="w-10 h-10 md:w-12 md:h-12 text-blue-600 mx-auto mb-3" />
+                <h3 className="text-base md:text-lg font-semibold leading-tight">
+                  Stop losing leads due to system gaps
+                </h3>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg">
-                <Shield className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Protect your commission, effort, and relationships</h3>
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm min-h-[140px] flex flex-col items-center justify-center text-center">
+                <Shield className="w-10 h-10 md:w-12 md:h-12 text-green-600 mx-auto mb-3" />
+                <h3 className="text-base md:text-lg font-semibold leading-tight">
+                  Protect your commission, effort, and relationships
+                </h3>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg">
-                <DollarSign className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Earn more with less chaos</h3>
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm min-h-[140px] flex flex-col items-center justify-center text-center">
+                <DollarSign className="w-10 h-10 md:w-12 md:h-12 text-yellow-600 mx-auto mb-3" />
+                <h3 className="text-base md:text-lg font-semibold leading-tight">
+                  Earn more with less chaos
+                </h3>
               </div>
             </div>
-
           </div>
         </div>
       </section>
