@@ -3,18 +3,47 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Building2, Shield, CheckCircle, XCircle, Users, FileCheck, IndianRupee, MapPin, Search, Star, Play, TrendingUp, Clock, Zap } from "lucide-react";
+import {
+  Building2,
+  Shield,
+  CheckCircle,
+  XCircle,
+  Users,
+  FileCheck,
+  IndianRupee,
+  MapPin,
+  Search,
+  Star,
+  Play,
+  TrendingUp,
+  Clock,
+  Zap,
+  MessageSquare,
+} from "lucide-react";
 
 export default function Landing() {
   const [formData, setFormData] = useState({
     name: "",
-    phone: ""
+    phone: "",
   });
+
+  const [suggestionData, setSuggestionData] = useState({
+    name: "",
+    suggestion: "",
+  });
+
+  const [showSuggestionForm, setShowSuggestionForm] = useState(false);
   const { toast } = useToast();
 
   const betaSignupMutation = useMutation({
@@ -24,30 +53,53 @@ export default function Landing() {
     onSuccess: () => {
       toast({
         title: "Application Submitted!",
-        description: "We'll review your application and contact you soon with beta access details.",
+        description:
+          "We'll review your application and contact you soon with beta access details.",
       });
       setFormData({
         name: "",
-        phone: ""
+        phone: "",
       });
     },
     onError: () => {
       toast({
         title: "Something went wrong",
         description: "Please try again or contact us directly.",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
+  });
+
+  const suggestionMutation = useMutation({
+    mutationFn: async (data: typeof suggestionData) => {
+      return apiRequest("POST", "/api/suggestions", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Suggestion Submitted!",
+        description: "Thank you for your feedback. We'll review it carefully.",
+      });
+      setSuggestionData({ name: "", suggestion: "" });
+      setShowSuggestionForm(false);
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong",
+        description: "Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.phone) {
       toast({
         title: "Missing Information",
-        description: "Please fill in your name and contact number to apply for beta access.",
-        variant: "destructive"
+        description:
+          "Please fill in your name and contact number to apply for beta access.",
+        variant: "destructive",
       });
       return;
     }
@@ -56,7 +108,7 @@ export default function Landing() {
   };
 
   const updateFormData = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -66,8 +118,12 @@ export default function Landing() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Building2 className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">PropNet</span>
-            <Badge variant="secondary" className="ml-2">Beta</Badge>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">
+              PropNet
+            </span>
+            <Badge variant="secondary" className="ml-2">
+              Beta
+            </Badge>
           </div>
           <div className="flex items-center space-x-2">
             <Link href="/login">
@@ -75,9 +131,7 @@ export default function Landing() {
                 Login
               </Button>
             </Link>
-            <Button size="sm">
-              See Demo
-            </Button>
+            <Button size="sm">See Demo</Button>
           </div>
         </div>
       </header>
@@ -87,21 +141,32 @@ export default function Landing() {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
-              The Real Estate Network<br />
+              The Real Estate Network
+              <br />
               <span className="text-yellow-300">Built for Brokers.</span>
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-blue-100 px-2">
-              A powerful private network built for brokers, by brokers — where every lead, listing, and effort is tracked, protected, and rewarded.
+              A powerful private network built for brokers, by brokers — where
+              every lead, listing, and effort is tracked, protected, and
+              rewarded.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-6 md:mb-8 px-4">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-6 md:px-8 py-3 w-full sm:w-auto font-medium"
-                onClick={() => document.getElementById('beta-form')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() =>
+                  document
+                    .getElementById("beta-form")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
               >
                 Get Early Access
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 px-6 md:px-8 py-3 font-medium w-full sm:w-auto">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white hover:bg-white hover:text-blue-600 px-6 md:px-8 py-3 font-medium w-full sm:w-auto text-[#facc15]"
+              >
                 <Play className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                 See Demo
               </Button>
@@ -159,7 +224,9 @@ export default function Landing() {
                 <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-green-600 inline mr-2" />
                 What We Fixed
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Features That Matter</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Features That Matter
+              </p>
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
@@ -168,7 +235,8 @@ export default function Landing() {
                   <Shield className="h-10 w-10 text-blue-600 mb-2" />
                   <CardTitle>Verified Brokers-Only Network</CardTitle>
                   <CardDescription>
-                    Only real, verified agents and brokers. No builders, no buyers, no noise.
+                    Only real, verified agents and brokers. No builders, no
+                    buyers, no noise.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -178,7 +246,8 @@ export default function Landing() {
                   <FileCheck className="h-10 w-10 text-green-600 mb-2" />
                   <CardTitle>Owner-Approved Listings</CardTitle>
                   <CardDescription>
-                    Every property comes from a real broker with owner consent. No duplicates. No misinformation.
+                    Every property comes from a real broker with owner consent.
+                    No duplicates. No misinformation.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -188,7 +257,8 @@ export default function Landing() {
                   <Zap className="h-10 w-10 text-purple-600 mb-2" />
                   <CardTitle>Structured Listing Sharing</CardTitle>
                   <CardDescription>
-                    Upload once. Share anytime. Auto-generated, searchable, media-rich listing cards. Goodbye WhatsApp chaos.
+                    Upload once. Share anytime. Auto-generated, searchable,
+                    media-rich listing cards. Goodbye WhatsApp chaos.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -198,7 +268,8 @@ export default function Landing() {
                   <IndianRupee className="h-10 w-10 text-yellow-600 mb-2" />
                   <CardTitle>Commission Protection Tools</CardTitle>
                   <CardDescription>
-                    Set clear terms with your client: role, responsibility, and commission. Get digital consent.
+                    Set clear terms with your client: role, responsibility, and
+                    commission. Get digital consent.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -208,7 +279,8 @@ export default function Landing() {
                   <Users className="h-10 w-10 text-red-600 mb-2" />
                   <CardTitle>Anti-Poaching & Lead Protection</CardTitle>
                   <CardDescription>
-                    Timestamped lead logs, visit history, and soft exclusivity. Get credit for your work. Every time.
+                    Timestamped lead logs, visit history, and soft exclusivity.
+                    Get credit for your work. Every time.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -218,7 +290,8 @@ export default function Landing() {
                   <MapPin className="h-10 w-10 text-indigo-600 mb-2" />
                   <CardTitle>Map-Based Search (Beta)</CardTitle>
                   <CardDescription>
-                    Find listings based on location, landmarks, radius, or micro-market demand.
+                    Find listings based on location, landmarks, radius, or
+                    micro-market demand.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -248,7 +321,7 @@ export default function Landing() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm flex flex-col md:flex-row items-center gap-4 text-left">
                 <div className="flex-shrink-0">
                   <Shield className="w-12 h-12 md:w-16 md:h-16 text-green-600" />
@@ -262,7 +335,7 @@ export default function Landing() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm flex flex-col md:flex-row items-center gap-4 text-left">
                 <div className="flex-shrink-0">
                   <IndianRupee className="w-12 h-12 md:w-16 md:h-16 text-yellow-600" />
@@ -295,7 +368,9 @@ export default function Landing() {
               </div>
               <div className="p-4 border rounded-lg">
                 <FileCheck className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <h3 className="font-semibold">Property Preference Report Generator</h3>
+                <h3 className="font-semibold">
+                  Property Preference Report Generator
+                </h3>
               </div>
               <div className="p-4 border rounded-lg">
                 <Star className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
@@ -340,7 +415,9 @@ export default function Landing() {
               <CardContent>
                 <form onSubmit={handleFormSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Name *</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Name *
+                    </label>
                     <Input
                       value={formData.name}
                       onChange={(e) => updateFormData("name", e.target.value)}
@@ -351,7 +428,9 @@ export default function Landing() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Contact Number *</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Contact Number *
+                    </label>
                     <Input
                       type="tel"
                       value={formData.phone}
@@ -367,7 +446,9 @@ export default function Landing() {
                     className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base font-medium"
                     disabled={betaSignupMutation.isPending}
                   >
-                    {betaSignupMutation.isPending ? "Submitting..." : "Apply for Beta Access"}
+                    {betaSignupMutation.isPending
+                      ? "Submitting..."
+                      : "Apply for Beta Access"}
                   </Button>
                 </form>
               </CardContent>
@@ -383,10 +464,17 @@ export default function Landing() {
             We're here to make you pro.
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-yellow-400 text-blue-900 hover:bg-yellow-300">
+            <Button
+              size="lg"
+              className="bg-yellow-400 text-blue-900 hover:bg-yellow-300"
+            >
               Join The Network
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white hover:bg-white hover:text-blue-600"
+            >
               Suggest a Feature
             </Button>
           </div>
@@ -440,7 +528,10 @@ export default function Landing() {
           </div>
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 PropNet. All rights reserved. Currently in beta testing phase - limited access available.</p>
+            <p>
+              &copy; 2025 PropNet. All rights reserved. Currently in beta
+              testing phase - limited access available.
+            </p>
           </div>
         </div>
       </footer>
