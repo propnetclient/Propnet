@@ -4,28 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Building, Smartphone, KeyRound, MessageSquare, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Smartphone, KeyRound, MessageSquare, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 
-interface LoginData {
+interface ResetData {
   phone: string;
-  pin: string;
   otp: string;
-  keepLoggedIn: boolean;
+  newPin: string;
+  confirmPin: string;
 }
 
-export default function Login() {
-  const [formData, setFormData] = useState<LoginData>({
+export default function ForgotPin() {
+  const [formData, setFormData] = useState<ResetData>({
     phone: "",
-    pin: "",
     otp: "",
-    keepLoggedIn: false
+    newPin: "",
+    confirmPin: ""
   });
-  const [currentStep, setCurrentStep] = useState<'phone' | 'pin' | 'verify'>('phone');
+  const [currentStep, setCurrentStep] = useState<'phone' | 'verify' | 'newpin'>('phone');
   const [resendTimer, setResendTimer] = useState(0);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -38,40 +37,19 @@ export default function Login() {
     }
   }, [user, isLoading, setLocation]);
 
-  // Check if phone needs verification or can use PIN
-  const checkPhoneMutation = useMutation({
-    mutationFn: async (phone: string) => {
-      return apiRequest("/api/pin-auth/check-phone", "POST", { phone });
-    },
-    onSuccess: (data: any) => {
-      if (data.needsVerification) {
-        sendOtpMutation.mutate(formData.phone);
-      } else {
-        setCurrentStep('pin');
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to verify phone number",
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Send OTP for verification
+  // Send OTP for PIN reset
   const sendOtpMutation = useMutation({
     mutationFn: async (phone: string) => {
       return apiRequest("/api/pin-auth/send-otp", "POST", { 
         phone, 
-        purpose: "verification" 
+        purpose: "pin_reset" 
       });
     },
     onSuccess: (data: any) => {
       setCurrentStep('verify');
       setResendTimer(60);
       toast({
-        title: "Verification Code Sent",
+        title: "Reset Code Sent",
         description: data.message
       });
       
@@ -88,58 +66,47 @@ export default function Login() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to send verification code",
+        description: error.message || "Failed to send reset code",
         variant: "destructive"
       });
     }
   });
 
-  // Verify OTP and complete registration
+  // Verify OTP for PIN reset
   const verifyOtpMutation = useMutation({
     mutationFn: async (data: { phone: string; otp: string }) => {
       return apiRequest("/api/pin-auth/verify-otp", "POST", {
         phone: data.phone,
         otp: data.otp,
-        purpose: "verification"
+        purpose: "pin_reset"
       });
     },
-    onSuccess: (data: any) => {
-      if (data.user) {
-        login(data.user);
-      }
-      
+    onSuccess: () => {
+      setCurrentStep('newpin');
       toast({
-        title: "Phone Verified!",
-        description: "Your phone number has been verified successfully"
+        title: "Code Verified",
+        description: "Now set your new PIN"
       });
-
-      if (data.requiresPinSetup) {
-        setLocation("/auth/setup-pin");
-      } else if (data.requiresProfileComplete) {
-        setLocation("/auth/complete-profile");
-      } else {
-        setLocation("/");
-      }
     },
     onError: (error) => {
       toast({
         title: "Verification Failed",
-        description: error.message || "Invalid verification code",
+        description: error.message || "Invalid reset code",
         variant: "destructive"
       });
     }
   });
 
-  // Login with PIN
-  const loginMutation = useMutation({
-    mutationFn: async (data: { phone: string; pin: string; keepLoggedIn: boolean }) => {
-      return apiRequest("/api/pin-auth/login-pin", "POST", data);
+  // Reset PIN
+  const resetPinMutation = useMutation({
+    mutationFn: async (data: { phone: string; newPin: string }) => {
+      return apiRequest("/api/pin-auth/reset-pin", "POST", data);
     },
     onSuccess: (data: any) => {
       login(data.user);
       toast({
-        title: "Welcome back!",
-        description: "Successfully logged in"
+        title: "PIN Reset Successful",
+        description: "Your new PIN has been set"
       });
       
       if (data.requiresProfileComplete) {
@@ -150,8 +117,8 @@ export default function Login() {
     },
     onError: (error) => {
       toast({
-        title: "Login Failed",
-        description: error.message || "Invalid phone number or PIN",
+        title: "Reset Failed",
+        description: error.message || "Failed to reset PIN",
         variant: "destructive"
       });
     }
@@ -160,18 +127,7 @@ export default function Login() {
   const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.phone.length === 10) {
-      checkPhoneMutation.mutate(formData.phone);
-    }
-  };
-
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.pin.length >= 4) {
-      loginMutation.mutate({
-        phone: formData.phone,
-        pin: formData.pin,
-        keepLoggedIn: formData.keepLoggedIn
-      });
+      sendOtpMutation.mutate(formData.phone);
     }
   };
 
@@ -185,14 +141,41 @@ export default function Login() {
     }
   };
 
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (formData.newPin !== formData.confirmPin) {
+      toast({
+        title: "PIN Mismatch",
+        description: "New PIN and confirmation PIN don't match",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.newPin.length < 4) {
+      toast({
+        title: "Invalid PIN",
+        description: "PIN must be at least 4 digits",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    resetPinMutation.mutate({
+      phone: formData.phone,
+      newPin: formData.newPin
+    });
+  };
+
   const handleBack = () => {
-    if (currentStep === 'pin') {
-      setCurrentStep('phone');
-      setFormData(prev => ({ ...prev, pin: "" }));
-    } else if (currentStep === 'verify') {
+    if (currentStep === 'verify') {
       setCurrentStep('phone');
       setFormData(prev => ({ ...prev, otp: "" }));
       setResendTimer(0);
+    } else if (currentStep === 'newpin') {
+      setCurrentStep('verify');
+      setFormData(prev => ({ ...prev, newPin: "", confirmPin: "" }));
     }
   };
 
@@ -205,21 +188,21 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+        <CardHeader className="text-center bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-t-lg">
           <div className="flex items-center justify-center mb-2">
             {currentStep === 'phone' && <Smartphone className="h-8 w-8" />}
-            {currentStep === 'pin' && <KeyRound className="h-8 w-8" />}
             {currentStep === 'verify' && <MessageSquare className="h-8 w-8" />}
+            {currentStep === 'newpin' && <KeyRound className="h-8 w-8" />}
           </div>
           <CardTitle className="text-2xl font-bold">
-            {currentStep === 'phone' && "Welcome to PropNet"}
-            {currentStep === 'pin' && "Enter Your PIN"}
-            {currentStep === 'verify' && "Verify Your Phone"}
+            {currentStep === 'phone' && "Reset Your PIN"}
+            {currentStep === 'verify' && "Verify Reset Code"}
+            {currentStep === 'newpin' && "Set New PIN"}
           </CardTitle>
-          <CardDescription className="text-blue-100">
+          <CardDescription className="text-red-100">
             {currentStep === 'phone' && "Enter your registered mobile number"}
-            {currentStep === 'pin' && "Enter your 4-6 digit PIN to access your account"}
             {currentStep === 'verify' && "Enter the 6-digit code sent to your phone"}
+            {currentStep === 'newpin' && "Create a new 4-6 digit PIN"}
           </CardDescription>
         </CardHeader>
 
@@ -228,7 +211,7 @@ export default function Login() {
           {currentStep === 'phone' && (
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="phone">Mobile Number</Label>
+                <Label htmlFor="phone">Registered Mobile Number</Label>
                 <div className="flex">
                   <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
                     +91
@@ -248,85 +231,24 @@ export default function Login() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  New users will receive a verification code
+                  We'll send a reset code to this number
                 </p>
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                disabled={formData.phone.length !== 10 || checkPhoneMutation.isPending}
-              >
-                {checkPhoneMutation.isPending ? "Checking..." : "Continue"}
-              </Button>
-            </form>
-          )}
-
-          {/* PIN Entry Step */}
-          {currentStep === 'pin' && (
-            <form onSubmit={handlePinSubmit} className="space-y-4">
-              <div className="text-center mb-4">
-                <p className="text-sm text-gray-600">
-                  Logging in as: <span className="font-medium">+91 {formData.phone}</span>
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="pin">Enter PIN</Label>
-                <Input
-                  id="pin"
-                  type="password"
-                  placeholder="••••••"
-                  value={formData.pin}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    pin: e.target.value.replace(/\D/g, '').slice(0, 6) 
-                  }))}
-                  className="text-center text-2xl tracking-widest"
-                  maxLength={6}
-                  required
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="keepLoggedIn"
-                  checked={formData.keepLoggedIn}
-                  onCheckedChange={(checked) => setFormData(prev => ({ 
-                    ...prev, 
-                    keepLoggedIn: !!checked 
-                  }))}
-                />
-                <Label htmlFor="keepLoggedIn" className="text-sm">
-                  Keep me logged in
-                </Label>
               </div>
 
               <div className="space-y-3">
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  disabled={formData.pin.length < 4 || loginMutation.isPending}
+                  className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
+                  disabled={formData.phone.length !== 10 || sendOtpMutation.isPending}
                 >
-                  {loginMutation.isPending ? "Logging in..." : "Login"}
+                  {sendOtpMutation.isPending ? "Sending..." : "Send Reset Code"}
                 </Button>
 
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleBack}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-              </div>
-
-              <div className="text-center">
-                <Link href="/auth/forgot-pin">
-                  <a className="text-sm text-blue-600 hover:text-blue-800">
-                    Forgot PIN?
-                  </a>
+                <Link href="/login">
+                  <Button variant="outline" className="w-full">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Login
+                  </Button>
                 </Link>
               </div>
             </form>
@@ -338,12 +260,12 @@ export default function Login() {
               <div className="text-center mb-4">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
                 <p className="text-sm text-gray-600">
-                  Code sent to: <span className="font-medium">+91 {formData.phone}</span>
+                  Reset code sent to: <span className="font-medium">+91 {formData.phone}</span>
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="otp">Verification Code</Label>
+                <Label htmlFor="otp">Reset Code</Label>
                 <Input
                   id="otp"
                   type="text"
@@ -362,7 +284,7 @@ export default function Login() {
               <div className="space-y-3">
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
                   disabled={formData.otp.length !== 6 || verifyOtpMutation.isPending}
                 >
                   {verifyOtpMutation.isPending ? "Verifying..." : "Verify Code"}
@@ -397,9 +319,74 @@ export default function Login() {
             </form>
           )}
 
+          {/* New PIN Setup Step */}
+          {currentStep === 'newpin' && (
+            <form onSubmit={handlePinSubmit} className="space-y-4">
+              <div className="text-center mb-4">
+                <p className="text-sm text-gray-600">
+                  Setting new PIN for: <span className="font-medium">+91 {formData.phone}</span>
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="newPin">New PIN (4-6 digits)</Label>
+                <Input
+                  id="newPin"
+                  type="password"
+                  placeholder="••••••"
+                  value={formData.newPin}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    newPin: e.target.value.replace(/\D/g, '').slice(0, 6) 
+                  }))}
+                  className="text-center text-2xl tracking-widest"
+                  maxLength={6}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="confirmPin">Confirm New PIN</Label>
+                <Input
+                  id="confirmPin"
+                  type="password"
+                  placeholder="••••••"
+                  value={formData.confirmPin}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    confirmPin: e.target.value.replace(/\D/g, '').slice(0, 6) 
+                  }))}
+                  className="text-center text-2xl tracking-widest"
+                  maxLength={6}
+                  required
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
+                  disabled={formData.newPin.length < 4 || formData.confirmPin.length < 4 || resetPinMutation.isPending}
+                >
+                  {resetPinMutation.isPending ? "Setting PIN..." : "Set New PIN"}
+                </Button>
+
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleBack}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+            </form>
+          )}
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Exclusive platform for verified real estate agents
+              Need help? Contact support for assistance
             </p>
           </div>
         </CardContent>

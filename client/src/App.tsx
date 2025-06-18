@@ -9,6 +9,7 @@ import Login from "@/pages/auth/login";
 import PinLogin from "@/pages/auth/pin-login";
 import PhoneVerification from "@/pages/auth/phone-verification";
 import SetupPin from "@/pages/auth/setup-pin";
+import ForgotPin from "@/pages/auth/forgot-pin";
 import OtpVerification from "@/pages/auth/otp-verification";
 import KYC from "@/pages/auth/kyc";
 import CompleteProfile from "@/pages/auth/complete-profile";
