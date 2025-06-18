@@ -1598,6 +1598,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register analytics routes
   registerAnalyticsRoutes(app);
 
+  // Client Management API endpoints
+  app.get("/api/clients", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // For now, return empty array since tables don't exist yet
+      res.json([]);
+    } catch (error) {
+      console.error("Get clients error:", error);
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
+
+  app.post("/api/clients", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // For now, return mock success response
+      res.json({ id: 1, ...req.body, userId, createdAt: new Date() });
+    } catch (error) {
+      console.error("Create client error:", error);
+      res.status(500).json({ message: "Failed to create client" });
+    }
+  });
+
+  // Deal Management API endpoints
+  app.get("/api/deals", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // For now, return empty array since tables don't exist yet
+      res.json([]);
+    } catch (error) {
+      console.error("Get deals error:", error);
+      res.status(500).json({ message: "Failed to fetch deals" });
+    }
+  });
+
+  app.post("/api/deals", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // For now, return mock success response
+      res.json({ id: 1, ...req.body, userId, createdAt: new Date() });
+    } catch (error) {
+      console.error("Create deal error:", error);
+      res.status(500).json({ message: "Failed to create deal" });
+    }
+  });
+
+  // Task Management API endpoints
+  app.get("/api/tasks", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // For now, return empty array since tables don't exist yet
+      res.json([]);
+    } catch (error) {
+      console.error("Get tasks error:", error);
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  app.post("/api/tasks", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // For now, return mock success response
+      res.json({ id: 1, ...req.body, userId, createdAt: new Date() });
+    } catch (error) {
+      console.error("Create task error:", error);
+      res.status(500).json({ message: "Failed to create task" });
+    }
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
 
