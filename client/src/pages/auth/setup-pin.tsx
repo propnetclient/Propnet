@@ -39,7 +39,8 @@ export default function SetupPin() {
   // PIN setup mutation
   const setupPinMutation = useMutation({
     mutationFn: async (data: { phone: string; pin: string; keepLoggedIn: boolean }) => {
-      return apiRequest("/api/pin-auth/setup-pin", "POST", data);
+      const res = await apiRequest("POST", "/api/pin-auth/setup-pin", data);
+      return res.json();
     },
     onSuccess: (data: any) => {
       if (data.user) {
@@ -202,10 +203,8 @@ export default function SetupPin() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Need help?{" "}
-              <Link href="/support">
-                <a className="text-blue-600 hover:text-blue-800">
-                  Contact Support
-                </a>
+              <Link href="/support" className="text-blue-600 hover:text-blue-800">
+                Contact Support
               </Link>
             </p>
           </div>
