@@ -574,12 +574,14 @@ export default function Landing() {
               <p className="text-gray-400 text-sm">
                 &copy; 2025 PropNet. All rights reserved.
               </p>
-              <button
-                onClick={() => setShowLoginModal(true)}
-                className="text-gray-500 hover:text-gray-300 text-xs mt-1 underline-offset-2 hover:underline transition-colors"
-              >
-                Beta User Login
-              </button>
+              <div className="mt-2">
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="text-blue-400 hover:text-blue-300 text-sm font-medium underline-offset-2 hover:underline transition-colors border border-blue-500/30 px-3 py-1 rounded-md hover:bg-blue-500/10"
+                >
+                  Approved Beta Login
+                </button>
+              </div>
             </div>
           </div>
         </div>
