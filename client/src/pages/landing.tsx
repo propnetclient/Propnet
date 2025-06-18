@@ -45,6 +45,10 @@ export default function Landing() {
   });
 
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginData, setLoginData] = useState({
+    phone: "",
+  });
   const { toast } = useToast();
 
   const betaSignupMutation = useMutation({

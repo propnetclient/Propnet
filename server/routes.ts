@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertPropertySchema, insertCoListingRequestSchema, insertPropertyRequirementSchema, insertConversationSchema, insertMessageSchema } from "@shared/schema";
+import { insertUserSchema, insertPropertySchema, insertCoListingRequestSchema, insertPropertyRequirementSchema, insertConversationSchema, insertMessageSchema, insertBetaSignupSchema, insertSuggestionSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -42,63 +42,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Beta signup route for landing page
   app.post("/api/beta-signup", async (req, res) => {
     try {
-      const { name, phone } = z.object({
-        name: z.string().min(1, "Name is required"),
-        phone: z.string().min(10, "Valid phone number required")
-      }).parse(req.body);
+      const validatedData = insertBetaSignupSchema.parse(req.body);
       
-      // Normalize phone number
-      const normalizedPhone = phone.replace(/\D/g, '').slice(-10);
+      // Check if already signed up
+      const existingSignup = await storage.getBetaSignupByPhone(validatedData.phone);
+      if (existingSignup) {
+        return res.status(400).json({ 
+          message: "Phone number already registered for beta access" 
+        });
+      }
       
-      // Store beta signup information
-      console.log(`Beta Application:
-        Name: ${name}
-        Phone: ${normalizedPhone}
-        Applied at: ${new Date().toISOString()}
-      `);
-      
-      // In production, store this in database and/or send to email service
-      res.json({ 
-        success: true, 
-        message: "Beta application submitted successfully! We'll review and contact you soon." 
-      });
-    } catch (error) {
+      const signup = await storage.createBetaSignup(validatedData);
+      res.json({ message: "Beta signup successful", id: signup.id });
+    } catch (error: any) {
       console.error("Beta signup error:", error);
-      res.status(400).json({ 
-        message: error instanceof Error ? error.message : "Invalid application data" 
-      });
+      res.status(400).json({ message: error.message || "Failed to submit beta signup" });
     }
   });
 
-  // Suggestions route for landing page
+  // Suggestion route for landing page
   app.post("/api/suggestions", async (req, res) => {
     try {
-      const { name, contact, suggestion } = z.object({
-        name: z.string().min(1, "Name is required"),
-        contact: z.string().min(1, "Contact information is required"),
-        suggestion: z.string().min(10, "Suggestion must be at least 10 characters")
-      }).parse(req.body);
-      
-      // Store suggestion information
-      console.log(`Feature Suggestion:
-        Name: ${name}
-        Contact: ${contact}
-        Suggestion: ${suggestion}
-        Submitted at: ${new Date().toISOString()}
-      `);
-      
-      // In production, store this in database and/or send to email service
-      res.json({ 
-        success: true, 
-        message: "Thank you for your suggestion! We'll review it carefully." 
-      });
-    } catch (error) {
-      console.error("Suggestion submission error:", error);
-      res.status(400).json({ 
-        message: error instanceof Error ? error.message : "Invalid suggestion data" 
-      });
+      const validatedData = insertSuggestionSchema.parse(req.body);
+      const suggestion = await storage.createSuggestion(validatedData);
+      res.json({ message: "Suggestion submitted successfully", id: suggestion.id });
+    } catch (error: any) {
+      console.error("Suggestion error:", error);
+      res.status(400).json({ message: error.message || "Failed to submit suggestion" });
     }
   });
+
+  // Simple login route for approved beta users
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { phone } = z.object({
+        phone: z.string().min(10, "Valid phone number required")
+      }).parse(req.body);
+
+      const user = await storage.authenticateUser(phone);
+      if (!user) {
+        return res.status(401).json({ 
+          message: "Phone number not approved for beta access" 
+        });
+      }
+
+      // Store user session
+      (req.session as any).userId = user.id;
+      (req.session as any).user = user;
+      
+      res.json({ user, message: "Login successful" });
+    } catch (error: any) {
+      console.error("Login error:", error);
+      res.status(400).json({ message: error.message || "Login failed" });
+    }
+  });
+
+  // Get current user for authentication check
+  app.get("/api/auth/me", async (req, res) => {
+    try {
+      const userId = (req.session as any)?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      res.json({ user });
+    } catch (error: any) {
+      console.error("Auth check error:", error);
+      res.status(500).json({ message: "Authentication check failed" });
+    }
+  });
+
+  // Logout route
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  });
+
+
 
   // Auth routes with rate limiting and security
   app.post("/api/auth/send-otp", async (req, res) => {
