@@ -214,3 +214,5 @@ PropNet is a comprehensive real estate marketplace platform built with React fro
 Preferred communication style: Simple, everyday language.
 Project focus: Broker pain points and testing phase user acquisition.
 Landing page objective: Get interested broker data and onboard limited beta testers.
+Authentication flow: Use original login page (/login) for approved beta users.
+Navigation preference: Bottom bar shows "Clients" instead of "Profile".
