@@ -509,56 +509,20 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 text-white py-8">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Building2 className="h-8 w-8 text-blue-400" />
-                <span className="text-2xl font-bold">PropNet</span>
-              </div>
-              <p className="text-gray-400 mb-4">
-                A powerful private network built for brokers, by brokers.
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Building2 className="h-6 w-6 text-blue-400" />
+              <span className="text-xl font-bold">PropNet</span>
+              <Badge variant="secondary" className="ml-2">Beta</Badge>
+            </div>
+            
+            <div className="text-center md:text-right">
+              <p className="text-gray-400 text-sm">
+                &copy; 2025 PropNet. Built for brokers, by brokers.
               </p>
-              <Badge variant="secondary">Beta Testing Phase</Badge>
             </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>Features</li>
-                <li>Beta Program</li>
-                <li>Roadmap</li>
-                <li>Pricing</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>Help Center</li>
-                <li>Contact Us</li>
-                <li>Community</li>
-                <li>Feedback</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>About</li>
-                <li>Blog</li>
-                <li>Careers</li>
-                <li>Privacy</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>
-              &copy; 2025 PropNet. All rights reserved. Currently in beta
-              testing phase - limited access available.
-            </p>
           </div>
         </div>
       </footer>
