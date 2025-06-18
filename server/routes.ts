@@ -42,24 +42,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Beta signup route for landing page
   app.post("/api/beta-signup", async (req, res) => {
     try {
-      const { name, phone, city, interestedInTesting, biggestIssue } = z.object({
+      const { name, phone } = z.object({
         name: z.string().min(1, "Name is required"),
-        phone: z.string().min(10, "Valid phone number required"),
-        city: z.string().min(1, "City is required"),
-        interestedInTesting: z.string().optional(),
-        biggestIssue: z.string().optional()
+        phone: z.string().min(10, "Valid phone number required")
       }).parse(req.body);
       
       // Normalize phone number
       const normalizedPhone = phone.replace(/\D/g, '').slice(-10);
       
-      // Store beta signup with detailed information
+      // Store beta signup information
       console.log(`Beta Application:
         Name: ${name}
         Phone: ${normalizedPhone}
-        City: ${city}
-        Interested in Testing: ${interestedInTesting || 'Not specified'}
-        Biggest Issue: ${biggestIssue || 'Not specified'}
         Applied at: ${new Date().toISOString()}
       `);
       

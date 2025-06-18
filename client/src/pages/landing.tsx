@@ -83,30 +83,30 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20">
+      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-12 md:py-20">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
               The Real Estate Network<br />
               <span className="text-yellow-300">Built for Brokers.</span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-blue-100">
+            <p className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-blue-100 px-2">
               A powerful private network built for brokers, by brokers — where every lead, listing, and effort is tracked, protected, and rewarded.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-6 md:mb-8 px-4">
               <Button 
                 size="lg" 
-                className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-8 py-3"
+                className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-6 md:px-8 py-3 w-full sm:w-auto font-medium"
                 onClick={() => document.getElementById('beta-form')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Get Early Access
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 font-medium">
-                <Play className="w-5 h-5 mr-2" />
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 px-6 md:px-8 py-3 font-medium w-full sm:w-auto">
+                <Play className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                 See Demo
               </Button>
             </div>
-            <p className="text-lg italic text-blue-200">
+            <p className="text-base md:text-lg italic text-blue-200 px-4">
               "WhatsApp isn't built for real estate. We are."
             </p>
           </div>
@@ -114,36 +114,36 @@ export default function Landing() {
       </section>
 
       {/* Problem Section */}
-      <section className="py-16 bg-red-50 dark:bg-red-950/20">
+      <section className="py-12 md:py-16 bg-red-50 dark:bg-red-950/20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              <XCircle className="w-8 h-8 text-red-600 inline mr-2" />
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              <XCircle className="w-6 h-6 md:w-8 md:h-8 text-red-600 inline mr-2" />
               The Problem: Real Estate Is Broken for Brokers
             </h2>
-            <div className="grid md:grid-cols-2 gap-6 mt-12">
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-red-500">
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+            <div className="grid sm:grid-cols-2 gap-4 md:gap-6 mt-8 md:mt-12">
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-red-500">
+                <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg">
                   You show a client a property, someone else closes the deal.
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-red-500">
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-red-500">
+                <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg">
                   Your listings are shared everywhere without your name.
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-red-500">
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-red-500">
+                <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg">
                   You do the hard work, but get ghosted — or lose commission.
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-red-500">
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-red-500">
+                <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg">
                   Every deal feels like a war instead of a win.
                 </p>
               </div>
             </div>
-            <p className="text-xl mt-8 text-gray-600 dark:text-gray-300">
+            <p className="text-lg md:text-xl mt-6 md:mt-8 text-gray-600 dark:text-gray-300 px-4">
               It's not your fault. You never had the right tools.
             </p>
           </div>
@@ -151,18 +151,18 @@ export default function Landing() {
       </section>
 
       {/* Solutions Section */}
-      <section className="py-16">
+      <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                <CheckCircle className="w-8 h-8 text-green-600 inline mr-2" />
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-green-600 inline mr-2" />
                 What We Fixed
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">Features That Matter</p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
               <Card className="border-l-4 border-l-blue-500">
                 <CardHeader>
                   <Shield className="h-10 w-10 text-blue-600 mb-2" />
