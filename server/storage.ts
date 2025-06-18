@@ -52,6 +52,9 @@ export interface IStorage {
   createSuggestion(suggestion: InsertSuggestion): Promise<Suggestion>;
   authenticateUser(phone: string): Promise<User | undefined>;
   
+  // Profile completion methods
+  completeUserProfile(userId: number, profileData: Partial<InsertUser>): Promise<User>;
+  
   // Admin methods
   getAllBetaSignups(): Promise<BetaSignup[]>;
   updateBetaSignupStatus(id: number, status: string, notes?: string): Promise<BetaSignup>;
@@ -530,6 +533,19 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updated;
+  }
+
+  async completeUserProfile(userId: number, profileData: Partial<InsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...profileData,
+        isProfileComplete: true,
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return user;
   }
 }
 

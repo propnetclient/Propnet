@@ -21,6 +21,7 @@ export const users = pgTable("users", {
   socialMedia: json("social_media"),
   isVerified: boolean("is_verified").default(false),
   isKycComplete: boolean("is_kyc_complete").default(false),
+  isProfileComplete: boolean("is_profile_complete").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

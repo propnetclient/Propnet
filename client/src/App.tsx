@@ -8,6 +8,7 @@ import Landing from "@/pages/landing";
 import Login from "@/pages/auth/login";
 import OtpVerification from "@/pages/auth/otp-verification";
 import KYC from "@/pages/auth/kyc";
+import CompleteProfile from "@/pages/auth/complete-profile";
 import Dashboard from "@/pages/dashboard/dashboard";
 import PropertyFeed from "@/pages/properties/feed";
 import PropertySearch from "@/pages/properties/search";
@@ -45,7 +46,11 @@ function Router() {
     <Switch>
       {/* Landing page for unauthenticated users */}
       <Route path="/">
-        {user ? <Dashboard /> : <Landing />}
+        {user ? (
+          user.isProfileComplete ? <Dashboard /> : <CompleteProfile />
+        ) : (
+          <Landing />
+        )}
       </Route>
       
       {/* Admin panel - always accessible */}
@@ -55,23 +60,54 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/otp-verification" component={OtpVerification} />
       <Route path="/kyc" component={KYC} />
+      <Route path="/complete-profile" component={CompleteProfile} />
       
-      {/* Protected app routes - only for authenticated users */}
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/feed" component={PropertyFeed} />
-      <Route path="/search" component={PropertySearch} />
-      <Route path="/add-property" component={AddProperty} />
-      <Route path="/bulk-upload" component={BulkUpload} />
-      <Route path="/quickpost" component={QuickPost} />
-      <Route path="/property/:id" component={PropertyDetail} />
-      <Route path="/my-listings" component={MyListings} />
-      <Route path="/consent/:consentId" component={OwnerConsent} />
-      <Route path="/requirements" component={Requirements} />
-      <Route path="/map" component={Map} />
-      <Route path="/messages" component={Messages} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/edit-profile" component={EditProfile} />
-      <Route path="/colisting-requests" component={ColistingRequests} />
+      {/* Protected app routes - only for authenticated users with complete profiles */}
+      <Route path="/dashboard">
+        {user && user.isProfileComplete ? <Dashboard /> : <CompleteProfile />}
+      </Route>
+      <Route path="/feed">
+        {user && user.isProfileComplete ? <PropertyFeed /> : <CompleteProfile />}
+      </Route>
+      <Route path="/search">
+        {user && user.isProfileComplete ? <PropertySearch /> : <CompleteProfile />}
+      </Route>
+      <Route path="/add-property">
+        {user && user.isProfileComplete ? <AddProperty /> : <CompleteProfile />}
+      </Route>
+      <Route path="/bulk-upload">
+        {user && user.isProfileComplete ? <BulkUpload /> : <CompleteProfile />}
+      </Route>
+      <Route path="/quickpost">
+        {user && user.isProfileComplete ? <QuickPost /> : <CompleteProfile />}
+      </Route>
+      <Route path="/property/:id">
+        {user && user.isProfileComplete ? <PropertyDetail /> : <CompleteProfile />}
+      </Route>
+      <Route path="/my-listings">
+        {user && user.isProfileComplete ? <MyListings /> : <CompleteProfile />}
+      </Route>
+      <Route path="/consent/:consentId">
+        {user && user.isProfileComplete ? <OwnerConsent /> : <CompleteProfile />}
+      </Route>
+      <Route path="/requirements">
+        {user && user.isProfileComplete ? <Requirements /> : <CompleteProfile />}
+      </Route>
+      <Route path="/map">
+        {user && user.isProfileComplete ? <Map /> : <CompleteProfile />}
+      </Route>
+      <Route path="/messages">
+        {user && user.isProfileComplete ? <Messages /> : <CompleteProfile />}
+      </Route>
+      <Route path="/profile">
+        {user && user.isProfileComplete ? <Profile /> : <CompleteProfile />}
+      </Route>
+      <Route path="/edit-profile">
+        {user && user.isProfileComplete ? <EditProfile /> : <CompleteProfile />}
+      </Route>
+      <Route path="/colisting-requests">
+        {user && user.isProfileComplete ? <ColistingRequests /> : <CompleteProfile />}
+      </Route>
       
       <Route component={NotFound} />
     </Switch>
