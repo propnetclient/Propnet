@@ -146,12 +146,17 @@ export default function Landing() {
             </Badge>
           </div>
           <div className="flex items-center space-x-2">
-            <Link href="/login">
-              <Button variant="outline" size="sm">
-                Login
-              </Button>
-            </Link>
-            <Button size="sm">See Demo</Button>
+            <Button 
+              size="sm"
+              className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-medium"
+              onClick={() =>
+                document
+                  .getElementById("beta-form")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+            >
+              Get Early Access
+            </Button>
           </div>
         </div>
       </header>
@@ -166,8 +171,8 @@ export default function Landing() {
               <span className="text-yellow-300">Built for Brokers.</span>
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-blue-100 px-2">
-              A powerful private network built for brokers, by brokers — where
-              every lead, listing, and effort is tracked, protected, and
+              A powerful <span className="font-semibold">private network</span> built for <span className="font-bold text-white">verified brokers</span> — where
+              every <span className="italic font-semibold">lead</span>, <span className="italic font-semibold">listing</span>, and <span className="italic font-semibold">effort</span> is tracked, protected, and
               rewarded.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-6 md:mb-8 px-4">
