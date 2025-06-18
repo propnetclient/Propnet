@@ -110,6 +110,24 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const betaSignups = pgTable("beta_signups", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  phone: varchar("phone", { length: 15 }).notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  approvedAt: timestamp("approved_at"),
+});
+
+export const suggestions = pgTable("suggestions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  contact: text("contact").notNull(),
+  suggestion: text("suggestion").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   properties: many(properties),
@@ -265,6 +283,18 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+export const insertBetaSignupSchema = createInsertSchema(betaSignups).omit({
+  id: true,
+  createdAt: true,
+  status: true,
+  approvedAt: true,
+});
+
+export const insertSuggestionSchema = createInsertSchema(suggestions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -279,6 +309,10 @@ export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type BetaSignup = typeof betaSignups.$inferSelect;
+export type InsertBetaSignup = z.infer<typeof insertBetaSignupSchema>;
+export type Suggestion = typeof suggestions.$inferSelect;
+export type InsertSuggestion = z.infer<typeof insertSuggestionSchema>;
 
 // Import analytics tables
 export * from "./analytics-schema";

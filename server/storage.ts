@@ -1,4 +1,4 @@
-import { users, properties, coListings, coListingRequests, propertyRequirements, conversations, messages, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
+import { users, properties, coListings, coListingRequests, propertyRequirements, conversations, messages, betaSignups, suggestions, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement, type Conversation, type InsertConversation, type Message, type InsertMessage, type BetaSignup, type InsertBetaSignup, type Suggestion, type InsertSuggestion } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, not, desc } from "drizzle-orm";
 import { withCache, cache } from "./cache";
@@ -45,6 +45,12 @@ export interface IStorage {
   getConversationMessages(conversationId: number): Promise<(Message & { sender: User })[]>;
   sendMessage(message: InsertMessage): Promise<Message>;
   markMessagesAsRead(conversationId: number, userId: number): Promise<void>;
+
+  // Beta signup and login methods
+  createBetaSignup(signup: InsertBetaSignup): Promise<BetaSignup>;
+  getBetaSignupByPhone(phone: string): Promise<BetaSignup | undefined>;
+  createSuggestion(suggestion: InsertSuggestion): Promise<Suggestion>;
+  authenticateUser(phone: string): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -453,6 +459,48 @@ export class DatabaseStorage implements IStorage {
         not(eq(messages.senderId, userId)), // Mark messages from others as read
         eq(messages.isRead, false)
       ));
+  }
+
+  // Beta signup and login methods
+  async createBetaSignup(signup: InsertBetaSignup): Promise<BetaSignup> {
+    const [created] = await db.insert(betaSignups).values(signup).returning();
+    return created;
+  }
+
+  async getBetaSignupByPhone(phone: string): Promise<BetaSignup | undefined> {
+    const [signup] = await db.select().from(betaSignups).where(eq(betaSignups.phone, phone));
+    return signup;
+  }
+
+  async createSuggestion(suggestion: InsertSuggestion): Promise<Suggestion> {
+    const [created] = await db.insert(suggestions).values(suggestion).returning();
+    return created;
+  }
+
+  async authenticateUser(phone: string): Promise<User | undefined> {
+    // Check if user has an approved beta signup
+    const [betaSignup] = await db.select().from(betaSignups).where(
+      and(
+        eq(betaSignups.phone, phone),
+        eq(betaSignups.status, "approved")
+      )
+    );
+    
+    if (!betaSignup) {
+      return undefined;
+    }
+
+    // Get or create user account
+    let [user] = await db.select().from(users).where(eq(users.phone, phone));
+    if (!user) {
+      [user] = await db.insert(users).values({
+        phone,
+        name: betaSignup.name,
+        isVerified: true
+      }).returning();
+    }
+    
+    return user;
   }
 }
 
