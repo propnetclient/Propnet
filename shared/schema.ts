@@ -365,6 +365,119 @@ export const adminSessions = pgTable("admin_sessions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Clients table
+export const clients = pgTable("clients", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  phone: varchar("phone", { length: 15 }).notNull(),
+  email: text("email"),
+  type: text("type").notNull(), // owner, buyer, tenant, lead
+  budget: text("budget"),
+  preferredLocation: text("preferred_location"),
+  requirements: text("requirements"),
+  notes: text("notes"),
+  status: text("status").default("active"), // active, inactive
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Deals table
+export const deals = pgTable("deals", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  propertyId: integer("property_id").references(() => properties.id),
+  title: text("title").notNull(),
+  dealType: text("deal_type").notNull(), // sale, rent, lease
+  value: text("value"),
+  commissionType: text("commission_type"), // percentage, fixed
+  commissionValue: text("commission_value"),
+  expectedClosure: timestamp("expected_closure"),
+  actualClosure: timestamp("actual_closure"),
+  status: text("status").default("active"), // active, closed, cancelled
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Tasks table
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  dealId: integer("deal_id").references(() => deals.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  priority: text("priority").notNull(), // low, medium, high
+  status: text("status").default("pending"), // pending, completed, cancelled
+  dueDate: timestamp("due_date"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for new tables
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  user: one(users, {
+    fields: [clients.userId],
+    references: [users.id],
+  }),
+  deals: many(deals),
+}));
+
+export const dealsRelations = relations(deals, ({ one, many }) => ({
+  user: one(users, {
+    fields: [deals.userId],
+    references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [deals.clientId],
+    references: [clients.id],
+  }),
+  property: one(properties, {
+    fields: [deals.propertyId],
+    references: [properties.id],
+  }),
+  tasks: many(tasks),
+}));
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  user: one(users, {
+    fields: [tasks.userId],
+    references: [users.id],
+  }),
+  deal: one(deals, {
+    fields: [tasks.dealId],
+    references: [deals.id],
+  }),
+}));
+
+// Insert schemas for new tables
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+  userId: true,
+});
+
+export const insertDealSchema = createInsertSchema(deals).omit({
+  id: true,
+  createdAt: true,
+  userId: true,
+  actualClosure: true,
+});
+
+export const insertTaskSchema = createInsertSchema(tasks).omit({
+  id: true,
+  createdAt: true,
+  userId: true,
+  completedAt: true,
+});
+
+// Types for new tables
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = z.infer<typeof insertClientSchema>;
+export type Deal = typeof deals.$inferSelect;
+export type InsertDeal = z.infer<typeof insertDealSchema>;
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type InsertAdminUser = typeof adminUsers.$inferInsert;
 export type AdminSession = typeof adminSessions.$inferSelect;

@@ -25,7 +25,7 @@ import OwnerConsent from "@/pages/properties/owner-consent";
 import Requirements from "@/pages/requirements/requirements";
 import Map from "@/pages/map/map";
 import Messages from "@/pages/messages/messages";
-import Clients from "@/pages/clients/clients";
+import Clients from "@/pages/clients";
 import Profile from "@/pages/profile/profile";
 import EditProfile from "@/pages/profile/edit-profile";
 import ColistingRequests from "@/pages/profile/colisting-requests";

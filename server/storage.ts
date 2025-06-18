@@ -1,4 +1,4 @@
-import { users, properties, coListings, coListingRequests, propertyRequirements, conversations, messages, betaSignups, suggestions, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement, type Conversation, type InsertConversation, type Message, type InsertMessage, type BetaSignup, type InsertBetaSignup, type Suggestion, type InsertSuggestion } from "@shared/schema";
+import { users, properties, coListings, coListingRequests, propertyRequirements, conversations, messages, betaSignups, suggestions, clients, deals, tasks, type User, type InsertUser, type Property, type InsertProperty, type CoListingRequest, type InsertCoListingRequest, type PropertyRequirement, type InsertPropertyRequirement, type Conversation, type InsertConversation, type Message, type InsertMessage, type BetaSignup, type InsertBetaSignup, type Suggestion, type InsertSuggestion, type Client, type InsertClient, type Deal, type InsertDeal, type Task, type InsertTask } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, not, desc } from "drizzle-orm";
 import { withCache, cache } from "./cache";
@@ -58,6 +58,27 @@ export interface IStorage {
   // Admin methods
   getAllBetaSignups(): Promise<BetaSignup[]>;
   updateBetaSignupStatus(id: number, status: string, notes?: string): Promise<BetaSignup>;
+
+  // Client management methods
+  getClients(userId: number): Promise<Client[]>;
+  getClient(id: number): Promise<Client | undefined>;
+  createClient(client: InsertClient & { userId: number }): Promise<Client>;
+  updateClient(id: number, updates: Partial<InsertClient>): Promise<Client>;
+  deleteClient(id: number): Promise<void>;
+
+  // Deal management methods
+  getDeals(userId: number): Promise<Deal[]>;
+  getDeal(id: number): Promise<Deal | undefined>;
+  createDeal(deal: InsertDeal & { userId: number }): Promise<Deal>;
+  updateDeal(id: number, updates: Partial<InsertDeal>): Promise<Deal>;
+  deleteDeal(id: number): Promise<void>;
+
+  // Task management methods
+  getTasks(userId: number): Promise<Task[]>;
+  getTask(id: number): Promise<Task | undefined>;
+  createTask(task: InsertTask & { userId: number }): Promise<Task>;
+  updateTask(id: number, updates: Partial<InsertTask>): Promise<Task>;
+  deleteTask(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
