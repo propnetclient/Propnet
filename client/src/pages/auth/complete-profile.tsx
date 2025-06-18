@@ -8,16 +8,36 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Upload, X, Plus, HelpCircle, CheckCircle2, ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
+import { Upload, X, Plus, HelpCircle, CheckCircle2, ArrowLeft, ArrowRight, AlertCircle, ChevronDown, Check } from "lucide-react";
 
 const AREA_OF_EXPERTISE_OPTIONS = {
   "Sales": [
@@ -103,6 +123,9 @@ export default function CompleteProfile() {
   const [customRegion, setCustomRegion] = useState("");
   const [filteredRegions, setFilteredRegions] = useState<string[]>([]);
   const [showSummary, setShowSummary] = useState(false);
+  
+  // Dropdown states
+  const [expertiseDropdownOpen, setExpertiseDropdownOpen] = useState(false);
 
   // Validation states
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -218,6 +241,18 @@ export default function CompleteProfile() {
       addExpertise(customExpertise.trim());
       setCustomExpertise("");
     }
+  };
+
+  // Get available expertise options (not already selected)
+  const getAvailableExpertiseOptions = () => {
+    const available: Record<string, string[]> = {};
+    Object.entries(AREA_OF_EXPERTISE_OPTIONS).forEach(([category, options]) => {
+      const filteredOptions = options.filter(option => !formData.areaOfExpertise.includes(option));
+      if (filteredOptions.length > 0) {
+        available[category] = filteredOptions;
+      }
+    });
+    return available;
   };
 
   const addWorkingRegion = (region: string) => {
@@ -501,9 +536,9 @@ export default function CompleteProfile() {
           Area of Expertise *
           {renderValidationIcon('areaOfExpertise')}
         </Label>
-        <p className="text-sm text-gray-600 mb-3">Select or add your areas of expertise</p>
+        <p className="text-sm text-gray-600 mb-3">Select your areas of expertise from the dropdown</p>
         
-        {/* Selected Expertise */}
+        {/* Selected Expertise Tags */}
         {formData.areaOfExpertise.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {formData.areaOfExpertise.map((expertise) => (
@@ -521,46 +556,88 @@ export default function CompleteProfile() {
           </div>
         )}
 
-        {/* Expertise Options by Category */}
-        <div className="space-y-4">
-          {Object.entries(AREA_OF_EXPERTISE_OPTIONS).map(([category, options]) => (
-            <div key={category}>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">{category}</h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {options.map((option) => (
-                  <Button
-                    key={option}
-                    type="button"
-                    variant={formData.areaOfExpertise.includes(option) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => 
-                      formData.areaOfExpertise.includes(option) 
-                        ? removeExpertise(option)
-                        : addExpertise(option)
-                    }
-                    className="justify-start text-left text-xs h-8"
-                  >
-                    {option}
-                  </Button>
+        {/* Multi-Select Dropdown */}
+        <Popover open={expertiseDropdownOpen} onOpenChange={setExpertiseDropdownOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={expertiseDropdownOpen}
+              className="w-full justify-between text-left font-normal"
+            >
+              <span className="text-gray-500">
+                {formData.areaOfExpertise.length === 0 
+                  ? "Select areas of expertise..." 
+                  : `${formData.areaOfExpertise.length} selected`
+                }
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0" align="start">
+            <Command className="w-full">
+              <CommandList className="max-h-64 overflow-y-auto">
+                {Object.entries(getAvailableExpertiseOptions()).map(([category, options]) => (
+                  <CommandGroup key={category} heading={category}>
+                    {options.map((option) => (
+                      <CommandItem
+                        key={option}
+                        value={option}
+                        onSelect={() => {
+                          addExpertise(option);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 ${
+                            formData.areaOfExpertise.includes(option) ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                        {option}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
                 ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Custom Expertise Input */}
-        <div className="flex gap-2 mt-4">
-          <Input
-            placeholder="Add custom expertise..."
-            value={customExpertise}
-            onChange={(e) => setCustomExpertise(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomExpertise())}
-            className="flex-1"
-          />
-          <Button type="button" onClick={addCustomExpertise} size="sm">
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
+                
+                {/* Custom Input Section */}
+                <CommandGroup heading="Custom">
+                  <div className="px-3 py-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add custom expertise..."
+                        value={customExpertise}
+                        onChange={(e) => setCustomExpertise(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addCustomExpertise();
+                            setExpertiseDropdownOpen(false);
+                          }
+                        }}
+                        className="flex-1 h-8 text-sm"
+                      />
+                      <Button 
+                        type="button" 
+                        onClick={() => {
+                          addCustomExpertise();
+                          setExpertiseDropdownOpen(false);
+                        }} 
+                        size="sm"
+                        className="h-8 px-2"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CommandGroup>
+                
+                {Object.keys(getAvailableExpertiseOptions()).length === 0 && !customExpertise && (
+                  <CommandEmpty>All options selected. Add custom expertise above.</CommandEmpty>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
         {validationErrors.areaOfExpertise && (
           <p className="text-sm text-red-500 mt-1">{validationErrors.areaOfExpertise}</p>
