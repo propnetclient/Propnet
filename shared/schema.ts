@@ -22,6 +22,13 @@ export const users = pgTable("users", {
   isVerified: boolean("is_verified").default(false),
   isKycComplete: boolean("is_kyc_complete").default(false),
   isProfileComplete: boolean("is_profile_complete").default(false),
+  isPhoneVerified: boolean("is_phone_verified").default(false),
+  pinHash: text("pin_hash"), // Hashed 4-6 digit PIN
+  sessionToken: text("session_token"), // For persistent sessions
+  sessionExpiresAt: timestamp("session_expires_at"),
+  keepLoggedIn: boolean("keep_logged_in").default(false),
+  lastLoginAt: timestamp("last_login_at"),
+  deviceFingerprint: text("device_fingerprint"), // For security tracking
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -126,6 +133,18 @@ export const suggestions = pgTable("suggestions", {
   name: text("name").notNull(),
   contact: text("contact").notNull(),
   suggestion: text("suggestion").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const otpSessions = pgTable("otp_sessions", {
+  id: serial("id").primaryKey(),
+  phone: varchar("phone", { length: 15 }).notNull(),
+  otpHash: text("otp_hash").notNull(), // Hashed OTP for security
+  purpose: text("purpose").notNull(), // 'verification', 'pin_reset'
+  attempts: integer("attempts").default(0),
+  maxAttempts: integer("max_attempts").default(3),
+  isUsed: boolean("is_used").default(false),
+  expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -296,9 +315,16 @@ export const insertSuggestionSchema = createInsertSchema(suggestions).omit({
   createdAt: true,
 });
 
+export const insertOtpSessionSchema = createInsertSchema(otpSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type OtpSession = typeof otpSessions.$inferSelect;
+export type InsertOtpSession = z.infer<typeof insertOtpSessionSchema>;
 export type Property = typeof properties.$inferSelect;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type CoListing = typeof coListings.$inferSelect;
