@@ -23,7 +23,7 @@ import {
   AlertCircle,
   XCircle
 } from "lucide-react";
-import BottomNavigation from "@/components/layout/bottom-navigation";
+import MobileNavigation from "@/components/layout/mobile-navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/utils/formatters";
 
@@ -300,7 +300,7 @@ export default function Dashboard() {
       {/* Bottom spacing for navigation */}
       <div className="h-20"></div>
       
-      <BottomNavigation />
+      <MobileNavigation />
     </div>
   );
 }

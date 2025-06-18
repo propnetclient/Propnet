@@ -16,7 +16,7 @@ import {
   Building2,
   Plus
 } from "lucide-react";
-import BottomNavigation from "@/components/layout/bottom-navigation";
+import MobileNavigation from "@/components/layout/mobile-navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -209,7 +209,7 @@ export default function Messages() {
         </div>
 
         <div className="h-20"></div>
-        <BottomNavigation />
+        <MobileNavigation />
       </div>
     );
   }
@@ -370,7 +370,7 @@ export default function Messages() {
       {/* Bottom spacing for navigation */}
       <div className="h-20"></div>
       
-      <BottomNavigation />
+      <MobileNavigation />
     </div>
   );
 }

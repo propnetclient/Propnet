@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { MapPin, Navigation, Layers, Phone, Eye, Filter, Home, User } from "lucide-react";
-import BottomNavigation from "@/components/layout/bottom-navigation";
+import MobileNavigation from "@/components/layout/mobile-navigation";
 import { formatPrice, getListingTypeBadgeColor } from "@/utils/formatters";
 
 declare global {
@@ -480,7 +480,7 @@ export default function Map() {
       {/* Bottom spacing for navigation */}
       <div className="h-20"></div>
       
-      <BottomNavigation />
+      <MobileNavigation />
 
       {/* Property Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
