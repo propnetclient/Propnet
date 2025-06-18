@@ -13,10 +13,7 @@ import { Building2, Shield, CheckCircle, XCircle, Users, FileCheck, DollarSign, 
 export default function Landing() {
   const [formData, setFormData] = useState({
     name: "",
-    phone: "",
-    city: "",
-    interestedInTesting: "Yes",
-    biggestIssue: ""
+    phone: ""
   });
   const { toast } = useToast();
 
@@ -31,10 +28,7 @@ export default function Landing() {
       });
       setFormData({
         name: "",
-        phone: "",
-        city: "",
-        interestedInTesting: "Yes",
-        biggestIssue: ""
+        phone: ""
       });
     },
     onError: () => {
@@ -49,10 +43,10 @@ export default function Landing() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.phone || !formData.city) {
+    if (!formData.name || !formData.phone) {
       toast({
         title: "Missing Information",
-        description: "Please fill in your name, phone, and city to apply for beta access.",
+        description: "Please fill in your name and contact number to apply for beta access.",
         variant: "destructive"
       });
       return;
@@ -93,17 +87,21 @@ export default function Landing() {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Never Lose a Client or<br />
-              <span className="text-yellow-300">Commission Again.</span>
+              The Real Estate Network<br />
+              <span className="text-yellow-300">Built for Brokers.</span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-blue-100">
               A powerful private network built for brokers, by brokers — where every lead, listing, and effort is tracked, protected, and rewarded.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              <Button size="lg" className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-8 py-3">
+              <Button 
+                size="lg" 
+                className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-8 py-3"
+                onClick={() => document.getElementById('beta-form')?.scrollIntoView({ behavior: 'smooth' })}
+              >
                 Get Early Access
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 font-medium">
                 <Play className="w-5 h-5 mr-2" />
                 See Demo
               </Button>
@@ -157,10 +155,11 @@ export default function Landing() {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 <CheckCircle className="w-8 h-8 text-green-600 inline mr-2" />
-                What We Fixed (Features That Matter)
+                What We Fixed
               </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Features That Matter</p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -249,11 +248,7 @@ export default function Landing() {
                 <h3 className="text-xl font-semibold mb-2">Earn more with less chaos</h3>
               </div>
             </div>
-            <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-l-blue-500">
-              <p className="text-lg italic text-gray-600 dark:text-gray-300">
-                "This platform makes my work visible and my deals verifiable." — Test user, Pune
-              </p>
-            </div>
+
           </div>
         </div>
       </section>
@@ -292,92 +287,59 @@ export default function Landing() {
       </section>
 
       {/* Beta Application Form */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-800">
+      <section id="beta-form" className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Apply for Early Access
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                Get Early Access
               </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 mb-2">
                 We're onboarding the first 250 verified brokers in India.
               </p>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
-                Join now and help shape the future of this platform.
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-300">
+                Interested in testing our platform?
               </p>
             </div>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Beta Access Application</CardTitle>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl">Join the Beta</CardTitle>
                 <CardDescription>
-                  Tell us about yourself and your real estate business
+                  Share your details and we'll be in touch
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleFormSubmit} className="space-y-6">
+                <form onSubmit={handleFormSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Name *</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Name *</label>
                     <Input
                       value={formData.name}
                       onChange={(e) => updateFormData("name", e.target.value)}
                       placeholder="Your full name"
+                      className="h-11"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Phone (WhatsApp) *</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Contact Number *</label>
                     <Input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => updateFormData("phone", e.target.value)}
                       placeholder="Your WhatsApp number"
+                      className="h-11"
                       required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">City / Area *</label>
-                    <Input
-                      value={formData.city}
-                      onChange={(e) => updateFormData("city", e.target.value)}
-                      placeholder="Your city or area of operation"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Are you interested in testing?</label>
-                    <select
-                      className="w-full p-2 border rounded-md bg-white dark:bg-gray-700"
-                      value={formData.interestedInTesting}
-                      onChange={(e) => updateFormData("interestedInTesting", e.target.value)}
-                    >
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                      <option value="Maybe">Maybe</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      What's the biggest issue you face in resale real estate today?
-                    </label>
-                    <Textarea
-                      value={formData.biggestIssue}
-                      onChange={(e) => updateFormData("biggestIssue", e.target.value)}
-                      placeholder="Tell us about your main challenges..."
-                      rows={4}
                     />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base font-medium"
                     disabled={betaSignupMutation.isPending}
                   >
-                    {betaSignupMutation.isPending ? "Submitting..." : "Join the Beta"}
+                    {betaSignupMutation.isPending ? "Submitting..." : "Apply for Beta Access"}
                   </Button>
                 </form>
               </CardContent>
