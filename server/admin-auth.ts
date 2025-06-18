@@ -22,11 +22,14 @@ export class AdminAuthService {
     const acceptLanguage = req.headers['accept-language'] || '';
     const ip = req.ip || req.connection.remoteAddress || '';
     
+    console.log('Fingerprint components:', { userAgent, acceptLanguage, ip });
+    
     const fingerprint = crypto
       .createHash('sha256')
       .update(`${userAgent}:${acceptLanguage}:${ip}`)
       .digest('hex');
     
+    console.log('Generated fingerprint:', fingerprint);
     return fingerprint;
   }
 
@@ -132,17 +135,6 @@ export class AdminAuthService {
 
       // Generate device fingerprint
       const deviceFingerprint = this.generateDeviceFingerprint(req);
-      // Check if device is approved (auto-approve first device for new admin)
-      const isDeviceApproved = admin.approvedDevices?.includes(deviceFingerprint) || false;
-      const hasNoApprovedDevices = !admin.approvedDevices || admin.approvedDevices.length === 0;
-
-      if (!isDeviceApproved && !hasNoApprovedDevices) {
-        return { 
-          success: false, 
-          message: "Device not approved. Please contact system administrator.",
-          requiresDeviceApproval: true 
-        };
-      }
 
       // Create session
       const sessionToken = this.generateSessionToken();
@@ -162,6 +154,8 @@ export class AdminAuthService {
       const updatedDevices = currentDevices.includes(deviceFingerprint) 
         ? currentDevices 
         : [...currentDevices, deviceFingerprint];
+
+      console.log('Final device update - current:', currentDevices, 'updated:', updatedDevices);
 
       await db.update(adminUsers)
         .set({
