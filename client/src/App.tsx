@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
+import Landing from "@/pages/landing";
 import Login from "@/pages/auth/login";
 import OtpVerification from "@/pages/auth/otp-verification";
 import KYC from "@/pages/auth/kyc";
@@ -27,7 +28,8 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Login} />
+      <Route path="/" component={Landing} />
+      <Route path="/login" component={Login} />
       <Route path="/otp-verification" component={OtpVerification} />
       <Route path="/kyc" component={KYC} />
       <Route path="/dashboard" component={Dashboard} />
