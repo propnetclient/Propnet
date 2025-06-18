@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,6 +56,7 @@ const taskSchema = z.object({
 
 export default function ClientsPage() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
   const [isCreateDealOpen, setIsCreateDealOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
@@ -510,7 +512,9 @@ export default function ClientsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setLocation(`/clients/${client.id}`)}>
+                              View Details
+                            </DropdownMenuItem>
                             <DropdownMenuItem>Create Deal</DropdownMenuItem>
                             <DropdownMenuItem>Edit Client</DropdownMenuItem>
                           </DropdownMenuContent>

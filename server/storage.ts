@@ -608,6 +608,10 @@ export class DatabaseStorage implements IStorage {
     return deal || undefined;
   }
 
+  async getClientDeals(clientId: number): Promise<Deal[]> {
+    return db.select().from(deals).where(eq(deals.clientId, clientId));
+  }
+
   async createDeal(deal: InsertDeal & { userId: number }): Promise<Deal> {
     const [newDeal] = await db.insert(deals).values(deal).returning();
     return newDeal;
