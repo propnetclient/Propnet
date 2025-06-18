@@ -40,6 +40,9 @@ if (!fs.existsSync('uploads')) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register PIN-based authentication routes
+  app.use("/api/pin-auth", pinAuthRoutes);
+
   // Beta signup route for landing page
   app.post("/api/beta-signup", async (req, res) => {
     try {
