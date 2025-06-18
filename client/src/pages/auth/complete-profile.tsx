@@ -150,11 +150,14 @@ export default function CompleteProfile() {
       validation.agencyName = formData.agencyName.trim().length >= 3;
       if (!validation.agencyName) errors.agencyName = "Agency name must be at least 3 characters";
       
-      // RERA ID validation with better pattern
-      const reraPattern = /^RERA\/[A-Z]{2,3}\/[A-Z]{2,4}\/\d{4}\/\d{6}$/;
-      validation.reraId = reraPattern.test(formData.reraId.toUpperCase());
+      // Gujarat RERA ID validation - flexible pattern for real-world formats
+      // Must start with AG/GJ/, followed by District/City/Authority/AgentID/VersionSegment
+      // AgentID: two uppercase letters + 5 digits (e.g., AA01234)
+      // VersionSegment: flexible but must end in R{number} (e.g., 150229R1, xx0130R2, 161xxxR1)
+      const gujaratReraPattern = /^AG\/GJ\/[A-Z\s]+\/[A-Z\s]+\/[A-Z\s]*\/[A-Z]{2}\d{5}\/[\dx]{1,6}R\d+$/i;
+      validation.reraId = gujaratReraPattern.test(formData.reraId.toUpperCase());
       if (!validation.reraId && formData.reraId) {
-        errors.reraId = "Invalid RERA ID format. Use: RERA/GUJ/AHMD/2024/123456";
+        errors.reraId = "Invalid Gujarat RERA ID format. Use: AG/GJ/AHMEDABAD/AHMEDABAD CITY/AUDA/AA01234/150123R1";
       }
     }
 
@@ -466,12 +469,13 @@ export default function CompleteProfile() {
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
                 <div className="space-y-2">
-                  <p className="font-semibold">RERA ID Format:</p>
-                  <p>RERA/STATE/CITY/YEAR/NUMBER</p>
+                  <p className="font-semibold">Gujarat RERA ID Format:</p>
+                  <p>AG/GJ/DISTRICT/CITY/AUTHORITY/AGENTID/VERSION</p>
                   <p className="text-sm">Examples:</p>
-                  <p className="text-sm">• RERA/GUJ/AHMD/2024/123456</p>
-                  <p className="text-sm">• RERA/MH/MUM/2023/789012</p>
-                  <p className="text-sm mt-2">This ensures you're a verified real estate agent registered with RERA.</p>
+                  <p className="text-sm">• AG/GJ/AHMEDABAD/AHMEDABAD CITY/AUDA/AA01234/150123R1</p>
+                  <p className="text-sm">• AG/GJ/RAJKOT/RAJKOT/Others/AA00546/150229R2</p>
+                  <p className="text-sm">• AG/GJ/GANDHINAGAR/GANDHINAGAR/GMDA/BB01999/161xxxR1</p>
+                  <p className="text-sm mt-2">This ensures you're a verified real estate agent registered with Gujarat RERA.</p>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -482,7 +486,7 @@ export default function CompleteProfile() {
           value={formData.reraId}
           onChange={(e) => setFormData(prev => ({...prev, reraId: e.target.value.toUpperCase()}))}
           className={`mt-1 ${validationErrors.reraId ? 'border-red-500' : fieldValidation.reraId ? 'border-green-500' : ''}`}
-          placeholder="RERA/GUJ/AHMD/2024/123456"
+          placeholder="AG/GJ/AHMEDABAD/AHMEDABAD CITY/AUDA/AA01234/150123R1"
         />
         {validationErrors.reraId && (
           <p className="text-sm text-red-500 mt-1">{validationErrors.reraId}</p>
