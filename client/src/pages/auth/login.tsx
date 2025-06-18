@@ -41,7 +41,8 @@ export default function Login() {
   // Check if phone needs verification or can use PIN
   const checkPhoneMutation = useMutation({
     mutationFn: async (phone: string) => {
-      return apiRequest("/api/pin-auth/check-phone", "POST", { phone });
+      const res = await apiRequest("POST", "/api/pin-auth/check-phone", { phone });
+      return res.json();
     },
     onSuccess: (data: any) => {
       if (data.needsVerification) {
@@ -62,10 +63,11 @@ export default function Login() {
   // Send OTP for verification
   const sendOtpMutation = useMutation({
     mutationFn: async (phone: string) => {
-      return apiRequest("/api/pin-auth/send-otp", "POST", { 
+      const res = await apiRequest("POST", "/api/pin-auth/send-otp", { 
         phone, 
         purpose: "verification" 
       });
+      return res.json();
     },
     onSuccess: (data: any) => {
       setCurrentStep('verify');
@@ -97,11 +99,12 @@ export default function Login() {
   // Verify OTP and complete registration
   const verifyOtpMutation = useMutation({
     mutationFn: async (data: { phone: string; otp: string }) => {
-      return apiRequest("/api/pin-auth/verify-otp", "POST", {
+      const res = await apiRequest("POST", "/api/pin-auth/verify-otp", {
         phone: data.phone,
         otp: data.otp,
         purpose: "verification"
       });
+      return res.json();
     },
     onSuccess: (data: any) => {
       if (data.user) {
@@ -133,7 +136,8 @@ export default function Login() {
   // Login with PIN
   const loginMutation = useMutation({
     mutationFn: async (data: { phone: string; pin: string; keepLoggedIn: boolean }) => {
-      return apiRequest("/api/pin-auth/login-pin", "POST", data);
+      const res = await apiRequest("POST", "/api/pin-auth/login-pin", data);
+      return res.json();
     },
     onSuccess: (data: any) => {
       login(data.user);
