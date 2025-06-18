@@ -29,9 +29,12 @@ export default function SetupPin() {
   const { user, login } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Get phone from authenticated user
+  // Get phone from localStorage or authenticated user
   useState(() => {
-    if (user?.phone) {
+    const tempPhone = localStorage.getItem("tempPhone");
+    if (tempPhone) {
+      setFormData(prev => ({ ...prev, phone: tempPhone }));
+    } else if (user?.phone) {
       setFormData(prev => ({ ...prev, phone: user.phone }));
     }
   });
@@ -46,6 +49,9 @@ export default function SetupPin() {
       if (data.user) {
         login(data.user);
       }
+      
+      // Clean up temporary phone number
+      localStorage.removeItem("tempPhone");
       
       toast({
         title: "PIN Setup Complete!",
@@ -98,6 +104,17 @@ export default function SetupPin() {
   const isFormValid = formData.pin.length >= 4 && 
                      formData.pin === formData.confirmPin &&
                      formData.phone;
+
+  // Debug logging
+  console.log("Setup PIN Form Debug:", {
+    pin: formData.pin,
+    confirmPin: formData.confirmPin,
+    phone: formData.phone,
+    pinLength: formData.pin.length,
+    pinsMatch: formData.pin === formData.confirmPin,
+    hasPhone: !!formData.phone,
+    isFormValid
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">

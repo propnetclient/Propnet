@@ -111,6 +111,9 @@ export default function Login() {
         login(data.user);
       }
       
+      // Store phone number for PIN setup
+      localStorage.setItem("tempPhone", formData.phone);
+      
       toast({
         title: "Phone Verified!",
         description: "Your phone number has been verified successfully"
