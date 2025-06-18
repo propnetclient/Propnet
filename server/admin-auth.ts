@@ -133,10 +133,11 @@ export class AdminAuthService {
       // Generate device fingerprint
       const deviceFingerprint = this.generateDeviceFingerprint(req);
 
-      // Check if device is approved
+      // Check if device is approved (auto-approve first device for new admin)
       const isDeviceApproved = admin.approvedDevices?.includes(deviceFingerprint) || false;
+      const hasNoApprovedDevices = !admin.approvedDevices || admin.approvedDevices.length === 0;
 
-      if (!isDeviceApproved && admin.approvedDevices && admin.approvedDevices.length > 0) {
+      if (!isDeviceApproved && !hasNoApprovedDevices) {
         return { 
           success: false, 
           message: "Device not approved. Please contact system administrator.",
