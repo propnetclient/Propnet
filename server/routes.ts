@@ -271,6 +271,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/auth/complete-profile", upload.single('profilePhoto'), async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const profileData: any = { ...req.body };
+      
+      // Parse array fields that come as JSON strings
+      if (profileData.areaOfExpertise) {
+        profileData.areaOfExpertise = JSON.parse(profileData.areaOfExpertise);
+      }
+      if (profileData.workingRegions) {
+        profileData.workingRegions = JSON.parse(profileData.workingRegions);
+      }
+
+      // Handle profile photo upload
+      if (req.file) {
+        profileData.profilePhoto = `/uploads/${req.file.filename}`;
+      }
+
+      const updatedUser = await storage.completeUserProfile(userId, profileData);
+      res.json({ user: updatedUser, message: "Profile completed successfully" });
+    } catch (error) {
+      console.error("Profile completion error:", error);
+      res.status(500).json({ message: "Profile completion failed" });
+    }
+  });
+
   app.post("/api/auth/logout", (req, res) => {
     (req as any).session.destroy();
     res.json({ success: true });

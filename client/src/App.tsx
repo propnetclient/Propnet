@@ -87,9 +87,7 @@ function Router() {
       <Route path="/my-listings">
         {user && user.isProfileComplete ? <MyListings /> : <CompleteProfile />}
       </Route>
-      <Route path="/consent/:consentId">
-        {user && user.isProfileComplete ? <OwnerConsent /> : <CompleteProfile />}
-      </Route>
+      <Route path="/consent/:consentId" component={OwnerConsent} />
       <Route path="/requirements">
         {user && user.isProfileComplete ? <Requirements /> : <CompleteProfile />}
       </Route>
