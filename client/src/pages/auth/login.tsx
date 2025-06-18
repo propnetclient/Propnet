@@ -47,6 +47,10 @@ export default function Login() {
     onSuccess: (data: any) => {
       if (data.needsVerification) {
         sendOtpMutation.mutate(formData.phone);
+      } else if (data.needsPinSetup) {
+        // Phone verified but no PIN - redirect to PIN setup
+        localStorage.setItem("tempPhone", formData.phone);
+        setLocation("/auth/setup-pin");
       } else {
         setCurrentStep('pin');
       }

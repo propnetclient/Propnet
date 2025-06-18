@@ -78,6 +78,16 @@ export class PinAuthService {
     return !user[0]?.isPhoneVerified;
   }
 
+  // Check if user needs PIN setup (phone verified but no PIN)
+  async needsPinSetup(phone: string): Promise<boolean> {
+    const user = await db.select({ isPhoneVerified: users.isPhoneVerified, pinHash: users.pinHash })
+      .from(users)
+      .where(eq(users.phone, phone))
+      .limit(1);
+
+    return Boolean(user[0]?.isPhoneVerified && !user[0]?.pinHash);
+  }
+
   // Send OTP for phone verification or PIN reset
   async sendOTP(phone: string, purpose: 'verification' | 'pin_reset'): Promise<AuthResult> {
     // Check rate limit

@@ -34,10 +34,16 @@ router.post('/check-phone', async (req, res) => {
     const { phone } = phoneSchema.parse(req.body);
     
     const needsVerification = await pinAuth.needsPhoneVerification(phone);
+    const needsPinSetup = await pinAuth.needsPinSetup(phone);
     
     res.json({ 
       needsVerification,
-      message: needsVerification ? "Phone verification required" : "Phone already verified"
+      needsPinSetup,
+      message: needsVerification 
+        ? "Phone verification required" 
+        : needsPinSetup 
+          ? "PIN setup required"
+          : "Phone verified with PIN"
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

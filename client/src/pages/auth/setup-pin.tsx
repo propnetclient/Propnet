@@ -105,17 +105,6 @@ export default function SetupPin() {
                      formData.pin === formData.confirmPin &&
                      formData.phone;
 
-  // Debug logging
-  console.log("Setup PIN Form Debug:", {
-    pin: formData.pin,
-    confirmPin: formData.confirmPin,
-    phone: formData.phone,
-    pinLength: formData.pin.length,
-    pinsMatch: formData.pin === formData.confirmPin,
-    hasPhone: !!formData.phone,
-    isFormValid
-  });
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
