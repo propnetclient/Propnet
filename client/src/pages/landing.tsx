@@ -148,7 +148,7 @@ export default function Landing() {
           <div className="flex items-center space-x-2">
             <Button 
               size="sm"
-              className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-medium"
+              className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-semibold shadow-md hover:shadow-lg transition-all duration-200 border border-yellow-500"
               onClick={() =>
                 document
                   .getElementById("beta-form")
