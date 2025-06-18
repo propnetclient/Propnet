@@ -152,7 +152,28 @@ PropNet is a comprehensive real estate marketplace platform built with React fro
 
 ## Changelog
 - June 15, 2025. Initial setup
+- June 18, 2025. Implemented broker-focused landing page for beta testing phase
+
+## Recent Changes
+
+### Landing Page Implementation (June 18, 2025)
+- Created comprehensive prelaunch landing page targeting real estate brokers
+- Focused on broker pain points: lead protection, commission loss, listing chaos
+- Added detailed beta application form collecting broker information
+- Implemented "Built for brokers, by brokers" messaging strategy
+- Updated routing to make landing page default (/) with login moved to /login
+- Added backend API endpoint for beta signup form processing
+- Designed for limited user onboarding (250 verified brokers target)
+
+### Key Features Added
+- Problem-solution framework highlighting broker challenges
+- Feature showcase with commission protection and anti-poaching tools
+- Comprehensive beta application form with business context questions
+- Professional testimonials and roadmap sections
+- Mobile-responsive design with broker-specific messaging
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Project focus: Broker pain points and testing phase user acquisition.
+Landing page objective: Get interested broker data and onboard limited beta testers.

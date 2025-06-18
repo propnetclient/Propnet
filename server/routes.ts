@@ -42,27 +42,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Beta signup route for landing page
   app.post("/api/beta-signup", async (req, res) => {
     try {
-      const { email, phone } = z.object({
-        email: z.string().email("Valid email required"),
-        phone: z.string().min(10, "Valid phone number required")
+      const { name, phone, city, interestedInTesting, biggestIssue } = z.object({
+        name: z.string().min(1, "Name is required"),
+        phone: z.string().min(10, "Valid phone number required"),
+        city: z.string().min(1, "City is required"),
+        interestedInTesting: z.string().optional(),
+        biggestIssue: z.string().optional()
       }).parse(req.body);
       
       // Normalize phone number
       const normalizedPhone = phone.replace(/\D/g, '').slice(-10);
       
-      // Store beta signup in a simple way - you could add a proper table later
-      console.log(`Beta signup: ${email}, ${normalizedPhone}`);
+      // Store beta signup with detailed information
+      console.log(`Beta Application:
+        Name: ${name}
+        Phone: ${normalizedPhone}
+        City: ${city}
+        Interested in Testing: ${interestedInTesting || 'Not specified'}
+        Biggest Issue: ${biggestIssue || 'Not specified'}
+        Applied at: ${new Date().toISOString()}
+      `);
       
-      // For now, just log the signup. In production, you'd store this in database
-      // or send to email service like SendGrid
+      // In production, store this in database and/or send to email service
       res.json({ 
         success: true, 
-        message: "Beta signup successful! We'll contact you soon." 
+        message: "Beta application submitted successfully! We'll review and contact you soon." 
       });
     } catch (error) {
       console.error("Beta signup error:", error);
       res.status(400).json({ 
-        message: error instanceof Error ? error.message : "Invalid signup data" 
+        message: error instanceof Error ? error.message : "Invalid application data" 
       });
     }
   });
