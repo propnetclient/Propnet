@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { pinAuth } from './pin-auth';
+import './session-types';
 
 const router = Router();
 

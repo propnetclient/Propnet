@@ -11,6 +11,7 @@ import PDFDocument from "pdfkit";
 import { extractPropertiesFromText, enhancePropertyDescription } from "./gemini";
 import { generateOTP, storeOTP, validateOTP, checkRateLimit, requireAuth } from "./auth";
 import { registerAnalyticsRoutes } from "./analytics-routes";
+import { pinAuthRoutes } from "./pin-auth-routes";
 import { cache } from "./cache";
 import { sendSMS } from "./sms";
 import { config } from "./config";

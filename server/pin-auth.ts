@@ -166,7 +166,10 @@ export class PinAuthService {
     const otpSession = session[0];
 
     // Check attempt limit
-    if (otpSession.attempts >= otpSession.maxAttempts) {
+    const attempts = otpSession.attempts || 0;
+    const maxAttempts = otpSession.maxAttempts || MAX_OTP_ATTEMPTS;
+    
+    if (attempts >= maxAttempts) {
       await db.update(otpSessions)
         .set({ isUsed: true })
         .where(eq(otpSessions.id, otpSession.id));
@@ -180,10 +183,10 @@ export class PinAuthService {
     if (!isValidOtp) {
       // Increment attempts
       await db.update(otpSessions)
-        .set({ attempts: otpSession.attempts + 1 })
+        .set({ attempts: attempts + 1 })
         .where(eq(otpSessions.id, otpSession.id));
 
-      const remainingAttempts = otpSession.maxAttempts - (otpSession.attempts + 1);
+      const remainingAttempts = maxAttempts - (attempts + 1);
       return { 
         success: false, 
         message: `Invalid verification code. ${remainingAttempts} attempts remaining.` 
