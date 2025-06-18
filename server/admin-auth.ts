@@ -110,6 +110,8 @@ export class AdminAuthService {
   // Admin login
   async loginAdmin(username: string, password: string, req: any): Promise<AdminAuthResult> {
     try {
+      console.log('Admin login attempt for username:', username);
+      
       // Find admin user
       const [admin] = await db.select()
         .from(adminUsers)
@@ -119,12 +121,16 @@ export class AdminAuthService {
         ))
         .limit(1);
 
+      console.log('Admin found:', admin ? 'Yes' : 'No');
       if (!admin) {
         return { success: false, message: "Invalid credentials" };
       }
 
       // Verify password
+      console.log('Verifying password...');
       const isValidPassword = await this.verifyPassword(password, admin.passwordHash);
+      console.log('Password valid:', isValidPassword);
+      
       if (!isValidPassword) {
         return { success: false, message: "Invalid credentials" };
       }

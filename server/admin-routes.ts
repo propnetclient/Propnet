@@ -49,7 +49,9 @@ export const requireAdminAuth = async (req: Request, res: Response, next: NextFu
 // Admin login route
 router.post('/login', async (req, res) => {
   try {
+    console.log('Admin login request received:', req.body);
     const { username, password } = adminLoginSchema.parse(req.body);
+    console.log('Parsed credentials - username:', username, 'password length:', password.length);
     
     const result = await adminAuth.loginAdmin(username, password, req);
     
