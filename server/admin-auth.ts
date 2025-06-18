@@ -132,7 +132,6 @@ export class AdminAuthService {
 
       // Generate device fingerprint
       const deviceFingerprint = this.generateDeviceFingerprint(req);
-
       // Check if device is approved (auto-approve first device for new admin)
       const isDeviceApproved = admin.approvedDevices?.includes(deviceFingerprint) || false;
       const hasNoApprovedDevices = !admin.approvedDevices || admin.approvedDevices.length === 0;
@@ -158,26 +157,18 @@ export class AdminAuthService {
           isActive: true
         });
 
-      // Update admin's approved devices if this is first login
-      if (!admin.approvedDevices || admin.approvedDevices.length === 0) {
-        await db.update(adminUsers)
-          .set({
-            approvedDevices: [deviceFingerprint],
-            lastLoginAt: new Date()
-          })
-          .where(eq(adminUsers.id, admin.id));
-      } else if (!admin.approvedDevices.includes(deviceFingerprint)) {
-        await db.update(adminUsers)
-          .set({
-            approvedDevices: [...admin.approvedDevices, deviceFingerprint],
-            lastLoginAt: new Date()
-          })
-          .where(eq(adminUsers.id, admin.id));
-      } else {
-        await db.update(adminUsers)
-          .set({ lastLoginAt: new Date() })
-          .where(eq(adminUsers.id, admin.id));
-      }
+      // Always update last login and ensure device is approved
+      const currentDevices = admin.approvedDevices || [];
+      const updatedDevices = currentDevices.includes(deviceFingerprint) 
+        ? currentDevices 
+        : [...currentDevices, deviceFingerprint];
+
+      await db.update(adminUsers)
+        .set({
+          approvedDevices: updatedDevices,
+          lastLoginAt: new Date()
+        })
+        .where(eq(adminUsers.id, admin.id));
 
       return {
         success: true,
