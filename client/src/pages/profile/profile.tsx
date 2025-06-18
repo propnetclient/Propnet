@@ -83,7 +83,7 @@ export default function Profile() {
           >
             <ArrowLeft size={24} />
           </button>
-          <h2 className="text-lg font-semibold text-neutral-900">Profile</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">Clients</h2>
         </div>
       </div>
 
