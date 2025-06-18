@@ -65,6 +65,7 @@ function Router() {
       <Route path="/auth/login" component={PinLogin} />
       <Route path="/auth/phone-verification" component={PhoneVerification} />
       <Route path="/auth/setup-pin" component={SetupPin} />
+      <Route path="/auth/forgot-pin" component={ForgotPin} />
       <Route path="/otp-verification" component={OtpVerification} />
       <Route path="/kyc" component={KYC} />
       <Route path="/auth/complete-profile" component={CompleteProfile} />

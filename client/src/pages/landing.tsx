@@ -669,54 +669,7 @@ export default function Landing() {
         </div>
       )}
 
-      {/* Login Modal for Approved Beta Users */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-sm">
-            <CardHeader>
-              <CardTitle className="text-lg text-center">Beta User Login</CardTitle>
-              <CardDescription className="text-center">
-                Enter your approved phone number
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                    Phone Number *
-                  </label>
-                  <Input
-                    type="tel"
-                    value={loginData.phone}
-                    onChange={(e) => updateLoginData("phone", e.target.value)}
-                    placeholder="Your registered phone number"
-                    className="h-11"
-                    required
-                  />
-                </div>
 
-                <div className="flex gap-3">
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 h-11 text-base font-medium"
-                    disabled={loginMutation.isPending}
-                  >
-                    {loginMutation.isPending ? "Logging in..." : "Login"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1 h-11"
-                    onClick={() => setShowLoginModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }
