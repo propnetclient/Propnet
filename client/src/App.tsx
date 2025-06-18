@@ -29,6 +29,8 @@ import Profile from "@/pages/profile/profile";
 import EditProfile from "@/pages/profile/edit-profile";
 import ColistingRequests from "@/pages/profile/colisting-requests";
 import AdminPanel from "@/pages/admin";
+import AdminLogin from "@/pages/admin/login";
+import AdminDashboard from "@/pages/admin/dashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -57,7 +59,9 @@ function Router() {
         )}
       </Route>
       
-      {/* Admin panel - always accessible */}
+      {/* Secure Admin Portal - completely separate from user interface */}
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin" component={AdminPanel} />
       
       {/* Authentication routes */}

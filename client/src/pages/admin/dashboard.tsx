@@ -130,7 +130,7 @@ export default function AdminDashboard() {
   };
 
   const getStats = () => {
-    if (!signups) return { pending: 0, approved: 0, rejected: 0, total: 0 };
+    if (!signups || !Array.isArray(signups)) return { pending: 0, approved: 0, rejected: 0, total: 0 };
     
     return signups.reduce((acc: any, signup: BetaSignup) => {
       acc.total++;
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Admin Portal</h1>
-                <p className="text-sm text-slate-400">Welcome, {adminData.admin?.username}</p>
+                <p className="text-sm text-slate-400">Welcome, {adminData?.admin?.username}</p>
               </div>
             </div>
             <Button 
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-center py-8">
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   </div>
-                ) : signups && signups.length > 0 ? (
+                ) : signups && Array.isArray(signups) && signups.length > 0 ? (
                   <div className="space-y-4">
                     {signups.map((signup: BetaSignup) => (
                       <div key={signup.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
@@ -330,8 +330,8 @@ export default function AdminDashboard() {
                   <div className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
                     <h3 className="font-medium text-white mb-2">Session Information</h3>
                     <div className="text-sm text-slate-400 space-y-1">
-                      <p>Username: <span className="text-white">{adminData.admin?.username}</span></p>
-                      <p>Email: <span className="text-white">{adminData.admin?.email}</span></p>
+                      <p>Username: <span className="text-white">{adminData?.admin?.username}</span></p>
+                      <p>Email: <span className="text-white">{adminData?.admin?.email}</span></p>
                       <p>Device Status: <span className="text-green-400">Verified</span></p>
                     </div>
                   </div>
