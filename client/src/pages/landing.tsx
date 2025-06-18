@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -50,6 +51,7 @@ export default function Landing() {
     phone: "",
   });
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const betaSignupMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -100,16 +102,22 @@ export default function Landing() {
     mutationFn: async (data: typeof loginData) => {
       return apiRequest("POST", "/api/auth/login", data);
     },
-    onSuccess: () => {
+    onSuccess: (response: any) => {
+      // Update auth context immediately
+      if (response.user) {
+        login(response.user);
+      }
+      
       toast({
         title: "Welcome!",
         description: "Login successful. Redirecting to dashboard...",
       });
       setShowLoginModal(false);
-      // Redirect to dashboard
+      
+      // Navigate to dashboard
       setTimeout(() => {
         window.location.href = "/dashboard";
-      }, 1000);
+      }, 500);
     },
     onError: (error: any) => {
       toast({
