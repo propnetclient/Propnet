@@ -69,6 +69,7 @@ export interface IStorage {
   // Deal management methods
   getDeals(userId: number): Promise<Deal[]>;
   getDeal(id: number): Promise<Deal | undefined>;
+  getClientDeals(clientId: number): Promise<Deal[]>;
   createDeal(deal: InsertDeal & { userId: number }): Promise<Deal>;
   updateDeal(id: number, updates: Partial<InsertDeal>): Promise<Deal>;
   deleteDeal(id: number): Promise<void>;

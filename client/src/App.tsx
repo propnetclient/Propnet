@@ -26,6 +26,7 @@ import Requirements from "@/pages/requirements/requirements";
 import Map from "@/pages/map/map";
 import Messages from "@/pages/messages/messages";
 import Clients from "@/pages/clients";
+import ClientProfile from "@/pages/clients/client-profile";
 import Profile from "@/pages/profile/profile";
 import EditProfile from "@/pages/profile/edit-profile";
 import ColistingRequests from "@/pages/profile/colisting-requests";
@@ -113,6 +114,9 @@ function Router() {
       </Route>
       <Route path="/clients">
         {user && user.isProfileComplete ? <Clients /> : <CompleteProfile />}
+      </Route>
+      <Route path="/clients/:clientId">
+        {user && user.isProfileComplete ? <ClientProfile /> : <CompleteProfile />}
       </Route>
       <Route path="/profile">
         {user && user.isProfileComplete ? <Profile /> : <CompleteProfile />}

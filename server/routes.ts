@@ -1629,6 +1629,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/clients/:clientId", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { clientId } = req.params;
+      const client = await storage.getClient(parseInt(clientId));
+      
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      // Ensure user owns this client
+      if (client.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(client);
+    } catch (error) {
+      console.error("Get client error:", error);
+      res.status(500).json({ message: "Failed to fetch client" });
+    }
+  });
+
+  app.patch("/api/clients/:clientId", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { clientId } = req.params;
+      const client = await storage.getClient(parseInt(clientId));
+      
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      // Ensure user owns this client
+      if (client.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedClient = await storage.updateClient(parseInt(clientId), req.body);
+      res.json(updatedClient);
+    } catch (error) {
+      console.error("Update client error:", error);
+      res.status(500).json({ message: "Failed to update client" });
+    }
+  });
+
   // Deal Management API endpoints
   app.get("/api/deals", async (req, res) => {
     try {
@@ -1657,6 +1710,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create deal error:", error);
       res.status(500).json({ message: "Failed to create deal" });
+    }
+  });
+
+  // Get deals for a specific client
+  app.get("/api/deals/client/:clientId", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { clientId } = req.params;
+      const deals = await storage.getClientDeals(parseInt(clientId));
+      res.json(deals);
+    } catch (error) {
+      console.error("Get client deals error:", error);
+      res.status(500).json({ message: "Failed to fetch deals" });
     }
   });
 
