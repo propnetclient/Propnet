@@ -135,7 +135,7 @@ export class AdminAuthService {
 
       // Generate device fingerprint
       const deviceFingerprint = this.generateDeviceFingerprint(req);
-
+      
       // Create session
       const sessionToken = this.generateSessionToken();
       const expiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION);
@@ -149,13 +149,11 @@ export class AdminAuthService {
           isActive: true
         });
 
-      // Always update last login and ensure device is approved
-      const currentDevices = admin.approvedDevices || [];
-      const updatedDevices = currentDevices.includes(deviceFingerprint) 
-        ? currentDevices 
-        : [...currentDevices, deviceFingerprint];
-
-      console.log('Final device update - current:', currentDevices, 'updated:', updatedDevices);
+      // Update last login and approve device automatically
+      const adminDevices = admin.approvedDevices || [];
+      const updatedDevices = adminDevices.includes(deviceFingerprint) 
+        ? adminDevices 
+        : [...adminDevices, deviceFingerprint];
 
       await db.update(adminUsers)
         .set({
