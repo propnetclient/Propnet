@@ -12,8 +12,28 @@ import { Building2, Users, MessageSquare, MapPin, Search, Zap, Shield, Globe } f
 export default function Landing() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  const betaSignupMutation = useMutation({
+    mutationFn: async (data: { email: string; phone: string }) => {
+      return apiRequest("POST", "/api/beta-signup", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Welcome to PropNet Beta!",
+        description: "We'll contact you soon with access details and testing instructions.",
+      });
+      setEmail("");
+      setPhone("");
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong",
+        description: "Please try again or contact us directly.",
+        variant: "destructive"
+      });
+    }
+  });
 
   const handleEarlyAccess = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,31 +47,7 @@ export default function Landing() {
       return;
     }
 
-    setIsSubmitting(true);
-    
-    try {
-      await apiRequest("/api/beta-signup", {
-        method: "POST",
-        body: JSON.stringify({ email, phone }),
-        headers: { "Content-Type": "application/json" }
-      });
-      
-      toast({
-        title: "Welcome to PropNet Beta!",
-        description: "We'll contact you soon with access details and testing instructions.",
-      });
-      
-      setEmail("");
-      setPhone("");
-    } catch (error) {
-      toast({
-        title: "Something went wrong",
-        description: "Please try again or contact us directly.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    betaSignupMutation.mutate({ email, phone });
   };
 
   return (
@@ -118,9 +114,9 @@ export default function Landing() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting}
+                  disabled={betaSignupMutation.isPending}
                 >
-                  {isSubmitting ? "Joining..." : "Get Beta Access"}
+                  {betaSignupMutation.isPending ? "Joining..." : "Get Beta Access"}
                 </Button>
               </form>
             </CardContent>

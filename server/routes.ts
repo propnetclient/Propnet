@@ -39,6 +39,34 @@ if (!fs.existsSync('uploads')) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Beta signup route for landing page
+  app.post("/api/beta-signup", async (req, res) => {
+    try {
+      const { email, phone } = z.object({
+        email: z.string().email("Valid email required"),
+        phone: z.string().min(10, "Valid phone number required")
+      }).parse(req.body);
+      
+      // Normalize phone number
+      const normalizedPhone = phone.replace(/\D/g, '').slice(-10);
+      
+      // Store beta signup in a simple way - you could add a proper table later
+      console.log(`Beta signup: ${email}, ${normalizedPhone}`);
+      
+      // For now, just log the signup. In production, you'd store this in database
+      // or send to email service like SendGrid
+      res.json({ 
+        success: true, 
+        message: "Beta signup successful! We'll contact you soon." 
+      });
+    } catch (error) {
+      console.error("Beta signup error:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Invalid signup data" 
+      });
+    }
+  });
+
   // Auth routes with rate limiting and security
   app.post("/api/auth/send-otp", async (req, res) => {
     try {
