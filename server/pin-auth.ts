@@ -137,10 +137,10 @@ export class PinAuthService {
       expiresAt
     });
 
-    // Send SMS
+    // Send SMS with enhanced branding
     const smsMessage = purpose === 'verification' 
-      ? `Your PropNet verification code is: ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes.`
-      : `Your PropNet PIN reset code is: ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes.`;
+      ? `🏠 PropNet: Your verification code is ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes. Welcome to the broker network!`
+      : `🔐 PropNet: Your PIN reset code is ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes. Secure your account now.`;
 
     const smsSent = await sendSMS(phone, smsMessage);
     if (!smsSent) {
