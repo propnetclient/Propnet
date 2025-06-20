@@ -1614,6 +1614,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/clients/:clientId", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { clientId } = req.params;
+      const client = await storage.getClient(parseInt(clientId));
+      
+      if (!client || client.userId !== userId) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      res.json(client);
+    } catch (error) {
+      console.error("Get client error:", error);
+      res.status(500).json({ message: "Failed to fetch client" });
+    }
+  });
+
   app.post("/api/clients", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
@@ -1626,6 +1647,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create client error:", error);
       res.status(500).json({ message: "Failed to create client" });
+    }
+  });
+
+  app.patch("/api/clients/:clientId", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { clientId } = req.params;
+      const client = await storage.getClient(parseInt(clientId));
+      
+      if (!client || client.userId !== userId) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      const updatedClient = await storage.updateClient(parseInt(clientId), req.body);
+      res.json(updatedClient);
+    } catch (error) {
+      console.error("Update client error:", error);
+      res.status(500).json({ message: "Failed to update client" });
     }
   });
 
