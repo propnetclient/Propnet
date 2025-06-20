@@ -15,16 +15,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    staleTime: 30 * 1000, // 30 seconds - shorter for profile updates
+    gcTime: 2 * 60 * 1000, // 2 minutes - shorter cache for iOS compatibility
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    refetchOnReconnect: true,
     queryFn: async () => {
       const response = await fetch("/api/auth/me", {
         credentials: "include",
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
       });
       if (!response.ok) {
         throw new Error("Not authenticated");
@@ -52,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUser = (userData: User) => {
     setUser(userData);
+    // Force refetch to ensure iOS gets the latest state
+    refetch();
   };
 
   return (

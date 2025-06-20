@@ -108,6 +108,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user for authentication check
   app.get("/api/auth/me", async (req, res) => {
     try {
+      // Set iOS-compatible headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
       const userId = (req.session as any)?.userId;
       if (!userId) {
         return res.status(401).json({ message: "Not authenticated" });
@@ -302,6 +309,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedUser = await storage.completeUserProfile(userId, profileData);
+      
+      // Update session with latest user data for iOS compatibility
+      (req.session as any).user = updatedUser;
+      
+      // Set iOS-compatible headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       res.json({ user: updatedUser, message: "Profile completed successfully" });
     } catch (error) {
       console.error("Profile completion error:", error);
