@@ -84,19 +84,19 @@ export default function ClientProfile() {
   const { data: client, isLoading: clientLoading } = useQuery({
     queryKey: ["/api/clients", clientId],
     enabled: !!clientId,
-  });
+  }) as { data: any, isLoading: boolean };
 
   // Fetch client deals
   const { data: deals = [] } = useQuery({
     queryKey: ["/api/deals", "client", clientId],
     enabled: !!clientId,
-  });
+  }) as { data: any[] };
 
   // Fetch client tasks
   const { data: tasks = [] } = useQuery({
     queryKey: ["/api/tasks", "client", clientId],
     enabled: !!clientId,
-  });
+  }) as { data: any[] };
 
   // Forms
   const editForm = useForm({
@@ -134,10 +134,15 @@ export default function ClientProfile() {
 
   // Create deal mutation
   const createDealMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/deals", {
-      method: "POST",
-      body: JSON.stringify({ ...data, clientId: parseInt(clientId!) }),
-    }),
+    mutationFn: async (data: any) => {
+      const response = await fetch("/api/deals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, clientId: parseInt(clientId!) }),
+      });
+      if (!response.ok) throw new Error("Failed to create deal");
+      return response.json();
+    },
     onSuccess: () => {
       toast({ title: "Deal created successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/deals", "client", clientId] });
@@ -151,10 +156,15 @@ export default function ClientProfile() {
 
   // Create task mutation
   const createTaskMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/tasks", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: any) => {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, dealId: data.dealId }),
+      });
+      if (!response.ok) throw new Error("Failed to create task");
+      return response.json();
+    },
     onSuccess: () => {
       toast({ title: "Task created successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks", "client", clientId] });

@@ -854,9 +854,9 @@ export default function ClientsPage() {
             propertyType: newClientData.propertyType
           }}
           agentData={{
-            name: user.name,
+            name: user.name || "Agent",
             phone: user.phone,
-            agency: user.agency
+            agency: user.agencyName || undefined
           }}
           onSendNotification={handleSendNotification}
         />
