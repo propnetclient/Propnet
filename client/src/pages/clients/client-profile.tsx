@@ -474,7 +474,7 @@ export default function ClientProfile() {
             </div>
             <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3 backdrop-blur-sm">
               <div className="flex items-center space-x-2">
-                <DollarSign className="h-4 w-4 text-blue-600" />
+                <IndianRupee className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-medium">₹{totalCommission.toLocaleString()}</span>
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400">Commission</p>
