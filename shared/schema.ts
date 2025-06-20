@@ -60,6 +60,7 @@ export const properties = pgTable("properties", {
   ownerApprovalStatus: text("owner_approval_status").default("pending"), // pending, approved, rejected
   consentId: text("consent_id"),
   approvalTimestamp: timestamp("approval_timestamp"),
+  ownerClientId: integer("owner_client_id").references(() => clients.id), // Link to client record
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -268,6 +269,7 @@ export const insertPropertySchema = z.object({
   ownerApprovalStatus: z.string().optional().default("pending"),
   consentId: z.string().optional(),
   approvalTimestamp: z.date().optional(),
+  ownerClientId: z.number().optional(), // Link to client record
   isActive: z.boolean().optional().default(true),
 }).refine((data) => {
   // For exclusive and co-listing types, require owner details and commission terms
@@ -378,6 +380,10 @@ export const clients = pgTable("clients", {
   requirements: text("requirements"),
   notes: text("notes"),
   status: text("status").default("active"), // active, inactive
+  isPropertyOwner: boolean("is_property_owner").default(false),
+  ownerConsentStatus: text("owner_consent_status").default("pending"), // pending, given, withdrawn
+  consentGivenAt: timestamp("consent_given_at"),
+  consentDocument: text("consent_document"), // Stored consent form or signature
   createdAt: timestamp("created_at").defaultNow(),
 });
 
