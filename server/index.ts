@@ -40,7 +40,7 @@ app.use(session({
     secure: isProduction, // HTTPS required in production
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: isProduction ? 'strict' : 'lax'
+    sameSite: 'lax' // iOS PWA compatibility - always use lax
   }
 }));
 

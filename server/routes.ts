@@ -94,9 +94,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Store user session
+      // Store user session with iOS compatibility
       (req.session as any).userId = user.id;
       (req.session as any).user = user;
+      
+      // Set iOS-compatible headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
       
       res.json({ user, message: "Login successful" });
     } catch (error: any) {
