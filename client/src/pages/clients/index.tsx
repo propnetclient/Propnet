@@ -67,6 +67,7 @@ export default function ClientsPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [newClientData, setNewClientData] = useState<any>(null);
+  const [selectedClientType, setSelectedClientType] = useState("lead");
 
   // User data for agent notifications
   const { user } = useAuth();
@@ -757,17 +758,20 @@ export default function ClientsPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-semibold">Client Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedClientType(value);
+                    }} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="rounded-lg border-gray-200 dark:border-gray-700 h-11">
                           <SelectValue placeholder="Select client type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="lead">Lead</SelectItem>
-                        <SelectItem value="buyer">Buyer</SelectItem>
-                        <SelectItem value="owner">Owner</SelectItem>
-                        <SelectItem value="tenant">Tenant</SelectItem>
+                        <SelectItem value="lead">Lead - Prospective Client</SelectItem>
+                        <SelectItem value="buyer">Buyer - Looking to Purchase</SelectItem>
+                        <SelectItem value="owner">Owner - Property Owner</SelectItem>
+                        <SelectItem value="tenant">Tenant - Looking to Rent</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -775,47 +779,140 @@ export default function ClientsPage() {
                 )}
               />
               
-              <FormField
-                control={clientForm.control}
-                name="budget"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold">Budget (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="e.g., 50,00,000" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Type-specific fields */}
+              {(selectedClientType === "buyer" || selectedClientType === "tenant") && (
+                <>
+                  <FormField
+                    control={clientForm.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">
+                          {selectedClientType === "buyer" ? "Purchase Budget" : "Monthly Rent Budget"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder={selectedClientType === "buyer" ? "e.g., ₹50,00,000" : "e.g., ₹25,000/month"} 
+                            className="rounded-lg border-gray-200 dark:border-gray-700 h-11" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={clientForm.control}
-                name="preferredLocation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold">Preferred Location (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="e.g., Bandra, Andheri" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={clientForm.control}
+                    name="preferredLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">Preferred Areas</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., Bandra, Andheri, Juhu" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={clientForm.control}
-                name="requirements"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold">Requirements (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Property requirements, preferences..." className="rounded-lg border-gray-200 dark:border-gray-700" rows={2} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={clientForm.control}
+                    name="requirements"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">
+                          {selectedClientType === "buyer" ? "Property Requirements" : "Rental Requirements"}
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder={selectedClientType === "buyer" 
+                              ? "e.g., 2-3 BHK, parking, gym, near metro..." 
+                              : "e.g., 1-2 BHK, furnished, pet-friendly..."
+                            } 
+                            className="rounded-lg border-gray-200 dark:border-gray-700" 
+                            rows={2} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              {selectedClientType === "owner" && (
+                <>
+                  <FormField
+                    control={clientForm.control}
+                    name="preferredLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">Property Location</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., Bandra West, Andheri East" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={clientForm.control}
+                    name="requirements"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">Property Details</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="e.g., 3 BHK apartment, 1200 sq ft, ready to sell/rent..."
+                            className="rounded-lg border-gray-200 dark:border-gray-700" 
+                            rows={2} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={clientForm.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">Expected Price</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., ₹1.2 Cr (sale) or ₹30,000/month (rent)" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              {selectedClientType === "lead" && (
+                <FormField
+                  control={clientForm.control}
+                  name="requirements"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold">Interest & Requirements</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="What are they looking for? Buying, selling, renting..."
+                          className="rounded-lg border-gray-200 dark:border-gray-700" 
+                          rows={2} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <div className="flex space-x-3 pt-4">
                 <Button 

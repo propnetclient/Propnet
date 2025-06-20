@@ -101,6 +101,16 @@ export default function ClientProfile() {
   // Forms
   const editForm = useForm({
     resolver: zodResolver(clientUpdateSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      type: "lead",
+      budget: "",
+      preferredLocation: "",
+      requirements: "",
+      notes: "",
+    },
   });
 
   const dealForm = useForm({
@@ -194,6 +204,7 @@ export default function ClientProfile() {
   }, [client, editForm]);
 
   const onUpdateClient = (data: any) => {
+    console.log("Updating client with data:", data);
     updateClientMutation.mutate(data);
   };
 
