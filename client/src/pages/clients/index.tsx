@@ -68,6 +68,8 @@ export default function ClientsPage() {
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [newClientData, setNewClientData] = useState<any>(null);
   const [selectedClientType, setSelectedClientType] = useState("lead");
+  const [isEditClientOpen, setIsEditClientOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<any>(null);
 
   // User data for agent notifications
   const { user } = useAuth();
@@ -132,6 +134,28 @@ export default function ClientsPage() {
     },
   });
 
+  const updateClientMutation = useMutation({
+    mutationFn: async (data: { id: number; updates: Partial<z.infer<typeof clientSchema>> }) => {
+      const response = await fetch(`/api/clients/${data.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data.updates),
+      });
+      if (!response.ok) throw new Error("Failed to update client");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      setIsEditClientOpen(false);
+      setEditingClient(null);
+      editClientForm.reset();
+      toast({ title: "Client updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to update client", variant: "destructive" });
+    },
+  });
+
   const createDealMutation = useMutation({
     mutationFn: async (data: z.infer<typeof dealSchema>) => {
       const response = await fetch("/api/deals", {
@@ -189,6 +213,20 @@ export default function ClientsPage() {
     },
   });
 
+  const editClientForm = useForm<z.infer<typeof clientSchema>>({
+    resolver: zodResolver(clientSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      type: "lead",
+      budget: "",
+      preferredLocation: "",
+      requirements: "",
+      notes: "",
+    },
+  });
+
   const dealForm = useForm<z.infer<typeof dealSchema>>({
     resolver: zodResolver(dealSchema),
     defaultValues: {
@@ -215,6 +253,27 @@ export default function ClientsPage() {
   // Form handlers
   const onCreateClient = (data: z.infer<typeof clientSchema>) => {
     createClientMutation.mutate(data);
+  };
+
+  const onEditClient = (data: z.infer<typeof clientSchema>) => {
+    if (!editingClient) return;
+    updateClientMutation.mutate({ id: editingClient.id, updates: data });
+  };
+
+  const handleEditClient = (client: any) => {
+    setEditingClient(client);
+    editClientForm.reset({
+      name: client.name || "",
+      phone: client.phone || "",
+      email: client.email || "",
+      type: client.type || "lead",
+      budget: client.budget || "",
+      preferredLocation: client.preferredLocation || "",
+      requirements: client.requirements || "",
+      notes: client.notes || "",
+    });
+    setSelectedClientType(client.type || "lead");
+    setIsEditClientOpen(true);
   };
 
   const onCreateDeal = (data: z.infer<typeof dealSchema>) => {
@@ -549,7 +608,9 @@ export default function ClientsPage() {
                               View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem>Create Deal</DropdownMenuItem>
-                            <DropdownMenuItem>Edit Client</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditClient(client)}>
+                              Edit Client
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -929,6 +990,261 @@ export default function ClientsPage() {
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg h-11"
                 >
                   {createClientMutation.isPending ? "Creating..." : "Create"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Client Dialog */}
+      <Dialog open={isEditClientOpen} onOpenChange={setIsEditClientOpen}>
+        <DialogContent className="w-[95vw] max-w-sm bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-white/20 dark:border-gray-800/50 rounded-xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Edit Client
+            </DialogTitle>
+          </DialogHeader>
+          <Form {...editClientForm}>
+            <form onSubmit={editClientForm.handleSubmit(onEditClient)} className="space-y-4">
+              <FormField
+                control={editClientForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-semibold">Full Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter client name" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editClientForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-semibold">Phone Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="+91 9876543210" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editClientForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-semibold">Email (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" placeholder="client@example.com" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editClientForm.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-semibold">Client Type</FormLabel>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedClientType(value);
+                    }} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="rounded-lg border-gray-200 dark:border-gray-700 h-11">
+                          <SelectValue placeholder="Select client type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="lead">Lead - Prospective Client</SelectItem>
+                        <SelectItem value="buyer">Buyer - Looking to Purchase</SelectItem>
+                        <SelectItem value="owner">Owner - Property Owner</SelectItem>
+                        <SelectItem value="tenant">Tenant - Looking to Rent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Type-specific fields for edit form */}
+              {(selectedClientType === "buyer" || selectedClientType === "tenant") && (
+                <>
+                  <FormField
+                    control={editClientForm.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">
+                          {selectedClientType === "buyer" ? "Purchase Budget" : "Monthly Rent Budget"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder={selectedClientType === "buyer" ? "e.g., ₹50,00,000" : "e.g., ₹25,000/month"} 
+                            className="rounded-lg border-gray-200 dark:border-gray-700 h-11" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editClientForm.control}
+                    name="preferredLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">Preferred Areas</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., Bandra, Andheri, Juhu" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editClientForm.control}
+                    name="requirements"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">
+                          {selectedClientType === "buyer" ? "Property Requirements" : "Rental Requirements"}
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder={selectedClientType === "buyer" 
+                              ? "e.g., 2-3 BHK, parking, gym, near metro..." 
+                              : "e.g., 1-2 BHK, furnished, pet-friendly..."
+                            } 
+                            className="rounded-lg border-gray-200 dark:border-gray-700" 
+                            rows={2} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              {selectedClientType === "owner" && (
+                <>
+                  <FormField
+                    control={editClientForm.control}
+                    name="preferredLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">Property Location</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., Bandra West, Andheri East" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editClientForm.control}
+                    name="requirements"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">Property Details</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="e.g., 3 BHK apartment, 1200 sq ft, ready to sell/rent..."
+                            className="rounded-lg border-gray-200 dark:border-gray-700" 
+                            rows={2} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editClientForm.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold">Expected Price</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., ₹1.2 Cr (sale) or ₹30,000/month (rent)" className="rounded-lg border-gray-200 dark:border-gray-700 h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              {selectedClientType === "lead" && (
+                <FormField
+                  control={editClientForm.control}
+                  name="requirements"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold">Interest & Requirements</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="What are they looking for? Buying, selling, renting..."
+                          className="rounded-lg border-gray-200 dark:border-gray-700" 
+                          rows={2} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={editClientForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-semibold">Notes (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        placeholder="Additional notes about this client..."
+                        className="rounded-lg border-gray-200 dark:border-gray-700" 
+                        rows={2} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex space-x-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsEditClientOpen(false)}
+                  className="flex-1 rounded-lg border-gray-200 dark:border-gray-700 h-11"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateClientMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg h-11"
+                >
+                  {updateClientMutation.isPending ? "Updating..." : "Update"}
                 </Button>
               </div>
             </form>
