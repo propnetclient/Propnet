@@ -19,6 +19,8 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import MobileNavigation from "@/components/layout/mobile-navigation";
+import { AgentNotificationModal } from "@/components/ui/agent-notification-modal";
+import { useAuth } from "@/hooks/use-auth";
 
 // Client form schema
 const clientSchema = z.object({
@@ -63,6 +65,11 @@ export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [newClientData, setNewClientData] = useState<any>(null);
+
+  // User data for agent notifications
+  const { user } = useAuth();
 
   // Queries
   const { data: clients, isLoading: isLoadingClients } = useQuery({
@@ -77,6 +84,22 @@ export default function ClientsPage() {
     queryKey: ["/api/tasks"],
   });
 
+  // Agent notification handler
+  const handleSendNotification = async (message: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/clients/${newClientData.id}/send-notification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      const data = await response.json();
+      return data.success;
+    } catch (error) {
+      console.error("Notification error:", error);
+      return false;
+    }
+  };
+
   // Mutations
   const createClientMutation = useMutation({
     mutationFn: async (data: z.infer<typeof clientSchema>) => {
@@ -88,10 +111,19 @@ export default function ClientsPage() {
       if (!response.ok) throw new Error("Failed to create client");
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (createdClient, formData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setIsCreateClientOpen(false);
       clientForm.reset();
+      
+      // Set up notification modal data
+      setNewClientData({
+        ...createdClient,
+        requirementType: formData.type,
+        propertyType: formData.requirements
+      });
+      setIsNotificationModalOpen(true);
+      
       toast({ title: "Client created successfully" });
     },
     onError: () => {
@@ -806,6 +838,29 @@ export default function ClientsPage() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Agent Notification Modal */}
+      {newClientData && user && (
+        <AgentNotificationModal
+          isOpen={isNotificationModalOpen}
+          onClose={() => {
+            setIsNotificationModalOpen(false);
+            setNewClientData(null);
+          }}
+          clientData={{
+            name: newClientData.name,
+            phone: newClientData.phone,
+            requirementType: newClientData.requirementType,
+            propertyType: newClientData.propertyType
+          }}
+          agentData={{
+            name: user.name,
+            phone: user.phone,
+            agency: user.agency
+          }}
+          onSendNotification={handleSendNotification}
+        />
+      )}
 
       {/* Bottom spacing for navigation */}
       <div className="h-20"></div>

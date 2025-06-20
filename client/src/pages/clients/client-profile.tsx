@@ -113,10 +113,15 @@ export default function ClientProfile() {
 
   // Update client mutation
   const updateClientMutation = useMutation({
-    mutationFn: (data: any) => apiRequest(`/api/clients/${clientId}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update client");
+      return response.json();
+    },
     onSuccess: () => {
       toast({ title: "Client updated successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/clients", clientId] });
