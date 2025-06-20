@@ -1761,6 +1761,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Agent notification system
+  app.post("/api/clients/:clientId/send-notification", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { clientId } = req.params;
+      const { message } = req.body;
+
+      if (!message || !message.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      const client = await storage.getClient(parseInt(clientId));
+      if (!client || client.userId !== userId) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      // Send SMS notification
+      const formattedPhone = client.phone.startsWith('+91') ? client.phone : `+91${client.phone}`;
+      const smsSent = await sendSMS(formattedPhone, message);
+
+      if (smsSent) {
+        // Log the notification in client notes
+        const timestamp = new Date().toISOString();
+        const logEntry = `[${timestamp}] Agent notification sent: "${message.substring(0, 50)}..."`;
+        const updatedNotes = client.notes ? `${client.notes}\n\n${logEntry}` : logEntry;
+        
+        await storage.updateClient(parseInt(clientId), { 
+          notes: updatedNotes,
+          lastContactDate: new Date().toISOString().split('T')[0]
+        });
+
+        res.json({ 
+          success: true, 
+          message: "Notification sent successfully",
+          deliveryStatus: "sent"
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Failed to send notification" 
+        });
+      }
+    } catch (error) {
+      console.error("Send notification error:", error);
+      res.status(500).json({ message: "Failed to send notification" });
+    }
+  });
+
   // Owner consent management routes
   app.post("/api/clients/:clientId/consent", async (req, res) => {
     try {

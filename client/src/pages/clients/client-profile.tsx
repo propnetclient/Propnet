@@ -267,7 +267,7 @@ export default function ClientProfile() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLocation("/clients")}
+                onClick={() => setLocation("/dashboard?tab=clients")}
                 className="p-2"
               >
                 <ArrowLeft className="h-5 w-5" />

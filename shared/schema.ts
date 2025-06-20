@@ -384,6 +384,7 @@ export const clients = pgTable("clients", {
   ownerConsentStatus: text("owner_consent_status").default("pending"), // pending, given, withdrawn
   consentGivenAt: timestamp("consent_given_at"),
   consentDocument: text("consent_document"), // Stored consent form or signature
+  lastContactDate: text("last_contact_date"), // Last interaction date
   createdAt: timestamp("created_at").defaultNow(),
 });
 
