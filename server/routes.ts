@@ -1761,6 +1761,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Owner consent management routes
+  app.post("/api/clients/:clientId/consent", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { clientId } = req.params;
+      const { status, document } = req.body;
+
+      if (!["pending", "given", "withdrawn"].includes(status)) {
+        return res.status(400).json({ message: "Invalid consent status" });
+      }
+
+      const updatedClient = await storage.updateOwnerConsent(parseInt(clientId), status, document);
+      res.json({ success: true, client: updatedClient });
+    } catch (error) {
+      console.error("Consent update error:", error);
+      res.status(500).json({ message: "Failed to update consent" });
+    }
+  });
+
+  app.get("/api/clients/owners", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const clients = await storage.getClients(userId);
+      const owners = clients.filter(client => client.isPropertyOwner);
+      res.json(owners);
+    } catch (error) {
+      console.error("Owner clients fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch owner clients" });
+    }
+  });
+
+  app.get("/api/properties/:propertyId/consent-status", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { propertyId } = req.params;
+      const property = await storage.getProperty(parseInt(propertyId));
+      
+      if (!property || property.ownerId !== userId) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      res.json({
+        consentId: property.consentId,
+        status: property.ownerApprovalStatus,
+        approvedAt: property.approvalTimestamp,
+        ownerClientId: property.ownerClientId
+      });
+    } catch (error) {
+      console.error("Consent status error:", error);
+      res.status(500).json({ message: "Failed to fetch consent status" });
+    }
+  });
+
+  app.post("/api/properties/:propertyId/send-consent-link", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { propertyId } = req.params;
+      const property = await storage.getProperty(parseInt(propertyId));
+      
+      if (!property || property.ownerId !== userId) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      if (!property.consentId) {
+        return res.status(400).json({ message: "No consent ID available for this property" });
+      }
+
+      // Send SMS with consent link
+      const consentUrl = `${config.baseUrl}/consent/${property.consentId}`;
+      const message = `PropNet: ${property.ownerName}, please provide consent for listing your property at ${property.fullAddress}. Click: ${consentUrl}`;
+      
+      const smsSent = await sendSMS(property.ownerPhone, message);
+      
+      if (smsSent) {
+        res.json({ 
+          success: true, 
+          message: "Consent link sent successfully",
+          consentUrl 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Failed to send consent link" 
+        });
+      }
+    } catch (error) {
+      console.error("Send consent link error:", error);
+      res.status(500).json({ message: "Failed to send consent link" });
+    }
+  });
+
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
 
