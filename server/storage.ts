@@ -35,6 +35,7 @@ export interface IStorage {
   // Consent and approval methods
   getConsentData(consentId: string): Promise<any>;
   updatePropertyApproval(consentId: string, status: string): Promise<Property>;
+  updateOwnerConsent(clientId: number, status: string, document?: string): Promise<Client>;
   checkDuplicateProperty(propertyData: any): Promise<Property[]>;
 
   // Messaging methods
@@ -179,9 +180,59 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProperty(property: InsertProperty & { ownerId: number }): Promise<Property> {
+    // If owner details are provided, create or link client record
+    let ownerClientId = property.ownerClientId;
+    
+    if (property.ownerName && property.ownerPhone && !ownerClientId) {
+      // Check if client already exists
+      const existingClient = await db
+        .select()
+        .from(clients)
+        .where(and(
+          eq(clients.phone, property.ownerPhone),
+          eq(clients.userId, property.ownerId)
+        ))
+        .limit(1);
+
+      if (existingClient[0]) {
+        ownerClientId = existingClient[0].id;
+        // Update client as property owner
+        await db
+          .update(clients)
+          .set({ 
+            isPropertyOwner: true,
+            type: 'owner',
+            name: property.ownerName
+          })
+          .where(eq(clients.id, existingClient[0].id));
+      } else {
+        // Create new client record for the owner
+        const [newClient] = await db
+          .insert(clients)
+          .values({
+            userId: property.ownerId,
+            name: property.ownerName,
+            phone: property.ownerPhone,
+            type: 'owner',
+            isPropertyOwner: true,
+            ownerConsentStatus: 'pending',
+            status: 'active'
+          })
+          .returning();
+        ownerClientId = newClient.id;
+      }
+    }
+
+    const propertyData: any = { ...property };
+    delete propertyData.ownerClientId; // Remove field not in schema yet
+    
+    if (ownerClientId) {
+      propertyData.consentId = `consent_${Date.now()}_${ownerClientId}`;
+    }
+
     const [newProperty] = await db
       .insert(properties)
-      .values(property)
+      .values(propertyData)
       .returning();
     return newProperty;
   }
@@ -335,6 +386,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.consentId, consentId))
       .returning();
     return property;
+  }
+
+  async updateOwnerConsent(clientId: number, status: string, document?: string): Promise<Client> {
+    const updateData: any = {
+      ownerConsentStatus: status,
+      consentGivenAt: status === 'given' ? new Date() : null,
+    };
+    
+    if (document) {
+      updateData.consentDocument = document;
+    }
+
+    const [client] = await db
+      .update(clients)
+      .set(updateData)
+      .where(eq(clients.id, clientId))
+      .returning();
+    return client;
   }
 
   // Messaging methods implementation
