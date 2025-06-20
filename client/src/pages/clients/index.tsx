@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, TrendingUp, Clock, DollarSign, Calendar, Search, Filter, MoreVertical, User, Building, FileText, CheckCircle, XCircle, AlertCircle, Target, Star, ChevronRight, Activity, Zap, ArrowUpRight, BarChart3, PieChart } from "lucide-react";
+import { Plus, Users, TrendingUp, Clock, DollarSign, IndianRupee, Calendar, Search, Filter, MoreVertical, User, Building, FileText, CheckCircle, XCircle, AlertCircle, Target, Star, ChevronRight, Activity, Zap, ArrowUpRight, BarChart3, PieChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -581,7 +581,7 @@ export default function ClientsPage() {
                       
                       {client.budget && (
                         <div className="flex items-center space-x-2 mb-3">
-                          <DollarSign className="h-4 w-4 text-emerald-600" />
+                          <IndianRupee className="h-4 w-4 text-emerald-600" />
                           <span className="text-sm font-medium text-emerald-600">₹{client.budget}</span>
                         </div>
                       )}
@@ -669,7 +669,7 @@ export default function ClientsPage() {
                     
                     {deal.value && (
                       <div className="flex items-center space-x-2 mb-3">
-                        <DollarSign className="h-4 w-4 text-emerald-600" />
+                        <IndianRupee className="h-4 w-4 text-emerald-600" />
                         <span className="font-medium text-emerald-600">₹{deal.value}</span>
                       </div>
                     )}
