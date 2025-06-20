@@ -64,13 +64,16 @@ export function OwnerConsentForm({
 
   const sendConsentLink = async (propertyId: number) => {
     try {
-      const response = await apiRequest(`/api/properties/${propertyId}/send-consent-link`, {
+      const response = await fetch(`/api/properties/${propertyId}/send-consent-link`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
       });
 
-      if (response.success) {
+      const data = await response.json();
+
+      if (data.success) {
         setConsentStatus('sent');
-        setConsentUrl(response.consentUrl);
+        setConsentUrl(data.consentUrl);
         toast({
           title: "Consent link sent successfully",
           description: "Owner will receive SMS with consent form link",
@@ -78,7 +81,7 @@ export function OwnerConsentForm({
       } else {
         toast({
           title: "Failed to send consent link",
-          description: response.message,
+          description: data.message,
           variant: "destructive",
         });
       }
