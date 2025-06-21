@@ -19,11 +19,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize session manager and migrate old sessions
-  useEffect(() => {
-    SessionManager.migrateOldSession();
-  }, []);
-
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
@@ -74,6 +69,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.user;
     },
   });
+
+  // Initialize session manager and authentication state monitoring
+  useEffect(() => {
+    SessionManager.migrateOldSession();
+    AuthStateManager.initialize();
+    
+    // Setup auth state change listener
+    const unsubscribe = AuthStateManager.onAuthStateChange(() => {
+      refetch();
+    });
+    
+    return () => {
+      unsubscribe();
+      AuthStateManager.cleanup();
+    };
+  }, [refetch]);
 
   useEffect(() => {
     if (data && !isLoading) {
