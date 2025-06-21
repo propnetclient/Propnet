@@ -1,9 +1,12 @@
-const CACHE_NAME = 'propnet-v1';
+const CACHE_NAME = 'propnet-v2';
 const urlsToCache = [
   '/',
   '/manifest.json',
+  '/icon-propnet.svg',
   '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/icons/icon-512x512.png',
+  '/src/main.tsx',
+  '/src/App.tsx'
 ];
 
 // Install event - cache resources
@@ -35,11 +38,29 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
+  // Handle navigation requests (app startup)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/');
+      })
+    );
+    return;
+  }
+
+  // Handle other requests
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
+        if (response) {
+          return response;
+        }
+        return fetch(event.request).catch(() => {
+          // Return offline page for failed requests
+          if (event.request.destination === 'document') {
+            return caches.match('/');
+          }
+        });
       })
   );
 });

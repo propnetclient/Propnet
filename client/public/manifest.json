@@ -2,7 +2,7 @@
   "name": "PropNet - Real Estate Network",
   "short_name": "PropNet",
   "description": "Professional real estate network for brokers and agents",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
