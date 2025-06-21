@@ -42,8 +42,26 @@ function handleStartupError(error: Error) {
   }
 }
 
-// Register service worker with error handling
+// Device detection for PWA compatibility
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isSamsung = /SamsungBrowser/.test(navigator.userAgent) || /SM-/.test(navigator.userAgent);
+const isProblematicDevice = isIOS || isSamsung;
+
+// Register service worker with device-specific handling
 async function initializePWA() {
+  // Skip service worker for problematic devices initially
+  if (isProblematicDevice) {
+    console.log('Problematic device detected, delaying service worker registration');
+    // Register after app loads successfully
+    setTimeout(() => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(() => console.warn('Delayed service worker registration failed'));
+      }
+    }, 3000);
+    return;
+  }
+
   try {
     if ('serviceWorker' in navigator) {
       await navigator.serviceWorker.register('/sw.js', { scope: '/' });
@@ -53,16 +71,23 @@ async function initializePWA() {
   }
 }
 
-// Initialize app with comprehensive error handling
+// Initialize app with device-specific error handling
 try {
-  initializePWA();
-  
   const rootElement = document.getElementById("root");
   if (!rootElement) {
     throw new Error("Root element not found");
   }
   
-  createRoot(rootElement).render(<App />);
+  // For problematic devices, start app immediately without waiting for PWA
+  if (isProblematicDevice) {
+    console.log('Starting app immediately for device compatibility');
+    createRoot(rootElement).render(<App />);
+    // Initialize PWA features after app starts
+    setTimeout(initializePWA, 1000);
+  } else {
+    initializePWA();
+    createRoot(rootElement).render(<App />);
+  }
 } catch (error) {
   handleStartupError(error as Error);
 }

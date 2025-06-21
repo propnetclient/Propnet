@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover, minimal-ui" />
     <meta name="description" content="Professional real estate network for brokers and agents" />
     
     <!-- PWA Meta Tags -->
@@ -93,6 +93,30 @@
     
     <!-- Device compatibility script -->
     <script>
+      // Immediate device detection and redirection for problematic devices
+      (function() {
+        var userAgent = navigator.userAgent;
+        var isIOS = /iPad|iPhone|iPod/.test(userAgent);
+        var isSamsung = /SamsungBrowser/.test(userAgent) || /SM-/.test(userAgent);
+        var isProblematicDevice = isIOS || isSamsung;
+        
+        // Check if we're already on the no-sw version
+        var isNoSW = window.location.pathname === '/no-sw.html' || window.location.search.includes('no-sw=1');
+        
+        if (isProblematicDevice && !isNoSW) {
+          console.warn('Problematic device detected (' + (isIOS ? 'iOS' : 'Samsung') + '), redirecting to compatibility mode');
+          // Immediate redirect to no-service-worker version
+          window.location.href = '/no-sw.html' + window.location.search;
+          return;
+        }
+        
+        if (isNoSW && !isProblematicDevice) {
+          console.log('Non-problematic device on no-sw version, redirecting to main app');
+          window.location.href = '/';
+          return;
+        }
+      })();
+      
       // Global error handler for uncaught errors
       window.addEventListener('error', function(event) {
         console.error('Global error:', event.error);
@@ -120,7 +144,9 @@
       // Device-specific fixes
       var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       var isAndroid = /Android/.test(navigator.userAgent);
+      var isSamsung = /SamsungBrowser/.test(navigator.userAgent) || /SM-/.test(navigator.userAgent);
       var isOldDevice = /Android [1-6]/.test(navigator.userAgent) || /iPhone OS [1-9]_/.test(navigator.userAgent);
+      var isProblematicDevice = isIOS || isSamsung;
 
       // Force app initialization on problematic devices
       window.addEventListener('DOMContentLoaded', function() {
@@ -131,18 +157,63 @@
           document.documentElement.style.overflow = 'hidden';
         }
 
-        // Monitor loading state
-        var loadingTimeout = setTimeout(function() {
-          var loader = document.querySelector('#root > div[style*="background: rgb(37, 99, 235)"]');
-          if (loader) {
-            console.warn('Loading timeout detected, forcing reload in 10 seconds');
+        // Aggressive monitoring for problematic devices
+        if (isProblematicDevice) {
+          console.warn('iOS/Samsung device detected - applying aggressive recovery monitoring');
+          
+          // Shorter timeout for problematic devices
+          var aggressiveTimeout = setTimeout(function() {
+            var loader = document.querySelector('#root > div[style*="background: rgb(37, 99, 235)"]');
+            if (loader) {
+              console.error('App failed to load on problematic device, forcing reload');
+              window.location.reload();
+            }
+          }, 5000);
+          
+          // Multiple fallback checks
+          var fallbackChecks = [3000, 4000, 6000, 8000];
+          fallbackChecks.forEach(function(delay) {
             setTimeout(function() {
-              if (document.querySelector('#root > div[style*="background: rgb(37, 99, 235)"]')) {
-                window.location.reload();
+              var root = document.getElementById('root');
+              if (root && !root.querySelector('.app-container')) {
+                console.warn('App container not found at ' + delay + 'ms, checking DOM state');
+                var hasOnlyLoader = root.children.length === 1 && 
+                                   root.firstElementChild && 
+                                   root.firstElementChild.style.background.includes('37, 99, 235');
+                if (hasOnlyLoader) {
+                  console.error('Still showing only loader at ' + delay + 'ms');
+                  if (delay >= 6000) {
+                    window.location.reload();
+                  }
+                }
               }
-            }, 10000);
-          }
-        }, 8000);
+            }, delay);
+          });
+          
+          // Clear aggressive timeout if app loads
+          var observer = new MutationObserver(function(mutations) {
+            var appContainer = document.querySelector('.app-container');
+            if (appContainer) {
+              clearTimeout(aggressiveTimeout);
+              observer.disconnect();
+              console.log('App loaded successfully on problematic device');
+            }
+          });
+          observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+        } else {
+          // Standard monitoring for other devices
+          var loadingTimeout = setTimeout(function() {
+            var loader = document.querySelector('#root > div[style*="background: rgb(37, 99, 235)"]');
+            if (loader) {
+              console.warn('Loading timeout detected, forcing reload in 10 seconds');
+              setTimeout(function() {
+                if (document.querySelector('#root > div[style*="background: rgb(37, 99, 235)"]')) {
+                  window.location.reload();
+                }
+              }, 10000);
+            }
+          }, 8000);
+        }
 
         // Clear timeout when app loads successfully
         var observer = new MutationObserver(function(mutations) {
