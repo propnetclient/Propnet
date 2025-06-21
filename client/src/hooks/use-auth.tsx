@@ -63,11 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isInitialized]);
 
   const login = (newUser: User, sessionToken?: string) => {
+    console.log('Auth login called with user:', newUser);
     setUser(newUser);
+    setIsInitialized(true);
     if (sessionToken) {
       localStorage.setItem('propnet_session_token', sessionToken);
     }
-    refetch();
+    // Force immediate refetch to ensure session is validated
+    setTimeout(() => refetch(), 100);
   };
 
   const logout = () => {

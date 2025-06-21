@@ -80,6 +80,8 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 function Router() {
   const { user, isLoading, isInitialized } = useAuth();
 
+  console.log('Router state:', { user: user ? { id: user.id, isProfileComplete: user.isProfileComplete } : null, isLoading, isInitialized });
+
   // Show loading while checking authentication or initializing
   if (isLoading || !isInitialized) {
     return (
@@ -96,7 +98,7 @@ function Router() {
     <Switch>
       {/* Landing page for unauthenticated users */}
       <Route path="/">
-        {user ? (
+        {user && user.id ? (
           user.isProfileComplete ? <Dashboard /> : <CompleteProfile />
         ) : (
           <Landing />
