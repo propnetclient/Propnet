@@ -1,9 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
-import { iosAuthUtils } from "@/utils/ios-auth-fix";
-import { SessionManager } from "@/utils/session-manager";
-import { AuthStateManager } from "@/utils/auth-state-manager";
 
 interface AuthContextType {
   user: User | null;
@@ -23,46 +20,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    staleTime: 30 * 1000, // 30 seconds - shorter for profile updates
-    gcTime: 2 * 60 * 1000, // 2 minutes - shorter cache for iOS compatibility
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
-    enabled: SessionManager.hasValidSession(), // Only run if we have a session
+    staleTime: 30 * 1000,
     queryFn: async () => {
-      const sessionToken = SessionManager.getSessionToken();
+      const sessionToken = localStorage.getItem('propnet_session_token');
       
-      if (!sessionToken) {
-        throw new Error("No session token");
-      }
+      // Try session verification first if we have a token
+      if (sessionToken) {
+        try {
+          const sessionResponse = await fetch("/api/pin-auth/verify-session", {
+            credentials: "include",
+            headers: { 'Cache-Control': 'no-cache' },
+          });
 
-      // Try session verification first
-      const sessionResponse = await fetch("/api/pin-auth/verify-session", {
-        credentials: "include",
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-      });
-
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        SessionManager.refreshSession();
-        return sessionData.user;
+          if (sessionResponse.ok) {
+            const sessionData = await sessionResponse.json();
+            return sessionData.user;
+          }
+        } catch (error) {
+          console.log("Session verification failed, trying regular auth");
+        }
       }
 
       // Fallback to regular auth check
       const response = await fetch("/api/auth/me", {
         credentials: "include",
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
+        headers: { 'Cache-Control': 'no-cache' },
       });
       
       if (!response.ok) {
-        // Clear invalid session
-        SessionManager.clearSession();
+        localStorage.removeItem('propnet_session_token');
         throw new Error("Not authenticated");
       }
       
@@ -71,128 +57,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Initialize session manager and authentication state monitoring
+  // Simple initialization logic - always set initialized after first query attempt
   useEffect(() => {
-    SessionManager.migrateOldSession();
-    AuthStateManager.initialize();
-    
-    // Setup auth state change listener
-    const unsubscribe = AuthStateManager.onAuthStateChange(() => {
-      refetch();
-    });
-    
-    return () => {
-      unsubscribe();
-      AuthStateManager.cleanup();
-    };
-  }, [refetch]);
-
-  useEffect(() => {
-    if (data && !isLoading) {
-      setUser(data);
+    if (!isLoading) {
+      setUser(data || null);
       setIsInitialized(true);
-      // Backup state for iOS compatibility
-      iosAuthUtils.backupUserState(data);
-    } else if (isError && !isLoading) {
-      // Try to restore from backup on iOS
-      const backupUser = iosAuthUtils.restoreUserState();
-      if (backupUser && iosAuthUtils.isIOS()) {
-        setUser(backupUser);
-        setIsInitialized(true);
-        // Force a session refresh to verify the backup is still valid
-        iosAuthUtils.forceSessionRefresh().then(refreshedUser => {
-          if (refreshedUser) {
-            setUser(refreshedUser);
-            iosAuthUtils.backupUserState(refreshedUser);
-          } else {
-            setUser(null);
-            iosAuthUtils.clearBackup();
-          }
-        });
-      } else {
-        setUser(null);
-        setIsInitialized(true);
-        iosAuthUtils.clearBackup();
-      }
     }
-  }, [data, isLoading, isError]);
+  }, [data, isLoading]);
 
-  // iOS PWA visibility change handler for authentication persistence
+  // Fallback timer to ensure initialization in case of any issues
   useEffect(() => {
-    if (!iosAuthUtils.isIOS() || !iosAuthUtils.isStandalone()) return;
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isInitialized) {
-        // App regained focus in iOS PWA mode - refresh auth state
-        setTimeout(() => {
-          refetch();
-        }, 100);
+    const timer = setTimeout(() => {
+      if (!isInitialized) {
+        console.log("Force initializing auth after 2 seconds");
+        setIsInitialized(true);
+        setUser(null);
       }
-    };
+    }, 2000);
 
-    const handlePageShow = () => {
-      if (isInitialized) {
-        // Page shown from cache - refresh auth state
-        setTimeout(() => {
-          refetch();
-        }, 100);
-      }
-    };
+    return () => clearTimeout(timer);
+  }, [isInitialized]);
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pageshow', handlePageShow);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pageshow', handlePageShow);
-    };
-  }, [isInitialized, refetch]);
-
-  const login = (userData: User, sessionToken?: string) => {
-    setUser(userData);
+  const login = (newUser: User, sessionToken?: string) => {
+    setUser(newUser);
     if (sessionToken) {
-      SessionManager.setSession(sessionToken, userData.id, userData.keepLoggedIn || false);
+      localStorage.setItem('propnet_session_token', sessionToken);
     }
-    // Backup for iOS compatibility
-    iosAuthUtils.backupUserState(userData);
-  };
-
-  const logout = async () => {
-    const sessionToken = SessionManager.getSessionToken();
-    
-    // Clear session from server
-    if (sessionToken) {
-      try {
-        await fetch("/api/pin-auth/logout", {
-          method: "POST",
-          credentials: "include",
-        });
-      } catch (error) {
-        console.warn("Failed to logout from server:", error);
-      }
-    }
-    
-    // Clear all local session data
-    SessionManager.clearSession();
-    iosAuthUtils.clearBackup();
-    setUser(null);
-  };
-
-  const updateUser = (userData: User) => {
-    setUser(userData);
-    // Update session with latest user data
-    const session = SessionManager.getSession();
-    if (session) {
-      SessionManager.setSession(session.sessionToken, userData.id, session.keepLoggedIn);
-    }
-    // Backup updated user state for iOS compatibility
-    iosAuthUtils.backupUserState(userData);
-    // Force refetch to ensure latest state
     refetch();
   };
 
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('propnet_session_token');
+    refetch();
+  };
+
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, isInitialized, login, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading: isLoading && !isInitialized,
+        isInitialized,
+        login,
+        logout,
+        updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
