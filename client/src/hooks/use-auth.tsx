@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
 import { iosAuthUtils } from "@/utils/ios-auth-fix";
+import { SessionManager } from "@/utils/session-manager";
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +18,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Initialize session manager and migrate old sessions
+  useEffect(() => {
+    SessionManager.migrateOldSession();
+  }, []);
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
@@ -25,7 +31,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
+    enabled: SessionManager.hasValidSession(), // Only run if we have a session
     queryFn: async () => {
+      const sessionToken = SessionManager.getSessionToken();
+      
+      if (!sessionToken) {
+        throw new Error("No session token");
+      }
+
+      // Try session verification first
+      const sessionResponse = await fetch("/api/pin-auth/verify-session", {
+        credentials: "include",
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+
+      if (sessionResponse.ok) {
+        const sessionData = await sessionResponse.json();
+        SessionManager.refreshSession();
+        return sessionData.user;
+      }
+
+      // Fallback to regular auth check
       const response = await fetch("/api/auth/me", {
         credentials: "include",
         headers: {
@@ -33,9 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'Pragma': 'no-cache',
         },
       });
+      
       if (!response.ok) {
+        // Clear invalid session
+        SessionManager.clearSession();
         throw new Error("Not authenticated");
       }
+      
       const data = await response.json();
       return data.user;
     },

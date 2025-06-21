@@ -117,15 +117,17 @@ router.post('/setup-pin', async (req, res) => {
     const result = await pinAuth.setPIN(phone, pin, keepLoggedIn);
     
     if (result.success) {
-      // Update session with session token
+      // Update session with session token and user data
       if (result.sessionToken) {
         req.session.userId = result.user.id;
         req.session.sessionToken = result.sessionToken;
+        req.session.user = result.user;
       }
       
       res.json({
         message: result.message,
         user: result.user,
+        sessionToken: result.sessionToken,
         requiresProfileComplete: result.requiresProfileComplete
       });
     } else {
@@ -156,6 +158,7 @@ router.post('/login-pin', async (req, res) => {
       res.json({
         message: result.message,
         user: result.user,
+        sessionToken: result.sessionToken,
         requiresProfileComplete: result.requiresProfileComplete
       });
     } else {
@@ -236,7 +239,14 @@ router.get('/verify-session', async (req, res) => {
     const result = await pinAuth.verifySession(sessionToken);
     
     if (result.success) {
-      res.json({ user: result.user });
+      // Update session with fresh user data
+      req.session.userId = result.user.id;
+      req.session.sessionToken = sessionToken;
+      
+      res.json({ 
+        user: result.user,
+        sessionToken: sessionToken
+      });
     } else {
       // Clear invalid session
       req.session.destroy(() => {});
