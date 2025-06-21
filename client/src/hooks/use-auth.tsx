@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
 import { iosAuthUtils } from "@/utils/ios-auth-fix";
 import { SessionManager } from "@/utils/session-manager";
+import { AuthStateManager } from "@/utils/auth-state-manager";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (user: User) => void;
+  login: (user: User, sessionToken?: string) => void;
   logout: () => void;
   updateUser: (user: User) => void;
 }
@@ -135,21 +136,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [isInitialized, refetch]);
 
-  const login = (userData: User) => {
+  const login = (userData: User, sessionToken?: string) => {
     setUser(userData);
+    if (sessionToken) {
+      SessionManager.setSession(sessionToken, userData.id, userData.keepLoggedIn || false);
+    }
+    // Backup for iOS compatibility
+    iosAuthUtils.backupUserState(userData);
   };
 
-  const logout = () => {
-    setUser(null);
-    // Clear iOS backup state on logout
+  const logout = async () => {
+    const sessionToken = SessionManager.getSessionToken();
+    
+    // Clear session from server
+    if (sessionToken) {
+      try {
+        await fetch("/api/pin-auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch (error) {
+        console.warn("Failed to logout from server:", error);
+      }
+    }
+    
+    // Clear all local session data
+    SessionManager.clearSession();
     iosAuthUtils.clearBackup();
+    setUser(null);
   };
 
   const updateUser = (userData: User) => {
     setUser(userData);
+    // Update session with latest user data
+    const session = SessionManager.getSession();
+    if (session) {
+      SessionManager.setSession(session.sessionToken, userData.id, session.keepLoggedIn);
+    }
     // Backup updated user state for iOS compatibility
     iosAuthUtils.backupUserState(userData);
-    // Force refetch to ensure iOS gets the latest state
+    // Force refetch to ensure latest state
     refetch();
   };
 

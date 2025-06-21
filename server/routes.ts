@@ -112,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get current user for authentication check
+  // Enhanced authentication check with session token validation
   app.get("/api/auth/me", async (req, res) => {
     try {
       // Set iOS-compatible headers
@@ -123,10 +123,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const userId = (req.session as any)?.userId;
+      const sessionToken = (req.session as any)?.sessionToken;
+      
       if (!userId) {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
+      // Verify session token if available
+      if (sessionToken) {
+        const { pinAuth } = await import('./pin-auth');
+        const sessionResult = await pinAuth.verifySession(sessionToken);
+        
+        if (!sessionResult.success) {
+          // Clear invalid session
+          req.session.destroy(() => {});
+          return res.status(401).json({ message: "Session expired" });
+        }
+        
+        // Return verified user data
+        res.json({ user: sessionResult.user, sessionToken });
+        return;
+      }
+
+      // Fallback to regular user lookup
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
