@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Landing from "@/pages/landing";
 import Login from "@/pages/auth/login";
 import PinLogin from "@/pages/auth/pin-login";
@@ -176,17 +177,19 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <div className="app-container">
-            <Toaster />
-            <Router />
-            <PWAInstallPrompt />
-          </div>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <div className="app-container">
+              <Toaster />
+              <Router />
+              <PWAInstallPrompt />
+            </div>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -76,7 +76,119 @@
       @keyframes spin {
         to { transform: rotate(360deg); }
       }
+      
+      /* Ensure consistent rendering across devices */
+      body {
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      #root {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+      }
     </style>
+    
+    <!-- Device compatibility script -->
+    <script>
+      // Global error handler for uncaught errors
+      window.addEventListener('error', function(event) {
+        console.error('Global error:', event.error);
+        if (event.error && event.error.message) {
+          // Show user-friendly error message
+          const root = document.getElementById('root');
+          if (root && !root.querySelector('.app-container')) {
+            root.innerHTML = 
+              '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#2563eb;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;padding:20px;box-sizing:border-box;text-align:center">' +
+              '<h1 style="margin:16px 0 8px 0;font-size:24px;font-weight:600">PropNet</h1>' +
+              '<p style="margin:0 0 16px 0;opacity:0.8">Loading failed, restarting...</p>' +
+              '<button onclick="window.location.reload()" style="background:white;color:#2563eb;border:none;padding:12px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-size:16px">Retry</button>' +
+              '</div>';
+            setTimeout(function() { window.location.reload(); }, 3000);
+          }
+        }
+      });
+
+      // Handle unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(event) {
+        console.warn('Unhandled promise rejection:', event.reason);
+        event.preventDefault(); // Prevent the default browser behavior
+      });
+
+      // Device-specific fixes
+      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      var isAndroid = /Android/.test(navigator.userAgent);
+      var isOldDevice = /Android [1-6]/.test(navigator.userAgent) || /iPhone OS [1-9]_/.test(navigator.userAgent);
+
+      // Force app initialization on problematic devices
+      window.addEventListener('DOMContentLoaded', function() {
+        // Immediate check for old devices
+        if (isOldDevice) {
+          console.warn('Old device detected, applying compatibility fixes');
+          document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
+        }
+
+        // Monitor loading state
+        var loadingTimeout = setTimeout(function() {
+          var loader = document.querySelector('#root > div[style*="background: rgb(37, 99, 235)"]');
+          if (loader) {
+            console.warn('Loading timeout detected, forcing reload in 10 seconds');
+            setTimeout(function() {
+              if (document.querySelector('#root > div[style*="background: rgb(37, 99, 235)"]')) {
+                window.location.reload();
+              }
+            }, 10000);
+          }
+        }, 8000);
+
+        // Clear timeout when app loads successfully
+        var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length > 0) {
+              var appContainer = document.querySelector('.app-container');
+              if (appContainer) {
+                clearTimeout(loadingTimeout);
+                observer.disconnect();
+              }
+            }
+          });
+        });
+        observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+      });
+
+      // Handle PWA visibility changes
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && window.location.pathname === '/') {
+          setTimeout(function() {
+            if (window.fetch) {
+              fetch('/api/auth/me', { credentials: 'include' }).catch(function() {
+                // Silent fail for offline scenarios
+              });
+            }
+          }, 1000);
+        }
+      });
+
+      // iOS-specific fixes
+      if (isIOS) {
+        // Fix iOS viewport issues
+        var viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover, shrink-to-fit=no');
+        }
+
+        // Prevent iOS bounce effect
+        document.addEventListener('touchmove', function(event) {
+          if (event.scale !== 1) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+      }
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>

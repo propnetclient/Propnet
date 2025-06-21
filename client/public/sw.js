@@ -1,12 +1,10 @@
-const CACHE_NAME = 'propnet-v2';
+const CACHE_NAME = 'propnet-v3';
 const urlsToCache = [
   '/',
   '/manifest.json',
   '/icon-propnet.svg',
   '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/src/main.tsx',
-  '/src/App.tsx'
+  '/icons/icon-512x512.png'
 ];
 
 // Install event - cache resources
@@ -14,7 +12,11 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        return cache.addAll(urlsToCache).catch((error) => {
+          console.warn('Cache addAll failed:', error);
+          // Continue installation even if caching fails
+          return Promise.resolve();
+        });
       })
   );
   self.skipWaiting();
