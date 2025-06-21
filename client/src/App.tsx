@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Landing from "@/pages/landing";
 import Login from "@/pages/auth/login";
 import PinLogin from "@/pages/auth/pin-login";
@@ -37,53 +36,11 @@ import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import NotFound from "@/pages/not-found";
 
-// Protected Route Component with proper initialization handling
-function ProtectedRoute({ component: Component }: { component: React.ComponentType<any> }) {
-  const { user, isInitialized } = useAuth();
-
-  // Debug logging to track authentication state
-  console.log("Protected Route Check:", {
-    user: user ? { id: user.id, name: user.name, isProfileComplete: user.isProfileComplete } : null,
-    isInitialized,
-    timestamp: new Date().toISOString()
-  });
-
-  // Wait for initialization to complete
-  if (!isInitialized) {
-    console.log("Waiting for auth initialization");
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Initializing...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect to login if no user
-  if (!user) {
-    console.log("No user, redirecting to login");
-    return <Login />;
-  }
-
-  // Redirect to profile completion if incomplete
-  if (!user.isProfileComplete) {
-    console.log("Profile incomplete, showing completion screen");
-    return <CompleteProfile />;
-  }
-
-  console.log("User authenticated with complete profile, rendering component");
-  return <Component />;
-}
-
 function Router() {
-  const { user, isLoading, isInitialized } = useAuth();
+  const { user, isLoading } = useAuth();
 
-  console.log('Router state:', { user: user ? { id: user.id, isProfileComplete: user.isProfileComplete } : null, isLoading, isInitialized });
-
-  // Show loading while checking authentication or initializing
-  if (isLoading || !isInitialized) {
+  // Show loading while checking authentication
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -98,7 +55,7 @@ function Router() {
     <Switch>
       {/* Landing page for unauthenticated users */}
       <Route path="/">
-        {user && user.id ? (
+        {user ? (
           user.isProfileComplete ? <Dashboard /> : <CompleteProfile />
         ) : (
           <Landing />
@@ -123,53 +80,53 @@ function Router() {
       
       {/* Protected app routes - only for authenticated users with complete profiles */}
       <Route path="/dashboard">
-        <ProtectedRoute component={Dashboard} />
+        {user && user.isProfileComplete ? <Dashboard /> : <CompleteProfile />}
       </Route>
       <Route path="/feed">
-        <ProtectedRoute component={PropertyFeed} />
+        {user && user.isProfileComplete ? <PropertyFeed /> : <CompleteProfile />}
       </Route>
       <Route path="/search">
-        <ProtectedRoute component={PropertySearch} />
+        {user && user.isProfileComplete ? <PropertySearch /> : <CompleteProfile />}
       </Route>
       <Route path="/add-property">
-        <ProtectedRoute component={AddProperty} />
+        {user && user.isProfileComplete ? <AddProperty /> : <CompleteProfile />}
       </Route>
       <Route path="/bulk-upload">
-        <ProtectedRoute component={BulkUpload} />
+        {user && user.isProfileComplete ? <BulkUpload /> : <CompleteProfile />}
       </Route>
       <Route path="/quickpost">
-        <ProtectedRoute component={QuickPost} />
+        {user && user.isProfileComplete ? <QuickPost /> : <CompleteProfile />}
       </Route>
       <Route path="/property/:id">
-        <ProtectedRoute component={PropertyDetail} />
+        {user && user.isProfileComplete ? <PropertyDetail /> : <CompleteProfile />}
       </Route>
       <Route path="/my-listings">
-        <ProtectedRoute component={MyListings} />
+        {user && user.isProfileComplete ? <MyListings /> : <CompleteProfile />}
       </Route>
       <Route path="/consent/:consentId" component={OwnerConsent} />
       <Route path="/requirements">
-        <ProtectedRoute component={Requirements} />
+        {user && user.isProfileComplete ? <Requirements /> : <CompleteProfile />}
       </Route>
       <Route path="/map">
-        <ProtectedRoute component={Map} />
+        {user && user.isProfileComplete ? <Map /> : <CompleteProfile />}
       </Route>
       <Route path="/messages">
-        <ProtectedRoute component={Messages} />
+        {user && user.isProfileComplete ? <Messages /> : <CompleteProfile />}
       </Route>
       <Route path="/clients">
-        <ProtectedRoute component={Clients} />
+        {user && user.isProfileComplete ? <Clients /> : <CompleteProfile />}
       </Route>
       <Route path="/clients/:clientId">
-        <ProtectedRoute component={ClientProfile} />
+        {user && user.isProfileComplete ? <ClientProfile /> : <CompleteProfile />}
       </Route>
       <Route path="/profile">
-        <ProtectedRoute component={Profile} />
+        {user && user.isProfileComplete ? <Profile /> : <CompleteProfile />}
       </Route>
       <Route path="/edit-profile">
-        <ProtectedRoute component={EditProfile} />
+        {user && user.isProfileComplete ? <EditProfile /> : <CompleteProfile />}
       </Route>
       <Route path="/colisting-requests">
-        <ProtectedRoute component={ColistingRequests} />
+        {user && user.isProfileComplete ? <ColistingRequests /> : <CompleteProfile />}
       </Route>
       
       <Route component={NotFound} />
@@ -179,19 +136,17 @@ function Router() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <div className="app-container">
-              <Toaster />
-              <Router />
-              <PWAInstallPrompt />
-            </div>
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <div className="app-container">
+            <Toaster />
+            <Router />
+            <PWAInstallPrompt />
+          </div>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

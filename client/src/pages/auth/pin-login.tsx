@@ -55,9 +55,7 @@ export default function PinLogin() {
       return apiRequest("/api/pin-auth/login-pin", "POST", data);
     },
     onSuccess: (data: any) => {
-      if (data.user && data.sessionToken) {
-        login(data.user, data.sessionToken);
-      }
+      login(data.user);
       toast({
         title: "Welcome back!",
         description: "Successfully logged in"

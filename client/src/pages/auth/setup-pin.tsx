@@ -46,8 +46,8 @@ export default function SetupPin() {
       return res.json();
     },
     onSuccess: (data: any) => {
-      if (data.user && data.sessionToken) {
-        login(data.user, data.sessionToken);
+      if (data.user) {
+        login(data.user);
       }
       
       // Clean up temporary phone number

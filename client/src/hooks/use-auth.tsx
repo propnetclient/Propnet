@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
+import { iosAuthUtils } from "@/utils/ios-auth-fix";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  isInitialized: boolean;
-  login: (user: User, sessionToken?: string) => void;
+  login: (user: User) => void;
   logout: () => void;
   updateUser: (user: User) => void;
 }
@@ -20,80 +20,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    staleTime: 30 * 1000,
+    staleTime: 30 * 1000, // 30 seconds - shorter for profile updates
+    gcTime: 2 * 60 * 1000, // 2 minutes - shorter cache for iOS compatibility
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
     queryFn: async () => {
-      // Always use credentials for session-based auth
       const response = await fetch("/api/auth/me", {
         credentials: "include",
-        headers: { 
+        headers: {
           'Cache-Control': 'no-cache',
-          'Content-Type': 'application/json'
+          'Pragma': 'no-cache',
         },
       });
-      
       if (!response.ok) {
-        localStorage.removeItem('propnet_session_token');
         throw new Error("Not authenticated");
       }
-      
       const data = await response.json();
       return data.user;
     },
   });
 
-  // Simple initialization logic - always set initialized after first query attempt
   useEffect(() => {
-    if (!isLoading) {
-      setUser(data || null);
+    if (data && !isLoading) {
+      setUser(data);
       setIsInitialized(true);
-    }
-  }, [data, isLoading]);
-
-  // Fallback timer to ensure initialization in case of any issues
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isInitialized) {
-        console.log("Force initializing auth after 2 seconds");
+      // Backup state for iOS compatibility
+      iosAuthUtils.backupUserState(data);
+    } else if (isError && !isLoading) {
+      // Try to restore from backup on iOS
+      const backupUser = iosAuthUtils.restoreUserState();
+      if (backupUser && iosAuthUtils.isIOS()) {
+        setUser(backupUser);
         setIsInitialized(true);
+        // Force a session refresh to verify the backup is still valid
+        iosAuthUtils.forceSessionRefresh().then(refreshedUser => {
+          if (refreshedUser) {
+            setUser(refreshedUser);
+            iosAuthUtils.backupUserState(refreshedUser);
+          } else {
+            setUser(null);
+            iosAuthUtils.clearBackup();
+          }
+        });
+      } else {
         setUser(null);
+        setIsInitialized(true);
+        iosAuthUtils.clearBackup();
       }
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [isInitialized]);
-
-  const login = (newUser: User, sessionToken?: string) => {
-    console.log('Auth login called with user:', newUser);
-    setUser(newUser);
-    setIsInitialized(true);
-    if (sessionToken) {
-      localStorage.setItem('propnet_session_token', sessionToken);
     }
-    // Force immediate refetch to ensure session is validated
-    setTimeout(() => refetch(), 100);
+  }, [data, isLoading, isError]);
+
+  // iOS PWA visibility change handler for authentication persistence
+  useEffect(() => {
+    if (!iosAuthUtils.isIOS() || !iosAuthUtils.isStandalone()) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isInitialized) {
+        // App regained focus in iOS PWA mode - refresh auth state
+        setTimeout(() => {
+          refetch();
+        }, 100);
+      }
+    };
+
+    const handlePageShow = () => {
+      if (isInitialized) {
+        // Page shown from cache - refresh auth state
+        setTimeout(() => {
+          refetch();
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [isInitialized, refetch]);
+
+  const login = (userData: User) => {
+    setUser(userData);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('propnet_session_token');
+    // Clear iOS backup state on logout
+    iosAuthUtils.clearBackup();
+  };
+
+  const updateUser = (userData: User) => {
+    setUser(userData);
+    // Backup updated user state for iOS compatibility
+    iosAuthUtils.backupUserState(userData);
+    // Force refetch to ensure iOS gets the latest state
     refetch();
   };
 
-  const updateUser = (updatedUser: User) => {
-    setUser(updatedUser);
-  };
-
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading: isLoading && !isInitialized,
-        isInitialized,
-        login,
-        logout,
-        updateUser,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
