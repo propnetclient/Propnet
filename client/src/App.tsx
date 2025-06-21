@@ -36,11 +36,51 @@ import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import NotFound from "@/pages/not-found";
 
-function Router() {
-  const { user, isLoading } = useAuth();
+// Protected Route Component with proper initialization handling
+function ProtectedRoute({ component: Component }: { component: React.ComponentType<any> }) {
+  const { user, isInitialized } = useAuth();
 
-  // Show loading while checking authentication
-  if (isLoading) {
+  // Debug logging to track authentication state
+  console.log("Protected Route Check:", {
+    user: user ? { id: user.id, name: user.name, isProfileComplete: user.isProfileComplete } : null,
+    isInitialized,
+    timestamp: new Date().toISOString()
+  });
+
+  // Wait for initialization to complete
+  if (!isInitialized) {
+    console.log("Waiting for auth initialization");
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Initializing...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if no user
+  if (!user) {
+    console.log("No user, redirecting to login");
+    return <Login />;
+  }
+
+  // Redirect to profile completion if incomplete
+  if (!user.isProfileComplete) {
+    console.log("Profile incomplete, showing completion screen");
+    return <CompleteProfile />;
+  }
+
+  console.log("User authenticated with complete profile, rendering component");
+  return <Component />;
+}
+
+function Router() {
+  const { user, isLoading, isInitialized } = useAuth();
+
+  // Show loading while checking authentication or initializing
+  if (isLoading || !isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -80,53 +120,53 @@ function Router() {
       
       {/* Protected app routes - only for authenticated users with complete profiles */}
       <Route path="/dashboard">
-        {user && user.isProfileComplete ? <Dashboard /> : <CompleteProfile />}
+        <ProtectedRoute component={Dashboard} />
       </Route>
       <Route path="/feed">
-        {user && user.isProfileComplete ? <PropertyFeed /> : <CompleteProfile />}
+        <ProtectedRoute component={PropertyFeed} />
       </Route>
       <Route path="/search">
-        {user && user.isProfileComplete ? <PropertySearch /> : <CompleteProfile />}
+        <ProtectedRoute component={PropertySearch} />
       </Route>
       <Route path="/add-property">
-        {user && user.isProfileComplete ? <AddProperty /> : <CompleteProfile />}
+        <ProtectedRoute component={AddProperty} />
       </Route>
       <Route path="/bulk-upload">
-        {user && user.isProfileComplete ? <BulkUpload /> : <CompleteProfile />}
+        <ProtectedRoute component={BulkUpload} />
       </Route>
       <Route path="/quickpost">
-        {user && user.isProfileComplete ? <QuickPost /> : <CompleteProfile />}
+        <ProtectedRoute component={QuickPost} />
       </Route>
       <Route path="/property/:id">
-        {user && user.isProfileComplete ? <PropertyDetail /> : <CompleteProfile />}
+        <ProtectedRoute component={PropertyDetail} />
       </Route>
       <Route path="/my-listings">
-        {user && user.isProfileComplete ? <MyListings /> : <CompleteProfile />}
+        <ProtectedRoute component={MyListings} />
       </Route>
       <Route path="/consent/:consentId" component={OwnerConsent} />
       <Route path="/requirements">
-        {user && user.isProfileComplete ? <Requirements /> : <CompleteProfile />}
+        <ProtectedRoute component={Requirements} />
       </Route>
       <Route path="/map">
-        {user && user.isProfileComplete ? <Map /> : <CompleteProfile />}
+        <ProtectedRoute component={Map} />
       </Route>
       <Route path="/messages">
-        {user && user.isProfileComplete ? <Messages /> : <CompleteProfile />}
+        <ProtectedRoute component={Messages} />
       </Route>
       <Route path="/clients">
-        {user && user.isProfileComplete ? <Clients /> : <CompleteProfile />}
+        <ProtectedRoute component={Clients} />
       </Route>
       <Route path="/clients/:clientId">
-        {user && user.isProfileComplete ? <ClientProfile /> : <CompleteProfile />}
+        <ProtectedRoute component={ClientProfile} />
       </Route>
       <Route path="/profile">
-        {user && user.isProfileComplete ? <Profile /> : <CompleteProfile />}
+        <ProtectedRoute component={Profile} />
       </Route>
       <Route path="/edit-profile">
-        {user && user.isProfileComplete ? <EditProfile /> : <CompleteProfile />}
+        <ProtectedRoute component={EditProfile} />
       </Route>
       <Route path="/colisting-requests">
-        {user && user.isProfileComplete ? <ColistingRequests /> : <CompleteProfile />}
+        <ProtectedRoute component={ColistingRequests} />
       </Route>
       
       <Route component={NotFound} />

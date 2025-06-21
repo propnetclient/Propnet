@@ -8,6 +8,7 @@ import { AuthStateManager } from "@/utils/auth-state-manager";
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isInitialized: boolean;
   login: (user: User, sessionToken?: string) => void;
   logout: () => void;
   updateUser: (user: User) => void;
@@ -191,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isLoading, isInitialized, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
