@@ -22,29 +22,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     retry: false,
     staleTime: 30 * 1000,
     queryFn: async () => {
-      const sessionToken = localStorage.getItem('propnet_session_token');
-      
-      // Try session verification first if we have a token
-      if (sessionToken) {
-        try {
-          const sessionResponse = await fetch("/api/pin-auth/verify-session", {
-            credentials: "include",
-            headers: { 'Cache-Control': 'no-cache' },
-          });
-
-          if (sessionResponse.ok) {
-            const sessionData = await sessionResponse.json();
-            return sessionData.user;
-          }
-        } catch (error) {
-          console.log("Session verification failed, trying regular auth");
-        }
-      }
-
-      // Fallback to regular auth check
+      // Always use credentials for session-based auth
       const response = await fetch("/api/auth/me", {
         credentials: "include",
-        headers: { 'Cache-Control': 'no-cache' },
+        headers: { 
+          'Cache-Control': 'no-cache',
+          'Content-Type': 'application/json'
+        },
       });
       
       if (!response.ok) {

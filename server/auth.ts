@@ -76,14 +76,17 @@ export function checkRateLimit(phone: string): { allowed: boolean; message?: str
 }
 
 export function isAuthenticated(req: Request): boolean {
-  return !!(req.session as any)?.userId;
+  const userId = req.session?.userId;
+  const sessionToken = req.session?.sessionToken;
+  return !!(userId && sessionToken);
 }
 
 export function requireAuth(req: Request): { success: boolean; userId?: number; message?: string } {
-  const userId = (req.session as any)?.userId;
+  const userId = req.session?.userId;
+  const sessionToken = req.session?.sessionToken;
   
-  if (!userId) {
-    return { success: false, message: "Authentication required" };
+  if (!userId || !sessionToken) {
+    return { success: false, message: "Not authenticated" };
   }
   
   return { success: true, userId };

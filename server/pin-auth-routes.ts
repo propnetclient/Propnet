@@ -116,22 +116,29 @@ router.post('/setup-pin', async (req, res) => {
     
     const result = await pinAuth.setPIN(phone, pin, keepLoggedIn);
     
-    if (result.success) {
-      // Update session with session token and user data
+    if (result.success && result.user) {
+      // Set session properly
+      req.session.userId = result.user.id;
       if (result.sessionToken) {
-        req.session.userId = result.user.id;
         req.session.sessionToken = result.sessionToken;
-        req.session.user = result.user;
       }
       
-      res.json({
-        message: result.message,
-        user: result.user,
-        sessionToken: result.sessionToken,
-        requiresProfileComplete: result.requiresProfileComplete
+      // Save session before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Session error" });
+        }
+        
+        res.json({
+          message: result.message,
+          user: result.user,
+          sessionToken: result.sessionToken,
+          requiresProfileComplete: result.requiresProfileComplete
+        });
       });
     } else {
-      res.status(400).json({ message: result.message });
+      res.status(400).json({ message: result.message || "PIN setup failed" });
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -148,26 +155,35 @@ router.post('/login-pin', async (req, res) => {
     
     const result = await pinAuth.loginWithPIN(phone, pin, keepLoggedIn);
     
-    if (result.success) {
-      // Set session
+    if (result.success && result.user) {
+      // Set session properly
+      req.session.userId = result.user.id;
       if (result.sessionToken) {
-        req.session.userId = result.user.id;
         req.session.sessionToken = result.sessionToken;
       }
       
-      res.json({
-        message: result.message,
-        user: result.user,
-        sessionToken: result.sessionToken,
-        requiresProfileComplete: result.requiresProfileComplete
+      // Save session before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Session error" });
+        }
+        
+        res.json({
+          message: result.message,
+          user: result.user,
+          sessionToken: result.sessionToken,
+          requiresProfileComplete: result.requiresProfileComplete
+        });
       });
     } else {
-      res.status(400).json({ message: result.message });
+      res.status(400).json({ message: result.message || "Login failed" });
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ message: "Invalid login data" });
     }
+    console.error('PIN login error:', error);
     res.status(500).json({ message: "Server error" });
   }
 });
