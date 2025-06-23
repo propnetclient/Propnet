@@ -20,87 +20,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    staleTime: 30 * 1000, // 30 seconds - shorter for profile updates
-    gcTime: 2 * 60 * 1000, // 2 minutes - shorter cache for iOS compatibility
-    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false, // Prevent infinite refetch loops
     refetchOnMount: true,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
     queryFn: async () => {
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Not authenticated");
+      try {
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Not authenticated");
+        }
+        const data = await response.json();
+        return data.user;
+      } catch (error) {
+        // Ensure error is properly thrown to set loading to false
+        throw error;
       }
-      const data = await response.json();
-      return data.user;
     },
   });
 
   useEffect(() => {
-    if (data && !isLoading) {
-      setUser(data);
-      setIsInitialized(true);
-      // Backup state for iOS compatibility
-      iosAuthUtils.backupUserState(data);
-    } else if (isError && !isLoading) {
-      // Try to restore from backup on iOS
-      const backupUser = iosAuthUtils.restoreUserState();
-      if (backupUser && iosAuthUtils.isIOS()) {
-        setUser(backupUser);
+    if (!isLoading) {
+      if (data) {
+        setUser(data);
         setIsInitialized(true);
-        // Force a session refresh to verify the backup is still valid
-        iosAuthUtils.forceSessionRefresh().then(refreshedUser => {
-          if (refreshedUser) {
-            setUser(refreshedUser);
-            iosAuthUtils.backupUserState(refreshedUser);
-          } else {
-            setUser(null);
-            iosAuthUtils.clearBackup();
-          }
-        });
+        iosAuthUtils.backupUserState(data);
       } else {
-        setUser(null);
+        // No authenticated user - check iOS backup
+        const backupUser = iosAuthUtils.restoreUserState();
+        if (backupUser && iosAuthUtils.isIOS()) {
+          setUser(backupUser);
+        } else {
+          setUser(null);
+          iosAuthUtils.clearBackup();
+        }
         setIsInitialized(true);
-        iosAuthUtils.clearBackup();
       }
     }
-  }, [data, isLoading, isError]);
+  }, [data, isLoading]);
 
-  // iOS PWA visibility change handler for authentication persistence
+  // Simplified iOS authentication persistence - only on app initialization
   useEffect(() => {
-    if (!iosAuthUtils.isIOS() || !iosAuthUtils.isStandalone()) return;
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isInitialized) {
-        // App regained focus in iOS PWA mode - refresh auth state
-        setTimeout(() => {
-          refetch();
-        }, 100);
+    if (iosAuthUtils.isIOS() && iosAuthUtils.isStandalone() && !user && isInitialized) {
+      // Check for backup user on iOS PWA startup only
+      const backupUser = iosAuthUtils.restoreUserState();
+      if (backupUser) {
+        setUser(backupUser);
       }
-    };
-
-    const handlePageShow = () => {
-      if (isInitialized) {
-        // Page shown from cache - refresh auth state
-        setTimeout(() => {
-          refetch();
-        }, 100);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pageshow', handlePageShow);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pageshow', handlePageShow);
-    };
-  }, [isInitialized, refetch]);
+    }
+  }, [isInitialized, user]);
 
   const login = (userData: User) => {
     setUser(userData);
@@ -116,8 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
     // Backup updated user state for iOS compatibility
     iosAuthUtils.backupUserState(userData);
-    // Force refetch to ensure iOS gets the latest state
-    refetch();
+    // Don't refetch immediately to prevent loops
   };
 
   return (
