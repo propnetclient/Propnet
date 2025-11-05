@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { AuthProvider } from "@/hooks/use-auth";
 import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
 import Landing from "@/pages/landing";
 import Login from "@/pages/auth/login";
@@ -37,36 +37,19 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { user, isLoading } = useAuth();
-
-  // Show loading while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // All routes are public now. Render components directly.
   return (
     <Switch>
-      {/* Landing page for unauthenticated users */}
+      {/* Landing page */}
       <Route path="/">
-        {user ? (
-          user.isProfileComplete ? <Dashboard /> : <CompleteProfile />
-        ) : (
-          <Landing />
-        )}
+        <Landing />
       </Route>
-      
+
       {/* Secure Admin Portal - completely separate from user interface */}
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin" component={AdminPanel} />
-      
+
       {/* Authentication routes */}
       <Route path="/login" component={Login} />
       <Route path="/auth/login" component={PinLogin} />
@@ -77,58 +60,27 @@ function Router() {
       <Route path="/kyc" component={KYC} />
       <Route path="/auth/complete-profile" component={CompleteProfile} />
       <Route path="/complete-profile" component={CompleteProfile} />
-      
-      {/* Protected app routes - only for authenticated users with complete profiles */}
-      <Route path="/dashboard">
-        {user && user.isProfileComplete ? <Dashboard /> : <CompleteProfile />}
-      </Route>
-      <Route path="/feed">
-        {user && user.isProfileComplete ? <PropertyFeed /> : <CompleteProfile />}
-      </Route>
-      <Route path="/search">
-        {user && user.isProfileComplete ? <PropertySearch /> : <CompleteProfile />}
-      </Route>
-      <Route path="/add-property">
-        {user && user.isProfileComplete ? <AddProperty /> : <CompleteProfile />}
-      </Route>
-      <Route path="/bulk-upload">
-        {user && user.isProfileComplete ? <BulkUpload /> : <CompleteProfile />}
-      </Route>
-      <Route path="/quickpost">
-        {user && user.isProfileComplete ? <QuickPost /> : <CompleteProfile />}
-      </Route>
-      <Route path="/property/:id">
-        {user && user.isProfileComplete ? <PropertyDetail /> : <CompleteProfile />}
-      </Route>
-      <Route path="/my-listings">
-        {user && user.isProfileComplete ? <MyListings /> : <CompleteProfile />}
-      </Route>
+
+      {/* App routes (now public) */}
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/feed" component={PropertyFeed} />
+      <Route path="/search" component={PropertySearch} />
+      <Route path="/add-property" component={AddProperty} />
+      <Route path="/bulk-upload" component={BulkUpload} />
+      <Route path="/quickpost" component={QuickPost} />
+      <Route path="/property/:id" component={PropertyDetail} />
+      <Route path="/my-listings" component={MyListings} />
       <Route path="/consent/:consentId" component={OwnerConsent} />
-      <Route path="/requirements">
-        {user && user.isProfileComplete ? <Requirements /> : <CompleteProfile />}
-      </Route>
-      <Route path="/map">
-        {user && user.isProfileComplete ? <Map /> : <CompleteProfile />}
-      </Route>
-      <Route path="/messages">
-        {user && user.isProfileComplete ? <Messages /> : <CompleteProfile />}
-      </Route>
-      <Route path="/clients">
-        {user && user.isProfileComplete ? <Clients /> : <CompleteProfile />}
-      </Route>
-      <Route path="/clients/:clientId">
-        {user && user.isProfileComplete ? <ClientProfile /> : <CompleteProfile />}
-      </Route>
-      <Route path="/profile">
-        {user && user.isProfileComplete ? <Profile /> : <CompleteProfile />}
-      </Route>
-      <Route path="/edit-profile">
-        {user && user.isProfileComplete ? <EditProfile /> : <CompleteProfile />}
-      </Route>
-      <Route path="/colisting-requests">
-        {user && user.isProfileComplete ? <ColistingRequests /> : <CompleteProfile />}
-      </Route>
-      
+      <Route path="/requirements" component={Requirements} />
+      <Route path="/map" component={Map} />
+      <Route path="/messages" component={Messages} />
+      <Route path="/clients" component={Clients} />
+      <Route path="/clients/:clientId" component={ClientProfile} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/edit-profile" component={EditProfile} />
+      <Route path="/colisting-requests" component={ColistingRequests} />
+
+      {/* Fallback */}
       <Route component={NotFound} />
     </Switch>
   );

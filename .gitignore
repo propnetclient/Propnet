@@ -5,9 +5,12 @@ server/public
 vite.config.ts.*
 *.tar.gz
 .env
+*.env
 .env.local
+*.env.local
 .env.production
 .env.development
 uploads/*
 !uploads/.gitkeep
 *.log
+*.md
