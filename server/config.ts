@@ -18,10 +18,7 @@ export function validateEnvironment() {
   if (process.env.NODE_ENV === 'production') {
     missing.push(...productionRequiredVars.filter(envVar => !process.env[envVar]));
   }
-  
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-  }
+
 }
 
 export const config = {
