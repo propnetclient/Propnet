@@ -34,10 +34,10 @@ export default function MyListings() {
   const queryClient = useQueryClient();
 
   // Redirect to login if not authenticated
-  if (!authLoading && !user) {
-    setLocation("/");
-    return null;
-  }
+  // if (!authLoading && !user) {
+  //   setLocation("/");
+  //   return null;
+  // }
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);

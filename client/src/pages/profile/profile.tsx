@@ -41,10 +41,10 @@ export default function Profile() {
     },
   });
 
-  if (!user) {
-    setLocation("/");
-    return null;
-  }
+  // if (!user) {
+  //   setLocation("/");
+  //   return null;
+  // }
 
   const pendingRequests = (colistingRequests as any[]).filter((req: any) => req.status === "pending").length;
 

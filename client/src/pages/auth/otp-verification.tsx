@@ -18,11 +18,11 @@ export default function OtpVerification() {
 
   const phone = localStorage.getItem("tempPhone") || "";
 
-  useEffect(() => {
-    if (!phone) {
-      setLocation("/");
-    }
-  }, [phone, setLocation]);
+  // useEffect(() => {
+  //   if (!phone) {
+  //     setLocation("/");
+  //   }
+  // }, [phone, setLocation]);
 
   const verifyOtpMutation = useMutation({
     mutationFn: async ({ phone, otp }: { phone: string; otp: string }) => {

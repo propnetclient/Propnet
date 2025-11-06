@@ -13,7 +13,7 @@ export default function MobileNavigation() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-mobile bg-white dark:bg-gray-900 border-t border-neutral-200 dark:border-gray-700 z-30">
+    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-mobile bg-white dark:bg-gray-900 border-t border-neutral-200 dark:border-gray-700 z-30 md:hidden">
       <div className="flex items-center justify-around py-2">
         {tabs.map((tab) => (
           <button

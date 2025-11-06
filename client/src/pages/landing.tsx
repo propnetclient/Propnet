@@ -187,10 +187,10 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+  <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
       <header className="border-b bg-white dark:bg-gray-900 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between max-w-7xl">
           <div className="flex items-center space-x-2">
             <Building2 className="h-8 w-8 text-blue-600" />
             <span className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -217,56 +217,121 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-12 md:py-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight">
-              The Real Estate Network
-              <br />
-              <span className="text-yellow-300">Built for Brokers.</span>
-            </h1>
-            <p className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-blue-100 px-2">
-              A powerful <span className="font-semibold">private network</span> built for <span className="font-bold text-white">verified brokers</span> — where
-              every <span className="italic font-semibold">lead</span>, <span className="italic font-semibold">listing</span>, and <span className="italic font-semibold">effort</span> is tracked, protected, and
-              rewarded.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-6 md:mb-8 px-4">
-              <Button
-                size="lg"
-                className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-8 md:px-10 py-4 w-full sm:w-auto font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                onClick={() =>
-                  document
-                    .getElementById("beta-form")
-                    ?.scrollIntoView({ behavior: "smooth" })
-                }
-              >
-                Get Early Access
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white hover:bg-white hover:text-blue-600 px-6 md:px-8 py-3 font-medium w-full sm:w-auto text-[#facc15]"
-              >
-                <Play className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                See Demo
-              </Button>
+      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-12 md:py-20">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="grid gap-10 lg:grid-cols-[1.15fr,0.85fr] items-center">
+            <div className="text-center lg:text-left space-y-6 md:space-y-8">
+              <div className="inline-flex items-center gap-2 bg-white/10 text-white px-3 py-1 rounded-full text-sm font-medium">
+                <span className="inline-flex h-2 w-2 rounded-full bg-yellow-300" />
+                Verify. Protect. Close.
+              </div>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight xl:text-6xl">
+                The Real Estate Network
+                <span className="block text-yellow-300">Built for Brokers.</span>
+              </h1>
+              <p className="text-lg md:text-xl lg:text-2xl text-blue-100 max-w-3xl lg:max-w-none mx-auto lg:mx-0">
+                A powerful <span className="font-semibold">private network</span> built for <span className="font-bold text-white">verified brokers</span> — where every <span className="italic font-semibold">lead</span>, <span className="italic font-semibold">listing</span>, and <span className="italic font-semibold">effort</span> is tracked, protected, and rewarded.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 xl:gap-6 lg:justify-start justify-center">
+                <Button
+                  size="lg"
+                  className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 px-8 md:px-10 py-4 w-full sm:w-auto font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                  onClick={() =>
+                    document
+                      .getElementById("beta-form")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                >
+                  Get Early Access
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white hover:bg-white hover:text-blue-600 px-6 md:px-8 py-3 font-medium w-full sm:w-auto text-[#facc15]"
+                >
+                  <Play className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                  See Demo
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+                  <p className="text-2xl font-bold text-white">250+</p>
+                  <p className="text-sm text-blue-100">Verified brokers joining the beta</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+                  <p className="text-2xl font-bold text-white">0%</p>
+                  <p className="text-sm text-blue-100">Lead leak tolerance</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+                  <p className="text-2xl font-bold text-white">5 min</p>
+                  <p className="text-sm text-blue-100">To publish a pro-grade listing</p>
+                </div>
+              </div>
+              <p className="text-base md:text-lg italic text-blue-200">
+                "WhatsApp isn't built for real estate. We are."
+              </p>
             </div>
-            <p className="text-base md:text-lg italic text-blue-200 px-4">
-              "WhatsApp isn't built for real estate. We are."
-            </p>
+
+            <div className="hidden lg:block">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-3xl bg-blue-900/40 blur-3xl" aria-hidden="true" />
+                <div className="relative bg-white text-blue-900 rounded-3xl shadow-2xl overflow-hidden">
+                  <div className="px-8 py-6 border-b border-blue-100 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-500 font-medium">Live Deal Room</p>
+                      <p className="text-2xl font-bold">Ahmedabad Micro-Market</p>
+                    </div>
+                    <Badge className="bg-blue-100 text-blue-700">Beta</Badge>
+                  </div>
+                  <div className="px-8 py-6 space-y-4">
+                    <div className="flex items-start gap-4">
+                      <MapPin className="w-10 h-10 text-blue-500" />
+                      <div>
+                        <p className="text-lg font-semibold">Science City · 4 BHK</p>
+                        <p className="text-sm text-blue-600">Listed by Shreya Shah • Verified</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-blue-50 rounded-xl px-4 py-3">
+                        <p className="text-sm text-blue-600">Client visit locked in</p>
+                        <p className="text-xl font-bold">Tomorrow • 11:30 AM</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-xl px-4 py-3">
+                        <p className="text-sm text-blue-600">Commission terms</p>
+                        <p className="text-xl font-bold">2% each side</p>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-blue-100 px-4 py-3 flex items-center gap-3">
+                      <Shield className="w-8 h-8 text-green-500" />
+                      <div>
+                        <p className="text-sm text-blue-600">Protected by PropNet Consent</p>
+                        <p className="text-base font-semibold">Digital agreement signed</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-8 py-4 bg-blue-50 border-t border-blue-100 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-600">Shared with</p>
+                      <p className="font-semibold">3 trusted brokers</p>
+                    </div>
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">View Listing</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Problem Section */}
       <section className="py-12 md:py-16 bg-red-50 dark:bg-red-950/20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="max-w-4xl mx-auto text-center lg:max-w-5xl xl:max-w-6xl">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
               <XCircle className="w-6 h-6 md:w-8 md:h-8 text-red-600 inline mr-2" />
               The Problem: Real Estate Is Broken for Brokers
             </h2>
-            <div className="grid sm:grid-cols-2 gap-4 md:gap-6 mt-8 md:mt-12">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 xl:gap-8 mt-8 md:mt-12">
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm border-l-4 border-red-500">
                 <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg">
                   You show a client a property, someone else closes the deal.
@@ -297,8 +362,8 @@ export default function Landing() {
 
       {/* Solutions Section */}
       <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="max-w-6xl mx-auto xl:max-w-7xl">
             <div className="text-center mb-8 md:mb-12">
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-green-600 inline mr-2" />
@@ -309,7 +374,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6 lg:gap-8 xl:gap-10">
               <Card className="border-l-4 border-l-blue-500">
                 <CardHeader>
                   <Shield className="h-10 w-10 text-blue-600 mb-2" />
@@ -382,12 +447,12 @@ export default function Landing() {
 
       {/* Target Audience */}
       <section className="py-12 md:py-16 bg-blue-50 dark:bg-blue-950/20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto text-center">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="max-w-6xl mx-auto text-center xl:max-w-7xl">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 md:mb-8">
               Built For: Brokers & Agents in the Secondary Market
             </h2>
-            <div className="space-y-4 md:space-y-6">
+            <div className="space-y-4 md:space-y-6 xl:grid xl:grid-cols-3 xl:gap-8 xl:space-y-0">
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-sm flex flex-col md:flex-row items-center gap-4 text-left">
                 <div className="flex-shrink-0">
                   <TrendingUp className="w-12 h-12 md:w-16 md:h-16 text-blue-600" />
@@ -436,12 +501,12 @@ export default function Landing() {
 
       {/* Coming Soon */}
       <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="max-w-4xl mx-auto text-center xl:max-w-6xl">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-12">
               What's Coming Soon
             </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 xl:gap-10">
               <div className="p-4 border rounded-lg">
                 <Search className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                 <h3 className="font-semibold">AI-Powered Buyer Matching</h3>
@@ -471,8 +536,8 @@ export default function Landing() {
 
       {/* Beta Application Form */}
       <section id="beta-form" className="py-16 bg-gray-50 dark:bg-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="max-w-lg mx-auto">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="max-w-lg mx-auto xl:max-w-xl">
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
                 Get Early Access
@@ -539,7 +604,7 @@ export default function Landing() {
 
       {/* Bottom CTA */}
       <section className="py-16 bg-blue-600 text-white">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center max-w-7xl">
           <h2 className="text-3xl font-bold mb-8">
             Trust · Clarity · Reward
           </h2>
@@ -570,8 +635,8 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 xl:gap-8">
             <div className="flex items-center space-x-2">
               <Building2 className="h-6 w-6 text-blue-400" />
               <span className="text-xl font-bold">PropNet</span>
@@ -595,7 +660,7 @@ export default function Landing() {
       {/* Suggestion Modal */}
       {showSuggestionForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md xl:max-w-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5" />

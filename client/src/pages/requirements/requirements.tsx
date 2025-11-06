@@ -183,9 +183,9 @@ export default function Requirements() {
     }
   };
 
-  if (!user) {
-    return <div>Please log in to view requirements</div>;
-  }
+  // if (!user) {
+  //   return <div>Please log in to view requirements</div>;
+  // }
 
   return (
     <div className="container mx-auto p-4 max-w-4xl pb-20">

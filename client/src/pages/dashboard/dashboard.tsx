@@ -24,6 +24,7 @@ import {
   XCircle
 } from "lucide-react";
 import MobileNavigation from "@/components/layout/mobile-navigation";
+import Sidebar from "@/components/layout/sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/utils/formatters";
 
@@ -31,12 +32,14 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   // Redirect to login if not authenticated
-  React.useEffect(() => {
-    if (!authLoading && !user) {
-      setLocation("/");
-    }
-  }, [authLoading, user, setLocation]);
+  // React.useEffect(() => {
+  //   if (!authLoading && !user) {
+  //     setLocation("/");
+  //   }
+  // }, [authLoading, user, setLocation]);
 
   const { data: myProperties = [], isLoading: propertiesLoading } = useQuery({
     queryKey: ["/api/my-properties"],
@@ -156,7 +159,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className={`min-h-screen bg-neutral-50 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-72'}`}>
+      {/* Sidebar for md+ */}
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((s) => !s)} />
       {/* Header */}
       <div className="bg-white border-b border-neutral-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -297,10 +302,11 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Bottom spacing for navigation */}
-      <div className="h-20"></div>
+  {/* Bottom spacing for navigation */}
+  <div className="h-20 md:h-0"></div>
       
-      <MobileNavigation />
+  {/* Mobile bottom navigation kept as-is */}
+  <MobileNavigation />
     </div>
   );
 }

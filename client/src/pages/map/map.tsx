@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { MapPin, Navigation, Layers, Phone, Eye, Filter, Home, User } from "lucide-react";
 import MobileNavigation from "@/components/layout/mobile-navigation";
 import { formatPrice, getListingTypeBadgeColor } from "@/utils/formatters";
+import Sidebar from "@/components/layout/sidebar";
 
 declare global {
   interface Window {
@@ -36,6 +37,7 @@ interface Property {
 }
 
 export default function Map() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number; lng: number} | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
@@ -333,9 +335,10 @@ export default function Map() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className={`min-h-screen bg-neutral-50 flex flex-col ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-72'}`}> 
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((s) => !s)} />
       {/* Header */}
-      <div className="bg-white border-b border-neutral-200 px-6 py-4">
+  <div className="bg-white border-b border-neutral-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-neutral-900">Property Map</h1>
@@ -482,7 +485,7 @@ export default function Map() {
       
       <MobileNavigation />
 
-      {/* Property Details Modal */}
+  {/* Property Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>

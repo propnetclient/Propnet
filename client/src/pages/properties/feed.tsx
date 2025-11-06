@@ -11,8 +11,10 @@ import CompactPropertyCard from "@/components/ui/compact-property-card";
 import MobileNavigation from "@/components/layout/mobile-navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/utils/formatters";
+import Sidebar from "@/components/layout/sidebar";
 
 export default function PropertyFeed() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedTab, setSelectedTab] = useState("sale");
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -84,7 +86,8 @@ export default function PropertyFeed() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-20 bg-gray-50">
+    <div className={`flex flex-col min-h-screen pb-20 bg-gray-50 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-72'}`}> 
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((s) => !s)} />
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-neutral-100 z-10">
         <div className="px-4 py-3">

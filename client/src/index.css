@@ -88,11 +88,24 @@
 
   /* App container styles */
   .app-container {
-    max-width: 428px;
+    width: 100%;
     margin: 0 auto;
-    background: white;
     min-height: 100vh;
     position: relative;
+  }
+
+  @media (max-width: 767px) {
+    .app-container {
+      max-width: 428px;
+      background: white;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .app-container {
+      max-width: 100%;
+      background: transparent;
+    }
   }
 
   /* Custom scrollbar for mobile */

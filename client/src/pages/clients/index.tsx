@@ -1,3 +1,4 @@
+import Sidebar from "@/components/layout/sidebar";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -57,6 +58,7 @@ const taskSchema = z.object({
 });
 
 export default function ClientsPage() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
@@ -312,7 +314,8 @@ export default function ClientsPage() {
   }).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950">
+    <div className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 flex flex-col ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-72'}`}> 
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((s) => !s)} />
       {/* Mobile-Optimized Header */}
       <div className="relative overflow-hidden bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-white/20 dark:border-gray-800/50">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/5 to-indigo-600/10"></div>

@@ -19,6 +19,7 @@ import {
 import MobileNavigation from "@/components/layout/mobile-navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import Sidebar from "@/components/layout/sidebar";
 
 interface Conversation {
   id: number;
@@ -44,6 +45,7 @@ interface Message {
 }
 
 export default function Messages() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
@@ -138,7 +140,8 @@ export default function Messages() {
 
   if (selectedConversation) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex flex-col">
+      <div className={`min-h-screen bg-neutral-50 flex flex-col ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-72'}`}> 
+        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((s) => !s)} />
         {/* Chat Header */}
         <div className="bg-white border-b border-neutral-200 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -215,7 +218,8 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className={`min-h-screen bg-neutral-50 flex flex-col ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-72'}`}> 
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((s) => !s)} />
       {/* Header */}
       <div className="bg-white border-b border-neutral-200 px-6 py-4">
         <div className="flex items-center justify-between">

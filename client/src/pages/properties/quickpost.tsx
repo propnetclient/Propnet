@@ -80,10 +80,10 @@ export default function QuickPost() {
   const queryClient = useQueryClient();
 
   // Redirect to login if not authenticated
-  if (!authLoading && !user) {
-    setLocation("/");
-    return null;
-  }
+  // if (!authLoading && !user) {
+  //   setLocation("/");
+  //   return null;
+  // }
 
   const [inputText, setInputText] = useState("");
   const [extractedProperties, setExtractedProperties] = useState<ExtractedProperty[]>([]);
