@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Share2, MapPin, Phone, Eye } from "lucide-react";
@@ -13,7 +15,7 @@ interface CompactPropertyCardProps {
 }
 
 export default function CompactPropertyCard({ property, currentUserId }: CompactPropertyCardProps) {
-  const [, setLocation] = useLocation();
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const { toast } = useToast();
@@ -120,7 +122,7 @@ export default function CompactPropertyCard({ property, currentUserId }: Compact
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => setLocation(`/property/${property.id}`)}
+                  onClick={() => router.push(`/property/${property.id}`)}
                   className="text-xs px-2 py-1 h-6"
                 >
                   <Eye size={10} className="mr-1" />

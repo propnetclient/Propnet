@@ -1,4 +1,6 @@
-import { useLocation } from "wouter";
+"use client";
+
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -8,7 +10,7 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property, currentUserId }: PropertyCardProps) {
-  const [, setLocation] = useLocation();
+  const router = useRouter();
 
   const isOwner = currentUserId === property.ownerId;
   const hasCoAgents = property.coAgents && property.coAgents.length > 0;
@@ -76,7 +78,7 @@ export default function PropertyCard({ property, currentUserId }: PropertyCardPr
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation(`/property/${property.id}`)}
+            onClick={() => router.push(`/property/${property.id}`)}
             className="text-primary font-medium text-sm"
           >
             View Details

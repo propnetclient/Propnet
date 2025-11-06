@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Share2, MapPin, Calendar, Eye, TrendingUp, Phone, FileText, Download } from "lucide-react";
@@ -13,7 +15,7 @@ interface EnhancedPropertyCardProps {
 }
 
 export default function EnhancedPropertyCard({ property, currentUserId }: EnhancedPropertyCardProps) {
-  const [, setLocation] = useLocation();
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const { toast } = useToast();
@@ -265,7 +267,7 @@ export default function EnhancedPropertyCard({ property, currentUserId }: Enhanc
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation(`/property/${property.id}`)}
+            onClick={() => router.push(`/property/${property.id}`)}
             className="flex-1 text-xs"
           >
             <Eye size={12} className="mr-1" />

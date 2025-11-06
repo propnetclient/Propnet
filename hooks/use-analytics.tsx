@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'wouter';
+import { usePathname } from 'next/navigation';
 import { useAuth } from './use-auth';
 
 // Client-side analytics tracking
@@ -141,16 +143,16 @@ const analytics = new ClientAnalytics();
 
 // Hook for page view tracking
 export const useAnalytics = () => {
-  const [location] = useLocation();
+  const pathname = usePathname();
   const { user } = useAuth();
-  const prevLocationRef = useRef<string>(location);
+  const prevLocationRef = useRef<string>(pathname);
   
   useEffect(() => {
-    if (location !== prevLocationRef.current) {
-      analytics.trackPageView(location, user?.id);
-      prevLocationRef.current = location;
+    if (pathname !== prevLocationRef.current) {
+      analytics.trackPageView(pathname, user?.id);
+      prevLocationRef.current = pathname;
     }
-  }, [location, user?.id]);
+  }, [pathname, user?.id]);
 
   useEffect(() => {
     if (user?.id) {

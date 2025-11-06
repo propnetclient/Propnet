@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useEventTracking } from "@/hooks/use-analytics";
@@ -6,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Circle, ArrowRight, User, Home, MessageCircle, Target } from "lucide-react";
-import { useLocation } from "wouter";
+import { useRouter } from "next/navigation";
 
 interface OnboardingStep {
   id: number;
@@ -20,7 +22,7 @@ interface OnboardingStep {
 
 export default function OnboardingTracker() {
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const router = useRouter();
   const { trackOnboarding } = useEventTracking();
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,7 @@ export default function OnboardingTracker() {
     trackOnboarding(step.id, step.title);
 
     if (step.route) {
-      setLocation(step.route);
+      router.push(step.route);
     } else if (step.action) {
       step.action();
     }
