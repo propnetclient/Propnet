@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 11% 98%; /* #F8FAFC */
+  --foreground: 220 13% 18%; /* #0F172A */
+  --muted: 215 16% 97%; /* #F1F5F9 */
+  --muted-foreground: 218 11% 65%; /* #64748B */
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 13% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 13% 18%;
+  --border: 220 13% 91%; /* #E2E8F0 */
+  --input: 220 13% 91%;
+  --primary: 217 91% 60%; /* #2563EB */
+  --primary-foreground: 213 100% 99%;
+  --secondary: 215 16% 97%;
+  --secondary-foreground: 222 47% 11%;
+  --accent: 158 64% 52%; /* #10B981 */
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 60 9% 98%;
+  --ring: 217 91% 60%;
+  --radius: 0.5rem;
+  
+  /* Custom colors for the app */
+  --neutral-50: 210 20% 98%;
+  --neutral-100: 220 14% 96%;
+  --neutral-400: 218 11% 65%;
+  --neutral-500: 220 9% 46%;
+  --neutral-700: 217 19% 27%;
+  --neutral-900: 220 13% 18%;
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dark {
+  --background: 224 71% 4%;
+  --foreground: 213 31% 91%;
+  --muted: 223 47% 11%;
+  --muted-foreground: 215.4 16.3% 56.9%;
+  --popover: 224 71% 4%;
+  --popover-foreground: 213 31% 91%;
+  --card: 224 71% 4%;
+  --card-foreground: 213 31% 91%;
+  --border: 216 34% 17%;
+  --input: 216 34% 17%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 1.2%;
+  --secondary: 222 47% 11%;
+  --secondary-foreground: 213 31% 91%;
+  --accent: 158 64% 52%;
+  --accent-foreground: 222 47% 1.2%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 213 31% 91%;
+  --ring: 217 91% 60%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom mobile-first styles */
+  .max-w-mobile {
+    max-width: 428px;
+  }
+
+  /* Touch-friendly buttons */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* App container styles */
+  .app-container {
+    max-width: 428px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* Custom scrollbar for mobile */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 2px;
+  }
+
+  /* Animation classes */
+  .slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  /* Loading spinner */
+  .loading-spinner {
+    border: 2px solid hsl(var(--muted));
+    border-top: 2px solid hsl(var(--primary));
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}
+
+/* PWA specific styles */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Focus styles for accessibility */
+input:focus-visible,
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Custom utility classes */
+.text-neutral-50 { color: hsl(var(--neutral-50)); }
+.text-neutral-100 { color: hsl(var(--neutral-100)); }
+.text-neutral-400 { color: hsl(var(--neutral-400)); }
+.text-neutral-500 { color: hsl(var(--neutral-500)); }
+.text-neutral-700 { color: hsl(var(--neutral-700)); }
+.text-neutral-900 { color: hsl(var(--neutral-900)); }
+
+.bg-neutral-50 { background-color: hsl(var(--neutral-50)); }
+.bg-neutral-100 { background-color: hsl(var(--neutral-100)); }
+.bg-neutral-400 { background-color: hsl(var(--neutral-400)); }
+.bg-neutral-500 { background-color: hsl(var(--neutral-500)); }
+.bg-neutral-700 { background-color: hsl(var(--neutral-700)); }
+.bg-neutral-900 { background-color: hsl(var(--neutral-900)); }
+
+.border-neutral-100 { border-color: hsl(var(--neutral-100)); }
+.border-neutral-200 { border-color: hsl(var(--border)); }
+.border-neutral-300 { border-color: hsl(var(--input)); }
