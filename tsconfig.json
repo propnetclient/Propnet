@@ -23,6 +23,7 @@
       "@/*": ["./app/*"],
       "@/components/*": ["./components/*"],
       "@/lib/*": ["./lib/*"],
+      "@/utils/*": ["./utils/*"],
       "@shared/*": ["./shared/*"]
     }
   },
