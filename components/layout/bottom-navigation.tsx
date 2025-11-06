@@ -1,8 +1,11 @@
-import { useLocation } from "wouter";
+"use client";
+
+import { useRouter, usePathname } from "next/navigation";
 import { Home, Search, MessageCircle, Map, User } from "lucide-react";
 
 export default function BottomNavigation() {
-  const [location, setLocation] = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const navItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
@@ -18,9 +21,9 @@ export default function BottomNavigation() {
         {navItems.map((item) => (
           <button
             key={item.path}
-            onClick={() => setLocation(item.path)}
+            onClick={() => router.push(item.path)}
             className={`flex flex-col items-center py-2 px-4 touch-target ${
-              location === item.path ? "text-primary" : "text-neutral-400"
+              pathname === item.path ? "text-primary" : "text-neutral-400"
             }`}
           >
             <item.icon size={20} className="mb-1" />

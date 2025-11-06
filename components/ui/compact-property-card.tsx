@@ -38,7 +38,7 @@ export default function CompactPropertyCard({ property, currentUserId }: Compact
       navigator.share({
         title: property.title,
         text: shareText,
-        url: window.location.href,
+        url: "",
       });
     } else {
       navigator.clipboard.writeText(shareText);

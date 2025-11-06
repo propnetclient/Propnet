@@ -1,8 +1,11 @@
-import { useLocation } from "wouter";
+"use client";
+
+import { useRouter, usePathname } from "next/navigation";
 import { Home, Search, MessageCircle, Map, Users } from "lucide-react";
 
 export default function MobileNavigation() {
-  const [location, setLocation] = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const tabs = [
     { icon: Home, label: "Home", path: "/dashboard" },
@@ -18,9 +21,9 @@ export default function MobileNavigation() {
         {tabs.map((tab) => (
           <button
             key={tab.path}
-            onClick={() => setLocation(tab.path)}
+            onClick={() => router.push(tab.path)}
             className={`flex flex-col items-center py-2 px-4 touch-target transition-colors ${
-              location === tab.path 
+              pathname === tab.path 
                 ? "text-blue-600 dark:text-blue-400" 
                 : "text-neutral-400 dark:text-gray-500 hover:text-neutral-600 dark:hover:text-gray-300"
             }`}

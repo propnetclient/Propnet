@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'wouter';
-import { useAuth } from './use-auth';
+// Removed: wouter import
+// Removed: useAuth import
 
 // Client-side analytics tracking
 class ClientAnalytics {
@@ -83,8 +83,8 @@ class ClientAnalytics {
           value,
           metadata: {
             ...metadata,
-            pageUrl: window.location.pathname,
-            referrer: document.referrer
+            pageUrl: typeof window !== 'undefined' ? window.location.pathname : '',
+            referrer: typeof document !== 'undefined' ? document.referrer : ''
           }
         })
       });
@@ -108,6 +108,18 @@ class ClientAnalytics {
   }
 
   private getDeviceInfo() {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return {
+        deviceType: 'unknown',
+        browserName: 'Unknown',
+        osName: 'Unknown',
+        userAgent: '',
+        ipAddress: '',
+        screenResolution: '0x0',
+        timezone: 'UTC'
+      };
+    }
+    
     const ua = navigator.userAgent;
     const deviceType = /Mobile|Android|iPhone|iPad/.test(ua) ? 'mobile' : 
                       /Tablet|iPad/.test(ua) ? 'tablet' : 'desktop';
@@ -139,40 +151,15 @@ class ClientAnalytics {
 
 const analytics = new ClientAnalytics();
 
-// Hook for page view tracking
+// Hook for page view tracking  
 export const useAnalytics = () => {
-  const [location] = useLocation();
-  const { user } = useAuth();
-  const prevLocationRef = useRef<string>(location);
-  
-  useEffect(() => {
-    if (location !== prevLocationRef.current) {
-      analytics.trackPageView(location, user?.id);
-      prevLocationRef.current = location;
-    }
-  }, [location, user?.id]);
-
-  useEffect(() => {
-    if (user?.id) {
-      analytics.initSession(user.id);
-    }
-
-    // End session on page unload
-    const handleUnload = () => {
-      analytics.endSession();
-    };
-
-    window.addEventListener('beforeunload', handleUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleUnload);
-      analytics.endSession();
-    };
-  }, [user?.id]);
+  // Removed: location and user tracking
+  // This hook is now a no-op since authentication is removed
 };
 
 // Hook for event tracking
 export const useEventTracking = () => {
-  const { user } = useAuth();
+  // Removed: user tracking
 
   const trackEvent = (
     eventType: string,
@@ -182,25 +169,23 @@ export const useEventTracking = () => {
     value?: number,
     metadata?: any
   ) => {
-    analytics.trackEvent(eventType, category, action, label, user?.id, value, metadata);
+    // No-op: analytics disabled without auth
   };
 
   const trackOnboarding = (step: number, stepName: string) => {
-    if (user?.id) {
-      analytics.trackOnboarding(user.id, step, stepName);
-    }
+    // No-op: analytics disabled without auth
   };
 
   const trackPropertyAction = (action: string, propertyId?: number) => {
-    trackEvent('property_interaction', 'property_management', action, propertyId?.toString(), propertyId);
+    // No-op: analytics disabled without auth
   };
 
   const trackSearch = (query: string, filters?: any) => {
-    trackEvent('search', 'property_discovery', 'search_performed', query, undefined, filters);
+    // No-op: analytics disabled without auth
   };
 
   const trackMessage = (action: 'sent' | 'received', recipientId?: number) => {
-    trackEvent('messaging', 'communication', `message_${action}`, recipientId?.toString(), recipientId);
+    // No-op: analytics disabled without auth
   };
 
   return {
