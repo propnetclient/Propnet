@@ -13,6 +13,14 @@ vite.config.ts.*
 uploads/*
 !uploads/.gitkeep
 *.log
-*.md
 .next
 out
+# Ignore specific md files but keep documentation
+DEPENDENCIES.md
+DEPLOYMENT_GUIDE.md
+FINAL_DEPLOYMENT_AUDIT.md
+LOCAL_SETUP.md
+PERFORMANCE_OPTIMIZATION.md
+PRODUCTION_AUDIT_2025.md
+PRODUCTION_READINESS.md
+replit.md
