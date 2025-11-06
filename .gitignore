@@ -14,3 +14,13 @@ uploads/*
 !uploads/.gitkeep
 *.log
 *.md
+
+# Next.js
+/.next/
+/out/
+.next
+next-env.d.ts
+
+# Build artifacts  
+build
+dist
