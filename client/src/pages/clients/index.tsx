@@ -22,6 +22,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import MobileNavigation from "@/components/layout/mobile-navigation";
 import { AgentNotificationModal } from "@/components/ui/agent-notification-modal";
 import { useAuth } from "@/hooks/use-auth";
+import { getClients, getDeals, getTasks, createClient as sbCreateClient, updateClient as sbUpdateClient, createDeal as sbCreateDeal, createTask as sbCreateTask } from "@/lib/data";
 
 // Client form schema
 const clientSchema = z.object({
@@ -78,15 +79,18 @@ export default function ClientsPage() {
 
   // Queries
   const { data: clients, isLoading: isLoadingClients } = useQuery({
-    queryKey: ["/api/clients"],
+    queryKey: ["supabase/clients"],
+    queryFn: getClients,
   });
 
   const { data: deals, isLoading: isLoadingDeals } = useQuery({
-    queryKey: ["/api/deals"],
+    queryKey: ["supabase/deals"],
+    queryFn: getDeals,
   });
 
   const { data: tasks, isLoading: isLoadingTasks } = useQuery({
-    queryKey: ["/api/tasks"],
+    queryKey: ["supabase/tasks"],
+    queryFn: getTasks,
   });
 
   // Agent notification handler
@@ -108,13 +112,8 @@ export default function ClientsPage() {
   // Mutations
   const createClientMutation = useMutation({
     mutationFn: async (data: z.infer<typeof clientSchema>) => {
-      const response = await fetch("/api/clients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create client");
-      return response.json();
+      const created = await sbCreateClient(data);
+      return created;
     },
     onSuccess: (createdClient, formData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
@@ -138,13 +137,8 @@ export default function ClientsPage() {
 
   const updateClientMutation = useMutation({
     mutationFn: async (data: { id: number; updates: Partial<z.infer<typeof clientSchema>> }) => {
-      const response = await fetch(`/api/clients/${data.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data.updates),
-      });
-      if (!response.ok) throw new Error("Failed to update client");
-      return response.json();
+      const updated = await sbUpdateClient(data.id, data.updates);
+      return updated;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
@@ -160,13 +154,8 @@ export default function ClientsPage() {
 
   const createDealMutation = useMutation({
     mutationFn: async (data: z.infer<typeof dealSchema>) => {
-      const response = await fetch("/api/deals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create deal");
-      return response.json();
+      const created = await sbCreateDeal(data as any);
+      return created;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
@@ -181,13 +170,8 @@ export default function ClientsPage() {
 
   const createTaskMutation = useMutation({
     mutationFn: async (data: z.infer<typeof taskSchema>) => {
-      const response = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create task");
-      return response.json();
+      const created = await sbCreateTask(data as any);
+      return created;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });

@@ -5,6 +5,7 @@ import { ArrowLeft, Share, Heart, FileText, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { getPropertyById } from "@/lib/data";
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -14,14 +15,8 @@ export default function PropertyDetail() {
   const queryClient = useQueryClient();
 
   const { data: property, isLoading } = useQuery({
-    queryKey: ["/api/properties", id],
-    queryFn: async () => {
-      const response = await fetch(`/api/properties/${id}`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Property not found");
-      return response.json();
-    },
+    queryKey: ["supabase/property", id],
+    queryFn: async () => await getPropertyById(parseInt(id!)),
   });
 
   const requestColistingMutation = useMutation({

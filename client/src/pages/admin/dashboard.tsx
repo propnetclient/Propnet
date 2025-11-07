@@ -19,6 +19,7 @@ import {
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { getBetaSignups, updateBetaSignupStatus } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
 interface BetaSignup {
@@ -43,26 +44,25 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check admin authentication
-  const { data: adminData, isLoading: authLoading } = useQuery({
-    queryKey: ['/api/secure-portal/me'],
-    retry: false,
-  });
+  // Bypass admin authentication: set a dummy admin object
+  const adminData: any = { admin: { username: 'admin', email: 'admin@example.com' } };
+  const authLoading = false;
 
   // Fetch beta signups
   const { data: signups, isLoading: signupsLoading } = useQuery({
-    queryKey: ['/api/secure-portal/beta-signups'],
+    queryKey: ['supabase/beta-signups'],
+    queryFn: getBetaSignups,
     enabled: !!adminData,
   });
 
   // Update signup status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, notes }: { id: number; status: string; notes?: string }) => {
-      const res = await apiRequest("PUT", `/api/secure-portal/beta-signups/${id}`, { status, notes });
-      return res.json();
+      await updateBetaSignupStatus(id, status, notes);
+      return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/secure-portal/beta-signups'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase/beta-signups'] });
       toast({
         title: "Status Updated",
         description: "Beta signup status has been updated successfully.",
@@ -79,20 +79,14 @@ export default function AdminDashboard() {
 
   // Logout mutation
   const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/secure-portal/logout", {});
-      return res.json();
-    },
+    mutationFn: async () => true,
     onSuccess: () => {
-      localStorage.removeItem('adminSessionToken');
       setLocation('/admin/login');
     }
   });
 
   useEffect(() => {
-    if (!authLoading && !adminData) {
-      setLocation('/admin/login');
-    }
+    // Auth bypass: no redirect
   }, [authLoading, adminData, setLocation]);
 
   if (authLoading) {
@@ -106,9 +100,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!adminData) {
-    return null; // Will redirect to login
-  }
+  // Admin bypass always has data
 
   const handleStatusUpdate = (id: number, status: string, notes?: string) => {
     updateStatusMutation.mutate({ id, status, notes });

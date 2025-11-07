@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
 import { iosAuthUtils } from "@/utils/ios-auth-fix";
+import { getFirstUser } from "@/lib/data";
 
 interface AuthContextType {
   user: User | null;
@@ -17,33 +18,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["/api/auth/me"],
+  const { data, isLoading } = useQuery({
+    queryKey: ["supabase/auth/bypassUser"],
     retry: false,
-    staleTime: 30 * 1000,
-    gcTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false, // Prevent infinite refetch loops
+    staleTime: Infinity,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: false,
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/auth/me", {
-          credentials: "include",
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-          },
-        });
-        if (!response.ok) {
-          throw new Error("Not authenticated");
-        }
-        const data = await response.json();
-        return data.user;
-      } catch (error) {
-        // Ensure error is properly thrown to set loading to false
-        throw error;
-      }
-    },
+    queryFn: async () => await getFirstUser(),
   });
 
   useEffect(() => {

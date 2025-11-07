@@ -10,6 +10,7 @@ import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { upsertUser } from "@/lib/data";
 import FileUpload from "@/components/ui/file-upload";
 
 export default function EditProfile() {
@@ -35,13 +36,25 @@ export default function EditProfile() {
   const [profilePhotoFiles, setProfilePhotoFiles] = useState<File[]>([]);
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const response = await apiRequest("POST", "/api/profile/update", data);
-      return response.json();
+    mutationFn: async (_data: FormData) => {
+      const payload: any = {
+        id: user?.id,
+        name: formData.name,
+        email: formData.email,
+        agencyName: formData.agencyName,
+        reraId: formData.reraId,
+        city: formData.city,
+        experience: formData.experience,
+        bio: formData.bio,
+        website: formData.website,
+        areaOfExpertise: formData.areaOfExpertise.split(",").map(s => s.trim()).filter(Boolean),
+        workingRegions: formData.workingRegions.split(",").map(s => s.trim()).filter(Boolean),
+      };
+      const saved = await upsertUser(payload);
+      return saved;
     },
-    onSuccess: (data) => {
-      updateUser(data.user);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    onSuccess: (saved) => {
+      if (saved) updateUser(saved);
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",

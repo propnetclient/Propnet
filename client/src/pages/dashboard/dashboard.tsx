@@ -27,6 +27,8 @@ import MobileNavigation from "@/components/layout/mobile-navigation";
 import Sidebar from "@/components/layout/sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/utils/formatters";
+import { useQueryClient } from "@tanstack/react-query";
+import { getProperties, getCoListingRequestsByUser } from "@/lib/data";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -42,19 +44,28 @@ export default function Dashboard() {
   // }, [authLoading, user, setLocation]);
 
   const { data: myProperties = [], isLoading: propertiesLoading } = useQuery({
-    queryKey: ["/api/my-properties"],
+    queryKey: ["supabase/my-properties", user?.id],
+    queryFn: async () => {
+      // Reuse getProperties then filter by ownerId
+      const all = await getProperties();
+      return user ? all.filter((p: any) => p.ownerId === user.id) : [];
+    },
+    enabled: !!user?.id,
   });
 
-  const { data: myRequirements = [], isLoading: requirementsLoading } = useQuery({
-    queryKey: ["/api/my-requirements"],
-  });
+  // Requirements not yet wired; show empty
+  const myRequirements: any[] = [];
+  const requirementsLoading = false;
 
   const { data: allProperties = [], isLoading: allPropertiesLoading } = useQuery({
-    queryKey: ["/api/properties"],
+    queryKey: ["supabase/all-properties"],
+    queryFn: getProperties,
   });
 
   const { data: coListingRequests = [], isLoading: coListingLoading } = useQuery({
-    queryKey: ["/api/colisting-requests"],
+    queryKey: ["supabase/colisting-requests", user?.id],
+    queryFn: async () => user ? await getCoListingRequestsByUser(user.id) : [],
+    enabled: !!user?.id,
   });
 
   const quickActions = [

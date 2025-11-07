@@ -19,6 +19,7 @@ import { ArrowLeft, Plus, Building2, MapPin, Clock, Shield, Eye, EyeOff, Phone, 
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { createProperty, updateProperty, deleteProperty, uploadPublicFile } from "@/lib/data";
 import { insertPropertySchema } from "@shared/schema";
 import FileUpload from "@/components/ui/file-upload";
 import MobileNavigation from "@/components/layout/mobile-navigation";
@@ -78,8 +79,39 @@ export default function MyListings() {
 
   const createPropertyMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const response = await apiRequest("POST", "/api/properties", data);
-      return response.json();
+      // Convert formData to a plain object; ignore file uploads for now
+      const obj: any = {};
+      const photoFiles: File[] = [];
+      let agreementFile: File | null = null;
+      data.forEach((value, key) => {
+        if (key === 'scopeOfWork') {
+          try { obj.scopeOfWork = JSON.parse(String(value)); } catch { obj.scopeOfWork = []; }
+        } else if (key === 'bhk') {
+          obj.bhk = parseInt(String(value)) || null;
+        } else if (key === 'isPubliclyVisible') {
+          obj.isPubliclyVisible = String(value) === 'true';
+        } else if (key === 'photos' && value instanceof File) {
+          photoFiles.push(value as File);
+        } else if (key === 'agreementDocument' && value instanceof File) {
+          agreementFile = value as File;
+        } else {
+          obj[key] = value as string;
+        }
+      });
+      // Upload files to storage if present
+      if (photoFiles.length) {
+        const urls: string[] = [];
+        for (const f of photoFiles) {
+          const url = await uploadPublicFile('property-photos', f, `${user?.id || 'u'}/`);
+          if (url) urls.push(url);
+        }
+        if (urls.length) obj.photos = urls;
+      }
+      if (agreementFile) {
+        const url = await uploadPublicFile('agreements', agreementFile, `${user?.id || 'u'}/`);
+        if (url) obj.agreementDocument = url;
+      }
+      return await createProperty(obj);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-properties"] });
@@ -114,8 +146,37 @@ export default function MyListings() {
 
   const updatePropertyMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: FormData }) => {
-      const response = await apiRequest("PUT", `/api/properties/${id}`, data);
-      return response.json();
+      const obj: any = {};
+      const photoFiles: File[] = [];
+      let agreementFile: File | null = null;
+      data.forEach((value, key) => {
+        if (key === 'scopeOfWork') {
+          try { obj.scopeOfWork = JSON.parse(String(value)); } catch { obj.scopeOfWork = []; }
+        } else if (key === 'bhk') {
+          obj.bhk = parseInt(String(value)) || null;
+        } else if (key === 'isPubliclyVisible') {
+          obj.isPubliclyVisible = String(value) === 'true';
+        } else if (key === 'photos' && value instanceof File) {
+          photoFiles.push(value as File);
+        } else if (key === 'agreementDocument' && value instanceof File) {
+          agreementFile = value as File;
+        } else {
+          obj[key] = value as string;
+        }
+      });
+      if (photoFiles.length) {
+        const urls: string[] = [];
+        for (const f of photoFiles) {
+          const url = await uploadPublicFile('property-photos', f, `${user?.id || 'u'}/`);
+          if (url) urls.push(url);
+        }
+        if (urls.length) obj.photos = urls;
+      }
+      if (agreementFile) {
+        const url = await uploadPublicFile('agreements', agreementFile, `${user?.id || 'u'}/`);
+        if (url) obj.agreementDocument = url;
+      }
+      return await updateProperty(id, obj);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-properties"] });
@@ -151,8 +212,8 @@ export default function MyListings() {
 
   const deletePropertyMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest("DELETE", `/api/properties/${id}`);
-      return response.json();
+      await deleteProperty(id);
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-properties"] });

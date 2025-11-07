@@ -12,6 +12,7 @@ import MobileNavigation from "@/components/layout/mobile-navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/utils/formatters";
 import Sidebar from "@/components/layout/sidebar";
+import { getProperties } from "@/lib/data";
 
 export default function PropertyFeed() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -31,7 +32,8 @@ export default function PropertyFeed() {
   const [priceRange, setPriceRange] = useState([0, 10000000]);
 
   const { data: properties = [], isLoading } = useQuery({
-    queryKey: ["/api/properties"],
+    queryKey: ["supabase/properties"],
+    queryFn: getProperties,
   });
 
   const filteredProperties = Array.isArray(properties) ? properties.filter((property: any) => {

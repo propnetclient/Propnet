@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { getClientById, getDealsByClientId, getTasksByClientId } from "@/lib/data";
+import { updateClient as sbUpdateClient, createDeal as sbCreateDeal, createTask as sbCreateTask } from "@/lib/data";
 import {
   ArrowLeft,
   Phone,
@@ -82,19 +84,22 @@ export default function ClientProfile() {
 
   // Fetch client data
   const { data: client, isLoading: clientLoading } = useQuery({
-    queryKey: [`/api/clients/${clientId}`],
+    queryKey: ["supabase/client", clientId],
+    queryFn: async () => await getClientById(parseInt(clientId!)),
     enabled: !!clientId,
   }) as { data: any, isLoading: boolean };
 
   // Fetch client deals
   const { data: deals = [] } = useQuery({
-    queryKey: ["/api/deals", "client", clientId],
+    queryKey: ["supabase/dealsByClient", clientId],
+    queryFn: async () => await getDealsByClientId(parseInt(clientId!)),
     enabled: !!clientId,
   }) as { data: any[] };
 
   // Fetch client tasks
   const { data: tasks = [] } = useQuery({
-    queryKey: ["/api/tasks", "client", clientId],
+    queryKey: ["supabase/tasksByClient", clientId],
+    queryFn: async () => await getTasksByClientId(parseInt(clientId!)),
     enabled: !!clientId,
   }) as { data: any[] };
 
@@ -124,13 +129,8 @@ export default function ClientProfile() {
   // Update client mutation
   const updateClientMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(`/api/clients/${clientId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to update client");
-      return response.json();
+      const updated = await sbUpdateClient(parseInt(clientId!), data);
+      return updated;
     },
     onSuccess: () => {
       toast({ title: "Client updated successfully" });
@@ -146,13 +146,8 @@ export default function ClientProfile() {
   // Create deal mutation
   const createDealMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/deals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, clientId: parseInt(clientId!) }),
-      });
-      if (!response.ok) throw new Error("Failed to create deal");
-      return response.json();
+      const created = await sbCreateDeal({ ...data, clientId: parseInt(clientId!) });
+      return created;
     },
     onSuccess: () => {
       toast({ title: "Deal created successfully" });
@@ -168,13 +163,8 @@ export default function ClientProfile() {
   // Create task mutation
   const createTaskMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, dealId: data.dealId }),
-      });
-      if (!response.ok) throw new Error("Failed to create task");
-      return response.json();
+      const created = await sbCreateTask({ ...data, dealId: data.dealId });
+      return created;
     },
     onSuccess: () => {
       toast({ title: "Task created successfully" });

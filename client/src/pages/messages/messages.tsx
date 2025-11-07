@@ -19,6 +19,7 @@ import {
 import MobileNavigation from "@/components/layout/mobile-navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { getConversationsByUser, getMessagesByConversation, createConversation as sbCreateConversation, createMessage as sbCreateMessage, getNetworkUsers } from "@/lib/data";
 import Sidebar from "@/components/layout/sidebar";
 
 interface Conversation {
@@ -56,34 +57,39 @@ export default function Messages() {
 
   // Fetch user conversations
   const { data: conversations = [], isLoading: conversationsLoading, refetch: refetchConversations } = useQuery({
-    queryKey: ["/api/conversations"],
+    queryKey: ["supabase/conversations", user?.id],
+    queryFn: async () => user ? await getConversationsByUser(user.id) : [],
+    enabled: !!user?.id,
   });
 
   // Fetch network users for new conversations
   const { data: networkUsers = [] } = useQuery({
-    queryKey: ["/api/network-users"],
+    queryKey: ["supabase/network-users", user?.id],
+    queryFn: async () => await getNetworkUsers(user?.id),
   });
 
   // Fetch messages for selected conversation
   const { data: messages = [] } = useQuery({
-    queryKey: ["/api/conversations", selectedConversation?.id, "messages"],
+    queryKey: ["supabase/messages", selectedConversation?.id],
+    queryFn: async () => selectedConversation ? await getMessagesByConversation(selectedConversation.id) : [],
     enabled: !!selectedConversation,
   });
 
   // Create new conversation mutation
   const createConversationMutation = useMutation({
     mutationFn: async ({ participantId, propertyId, type }: { participantId: number; propertyId?: number; type?: string }) => {
-      const response = await apiRequest("POST", "/api/conversations", {
-        participantId,
+      const conv = await sbCreateConversation({
+        participant1Id: user!.id,
+        participant2Id: participantId,
         propertyId,
-        type
+        type,
       });
-      return response.json();
+      return conv;
     },
     onSuccess: (conversation) => {
       setSelectedConversation(conversation);
       setShowNewChatDialog(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["supabase/conversations", user?.id] });
       refetchConversations();
     },
   });
@@ -91,15 +97,13 @@ export default function Messages() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ conversationId, content }: { conversationId: number; content: string }) => {
-      const response = await apiRequest("POST", `/api/conversations/${conversationId}/messages`, {
-        content
-      });
-      return response.json();
+      const msg = await sbCreateMessage({ conversationId, senderId: user!.id, content });
+      return msg;
     },
     onSuccess: () => {
       setNewMessage("");
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedConversation?.id, "messages"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["supabase/messages", selectedConversation?.id] });
+      queryClient.invalidateQueries({ queryKey: ["supabase/conversations", user?.id] });
     },
   });
 

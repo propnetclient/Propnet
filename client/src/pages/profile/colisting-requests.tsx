@@ -3,24 +3,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import { getCoListingRequestsByUser, updateCoListingRequestStatus, getPropertyById } from "@/lib/data";
 
 export default function ColistingRequests() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: requests = [], isLoading } = useQuery({
-    queryKey: ["/api/colisting-requests"],
+    queryKey: ["supabase/colisting-requests", user?.id],
+    queryFn: async () => user ? await getCoListingRequestsByUser(user.id) : [],
+    enabled: !!user?.id,
   });
 
   const updateRequestMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      await apiRequest("PATCH", `/api/colisting-requests/${id}`, { status });
+      await updateCoListingRequestStatus(id, status);
     },
     onSuccess: (_, { status }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/colisting-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      queryClient.invalidateQueries({ queryKey: ["supabase/colisting-requests", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["supabase/properties"] });
       toast({
         title: "Success",
         description: `Co-listing request ${status}!`,
@@ -86,14 +90,14 @@ export default function ColistingRequests() {
                 <div className="flex items-start space-x-3">
                   <div className="w-12 h-12 bg-neutral-200 rounded-full flex items-center justify-center">
                     <span className="text-neutral-500 font-medium">
-                      {request.requester.name?.charAt(0) || "A"}
+                      {(request.requester?.name || '').charAt(0) || "A"}
                     </span>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <div className="font-medium text-neutral-900">{request.requester.name}</div>
-                        <div className="text-sm text-neutral-500">{request.requester.agencyName}</div>
+                        <div className="font-medium text-neutral-900">{request.requester?.name || 'Agent'}</div>
+                        <div className="text-sm text-neutral-500">{request.requester?.agencyName || ''}</div>
                       </div>
                       <span className="text-xs text-neutral-400">
                         {formatTimeAgo(request.createdAt)}
@@ -101,7 +105,7 @@ export default function ColistingRequests() {
                     </div>
                     
                     <p className="text-sm text-neutral-600 mb-3">
-                      Wants to co-list: <span className="font-medium">{request.property.title}</span>
+                      Wants to co-list: <span className="font-medium">{request.property?.title || `Property #${request.propertyId}`}</span>
                     </p>
                     
                     <div className="flex space-x-3">
